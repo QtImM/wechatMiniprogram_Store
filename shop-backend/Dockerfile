@@ -1,0 +1,15 @@
+FROM maven:3.9-eclipse-temurin-17 AS build
+WORKDIR /app
+COPY pom.xml .
+COPY shop-framework/ shop-framework/
+COPY shop-module-product/ shop-module-product/
+COPY shop-module-member/ shop-module-member/
+COPY shop-module-system/ shop-module-system/
+COPY shop-server/ shop-server/
+RUN mvn package -DskipTests -B
+
+FROM eclipse-temurin:17-jre-alpine
+WORKDIR /app
+COPY --from=build /app/shop-server/target/*.jar app.jar
+EXPOSE 80
+ENTRYPOINT ["java", "-Xms256m", "-Xmx512m", "-jar", "app.jar", "--spring.profiles.active=prod"]
