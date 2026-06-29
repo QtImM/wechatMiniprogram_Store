@@ -15,19 +15,46 @@
 | 任务 | 状态 | 说明 |
 |------|------|------|
 | Task 1: Git 仓库初始化 | ✅ 完成 | 仓库结构、.gitignore、README |
-| Task 2: 父 POM + 模块骨架 | ⬜ 未开始 | Maven 多模块结构 |
-| Task 3: shop-common 公共模块 | ⬜ 未开始 | CommonResult, PageResult, BaseDO |
-| Task 4: shop-starter-mybatis | ⬜ 未开始 | MyBatis-Plus 自动配置 |
-| Task 5: shop-starter-security | ⬜ 未开始 | JWT + Spring Security |
-| Task 6: shop-starter-web | ⬜ 未开始 | Web 统一配置 |
-| Task 7: 数据库初始化 SQL | ⬜ 未开始 | 核心表结构 |
-| Task 8: Product 模块 CRUD | ⬜ 未开始 | 商品分类+SPU 接口 |
-| Task 9: Server 启动入口 | ⬜ 未开始 | Spring Boot 主应用 |
-| Task 10: 小程序骨架 | ⬜ 未开始 | uni-app 首页+请求封装 |
+| Task 2: 父 POM + 模块骨架 | ✅ 完成 | Maven 多模块结构 |
+| Task 3: shop-common 公共模块 | ✅ 完成 | CommonResult, PageResult, BaseDO |
+| Task 4: shop-starter-mybatis | ✅ 完成 | MyBatis-Plus 自动配置 |
+| Task 5: shop-starter-security | ✅ 完成 | JWT + Spring Security |
+| Task 6: shop-starter-web | ✅ 完成 | Web 统一配置 |
+| Task 7: 数据库初始化 SQL | ✅ 完成 | 核心表结构 |
+| Task 8: Product 模块 CRUD | ✅ 完成 | 商品分类+SPU 接口 |
+| Task 9: Server 启动入口 | ✅ 完成 | Spring Boot 主应用 |
+| Task 10: 小程序骨架 | ✅ 完成 | uni-app 首页+请求封装 |
 
 ## 阻塞项
 
 （无）
+
+## 2026-06-28 迁移记录
+
+- 从开源项目 platform-wxshop（Spring Boot 2.7 + Vue2）迁移到本项目架构
+- 按照 plan1-demo-foundation 完成了全部 10 个 Task 的代码创建
+- 后端采用 Spring Boot 3.2 + Java 17 + MyBatis-Plus 3.5.6
+- 小程序采用 uni-app + Vue 2（从开源 wx-mall 的 uni-mall 版本复制，35 页面）
+- 参考开源项目的业务逻辑（商品、购物车、订单等），按新架构重构
+- 已删除 platform-wxshop 目录
+
+## 2026-06-28 小程序前端定型
+
+- 最终确定前端使用 **uni-app Vue2** 版本（从开源 wx-mall 的 `uni-mall/` 复制）
+- 删除了之前的原生微信小程序版本 `shop-miniapp-native/`
+- 删除了原始开源项目 `platform-wxshop/`
+- 清理了原版项目中的 `skills/`、`agent/` 等无关目录
+- API 地址已修改为 `http://127.0.0.1/app-api/`，指向本地 Java 后端
+- 通过 HBuilderX 编译并运行到微信开发者工具，测试通过
+
+## 2026-06-29 后端 Mock 接口完善
+
+- 新增 `AppIndexController`：首页 7 个接口（banner、channel、brand、topic、newGoods、hotGoods、category）
+- 新增 `AppMockController`：分类、商品列表（68个）、商品详情、品牌、专题、评论、购物车、用户等 mock 接口
+- 新增 `AppAuthController`：mock 登录接口
+- 所有接口使用 `@RequestMapping` 兼容 POST 请求（小程序 util.request 默认 POST）
+- Spring Security 已放行所有 app-api 路径（包括 brand、comment、collect、buy）
+- API 返回格式统一：`{code: 0, msg: "success", data: {...}}`
 
 ## 决策记录
 
@@ -38,10 +65,17 @@
 | 2026-06-22 | 付费会员制（月卡/年卡） | 非免费升级体系 |
 | 2026-06-22 | 不做积分、直播、拼团 | 客户明确不需要 |
 | 2026-06-22 | 所有计划和文档使用中文 | 用户要求 |
+| 2026-06-28 | 从开源模板迁移代码并按新架构重构 | 用户提供的开源项目作为参考基础 |
+| 2026-06-28 | 先复制原生小程序快速获得 UI | 当时未考虑 uni-app 版本 |
+| 2026-06-29 | 切换到 uni-app Vue2 版本 | 用户明确要求用 uni-app，原版 uni-mall 已有完整 35 页面，API 路径与 mock 后端完全匹配 |
+| 2026-06-29 | 删除原生版和开源项目源码 | 代码已复制，保持项目整洁 |
 
 ## 下一步行动
 
-执行 Plan1 Task 2：创建 Maven 父 POM 和多模块骨架结构。
+Plan1 所有 Task 已完成。下一步：
+1. 在 HBuilderX 中测试小程序各页面功能（首页、分类、商品详情、购物车等）
+2. 规划 Plan2：补全后端 API（购物车、订单、会员登录等）以适配小程序全部页面
+3. 逐步将 mock 数据替换为真实数据库查询
 
 ---
 

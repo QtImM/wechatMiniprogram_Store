@@ -1,0 +1,8 @@
+schema_version: 1
+module_path: shop_backend/server
+title: 应用启动与基础设施配置
+scope:
+    - shop-backend/shop-server/
+source_files: []
+depends_on: []
+related_to: []

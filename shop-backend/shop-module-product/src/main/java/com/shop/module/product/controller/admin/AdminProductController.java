@@ -1,0 +1,40 @@
+package com.shop.module.product.controller.admin;
+
+import com.shop.common.pojo.CommonResult;
+import com.shop.common.pojo.PageParam;
+import com.shop.common.pojo.PageResult;
+import com.shop.module.product.dal.dataobject.ProductSpuDO;
+import com.shop.module.product.service.ProductSpuService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequestMapping("/admin-api/product/spu")
+@RequiredArgsConstructor
+public class AdminProductController {
+
+    private final ProductSpuService productSpuService;
+
+    @GetMapping("/page")
+    public CommonResult<PageResult<ProductSpuDO>> page(PageParam pageParam) {
+        return CommonResult.success(productSpuService.getAdminSpuPage(pageParam));
+    }
+
+    @PostMapping("/create")
+    public CommonResult<Boolean> create(@RequestBody ProductSpuDO spu) {
+        productSpuService.createSpu(spu);
+        return CommonResult.success(true);
+    }
+
+    @PutMapping("/update")
+    public CommonResult<Boolean> update(@RequestBody ProductSpuDO spu) {
+        productSpuService.updateSpu(spu);
+        return CommonResult.success(true);
+    }
+
+    @DeleteMapping("/delete")
+    public CommonResult<Boolean> delete(@RequestParam Long id) {
+        productSpuService.deleteSpu(id);
+        return CommonResult.success(true);
+    }
+}
