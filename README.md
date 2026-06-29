@@ -55,8 +55,8 @@ wechatMiniprogram_Store/
 - Maven 3.8+
 - MySQL 8.0
 - Redis 7.x
-- Node.js 18+
-- 微信开发者工具
+- [HBuilderX](https://www.dcloud.io/hbuilderx.html)（App开发版，用于编译 uni-app）
+- [微信开发者工具](https://developers.weixin.qq.com/miniprogram/dev/devtools/download.html)
 
 ### 第一步：启动基础服务
 
@@ -106,17 +106,15 @@ curl http://localhost/app-api/product/spu/page?pageNo=1&pageSize=10
 
 ### 第四步：启动小程序
 
-#### 方式一：使用 HBuilderX（推荐）
+1. 下载安装 [HBuilderX](https://www.dcloud.io/hbuilderx.html)（选 **App开发版**，自带 uni-app 编译器）
+2. 打开 HBuilderX → 「文件 → 导入 → 从本地目录导入」→ 选择 `shop-miniapp` 目录
+3. 首次使用需配置微信开发者工具路径：
+   - HBuilderX「设置 → 运行配置 → 微信开发者工具路径」→ 选择微信开发者工具安装目录
+   - 同时勾选「启动时打开微信开发者工具」
+4. 菜单栏「运行 → 运行到小程序模拟器 → 微信开发者工具」
+5. 微信开发者工具自动打开，在「本地设置」中勾选「不校验合法域名」
 
-1. 下载安装 [HBuilderX](https://www.dcloud.io/hbuilderx.html)
-2. 打开 HBuilderX，选择「文件→导入→从本地目录导入」
-3. 选择 `shop-miniapp` 目录
-4. 菜单栏「运行→运行到小程序模拟器→微信开发者工具」
-5. 首次使用需在 HBuilderX 设置中配置微信开发者工具路径
-
-#### 方式二：使用 CLI（需额外配置）
-
-由于这是 Vue 2 uni-app 项目，CLI 编译需安装 HBuilderX 内置编译器，建议优先使用方式一。
+> HBuilderX 会将 `.vue` 文件编译为微信小程序原生格式，每次保存代码会自动热更新。
 
 > 注意：后端目前已有首页、分类、商品详情等核心 mock 接口，购物车/订单/收藏等接口待补全。
 
@@ -124,15 +122,13 @@ curl http://localhost/app-api/product/spu/page?pageNo=1&pageSize=10
 
 | 验证项 | 预期结果 |
 |--------|----------|
-| `mvn clean package -DskipTests` | BUILD SUCCESS |
+| `mvn install -DskipTests` | BUILD SUCCESS |
 | 后端启动（端口 80） | 日志无报错 |
-| `GET /app-api/product/category/list` | 返回 4 个分类 |
-| `POST /admin-api/product/spu/create` | 创建商品成功 |
-| `GET /app-api/product/spu/page` | 返回商品列表 |
-| 小程序首页 | Banner + 分类导航 + 商品列表 |
-| 小程序分类页 | 左侧分类 + 右侧商品 |
-| 小程序购物车 | 页面正常渲染（API 待补全） |
-| 小程序我的 | 页面正常渲染（登录待补全） |
+| HBuilderX 运行到微信开发者工具 | 编译成功，自动打开模拟器 |
+| 小程序首页 | Banner + 分类导航 + 品牌商品 |
+| 小程序分类页 | 左侧分类 + 右侧子分类 |
+| 小程序商品详情 | 轮播图 + 商品参数 + 常见问题 |
+| 小程序购物车 | 页面正常渲染（mock 接口已就绪） |
 
 ## 许可证
 
