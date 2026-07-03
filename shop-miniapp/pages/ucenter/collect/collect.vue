@@ -1,13 +1,13 @@
 <template>
 	<view class="container">
 		<view class="collect-list" v-if="collectList.length>0">
-			<view class="item" @tap="openGoods" @touchstart="touchStart" @touchend="touchEnd" v-for="(item, index) in collectList"
-			 :key="item.id" :data-index="index">
-				<image class="img" :src="item.listPicUrl"></image>
-				<view class="info">
-					<view class="name">{{item.name||''}}</view>
-					<view class="subtitle">{{item.goodsBrief||''}}</view>
-					<view class="price">￥{{item.retailPrice||''}}</view>
+			<view class="collect-item" @tap="openGoods" @touchstart="touchStart" @touchend="touchEnd"
+			 v-for="(item, index) in collectList" :key="item.id" :data-index="index">
+				<image class="item-img" :src="item.listPicUrl" mode="aspectFill"></image>
+				<view class="item-info">
+					<text class="item-name">{{item.name||''}}</text>
+					<text class="item-brief">{{item.goodsBrief||''}}</text>
+					<text class="item-price">¥{{item.retailPrice||''}}</text>
 				</view>
 			</view>
 		</view>
@@ -28,25 +28,21 @@
 		methods: {
 			getCollectList() {
 				let that = this;
-				util.request(api.CollectList, {
-					typeId: that.typeId
-				}).then(function(res) {
+				util.request(api.CollectList, { typeId: that.typeId }).then(function(res) {
 					if (res.code === 0) {
-						that.collectList = res.data;
+						that.collectList = res.data || [];
 					}
 				});
 			},
 			openGoods(event) {
 				let that = this;
 				let goodsId = that.collectList[event.currentTarget.dataset.index].valueId;
-
-				//触摸时间距离页面打开的毫秒数
 				var touchTime = that.touch_end - that.touch_start;
-				//如果按下时间大于350为长按
 				if (touchTime > 350) {
 					uni.showModal({
-						title: '',
+						title: '提示',
 						content: '确定删除收藏吗？',
+						confirmColor: '#5B8C5A',
 						success: function(res) {
 							if (res.confirm) {
 								util.request(api.CollectAddOrDelete, {
@@ -54,36 +50,21 @@
 									valueId: goodsId
 								}, "POST", "application/json").then(function(res) {
 									if (res.code === 0) {
-										uni.showToast({
-											title: '删除成功',
-											icon: 'success',
-											duration: 2000
-										});
+										uni.showToast({ title: '删除成功', icon: 'success' });
 										that.getCollectList();
 									}
 								});
 							}
 						}
-					})
-				} else {
-					uni.navigateTo({
-						url: '/pages/goods/goods?id=' + goodsId,
 					});
+				} else {
+					uni.navigateTo({ url: '/pages/goods/goods?id=' + goodsId });
 				}
 			},
-			//按下事件开始
-			touchStart: function(e) {
-				let that = this;
-				that.touch_start = e.timeStamp
-			},
-			//按下事件结束
-			touchEnd: function(e) {
-				let that = this;
-				that.touch_end = e.timeStamp
-			}
+			touchStart: function(e) { this.touch_start = e.timeStamp; },
+			touchEnd: function(e) { this.touch_end = e.timeStamp; }
 		},
 		onPullDownRefresh() {
-			var self = this;
 			this.getCollectList();
 		},
 		onShow: function() {
@@ -93,71 +74,66 @@
 </script>
 
 <style lang="scss">
+	$green: #5B8C5A;
+	$green-bg: #F6F7F4;
+	$red: #CF4A3E;
+
 	page {
-		background: #f4f4f4;
+		background: $green-bg;
 		min-height: 100%;
 	}
 
 	.container {
-		background: #f4f4f4;
-		min-height: 100%;
+		padding: 24rpx;
 	}
 
 	.collect-list {
 		width: 100%;
-		height: auto;
-		overflow: hidden;
+	}
+
+	.collect-item {
+		display: flex;
+		align-items: center;
 		background: #fff;
-		padding-left: 30rpx;
-		border-top: 1px solid #e1e1e1;
+		border-radius: 16rpx;
+		padding: 24rpx;
+		margin-bottom: 16rpx;
+		box-shadow: 0 2rpx 10rpx rgba(91,140,90,0.08);
 	}
 
-	.item {
-		height: 212rpx;
-		width: 720rpx;
-		background: #fff;
-		padding: 30rpx 30rpx 30rpx 0;
-		border-bottom: 1px solid #e1e1e1;
+	.item-img {
+		width: 160rpx;
+		height: 160rpx;
+		border-radius: 12rpx;
+		margin-right: 20rpx;
 	}
 
-	.item:last-child {
-		border-bottom: 1px solid #fff;
-	}
-
-	.item .img {
-		float: left;
-		width: 150rpx;
-		height: 150rpx;
-	}
-
-	.item .info {
-		float: right;
-		width: 540rpx;
-		height: 150rpx;
+	.item-info {
+		flex: 1;
 		display: flex;
 		flex-direction: column;
 		justify-content: center;
-		padding-left: 20rpx;
 	}
 
-	.item .info .name {
+	.item-name {
 		font-size: 28rpx;
 		color: #333;
-		line-height: 40rpx;
+		line-height: 1.4;
+		margin-bottom: 8rpx;
 	}
 
-
-	.item .info .subtitle {
-		margin-top: 8rpx;
+	.item-brief {
 		font-size: 24rpx;
-		color: #888;
-		line-height: 40rpx;
+		color: #999;
+		margin-bottom: 12rpx;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
 	}
 
-	.item .info .price {
-		margin-top: 8rpx;
-		font-size: 28rpx;
-		color: #333;
-		line-height: 40rpx;
+	.item-price {
+		font-size: 30rpx;
+		font-weight: bold;
+		color: $red;
 	}
 </style>

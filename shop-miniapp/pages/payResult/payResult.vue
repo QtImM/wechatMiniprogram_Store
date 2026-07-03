@@ -1,123 +1,166 @@
-<!-- 昵称（邮箱或者个人主页） -->
 <template>
-	<view class="container">
-		<view class="pay-result">
-			<view class="success" v-if="status == true">
-				<view class="msg">付款成功</view>
-				<view class="btns">
-					<navigator class="btn" url="/pages/ucenter/order/order" open-type="redirect">查看订单</navigator>
-					<navigator class="btn" url="/pages/index/index" open-type="switchTab">继续逛</navigator>
-				</view>
+	<view class="page">
+		<!-- 支付成功 -->
+		<view class="result-card" v-if="status == true">
+			<view class="result-icon success-icon">✓</view>
+			<text class="result-title">支付成功</text>
+			<text class="result-desc">感谢您的购买，祝您身体健康</text>
+			<view class="result-btns">
+				<navigator class="btn-primary" url="/pages/ucenter/order/order" open-type="redirect">查看订单</navigator>
+				<navigator class="btn-outline" url="/pages/index/index" open-type="switchTab">继续逛逛</navigator>
 			</view>
-			<view class="error" v-if="status != true">
-				<view class="msg">付款失败</view>
-				<view class="tips">
-					<view class="p">请在
-						<text class="time">1小时</text>
-						内完成付款
-					</view>
-					<view class="p">否则订单将会被系统取消</view>
-				</view>
-				<view class="btns">
-					<navigator class="btn" url="/pages/ucenter/order/order" open-type="redirect">查看订单</navigator>
-					<view class="btn" @tap='payOrder'>重新付款</view>
-				</view>
+		</view>
+
+		<!-- 支付失败 -->
+		<view class="result-card" v-if="status != true">
+			<view class="result-icon fail-icon">!</view>
+			<text class="result-title fail-title">支付未完成</text>
+			<text class="result-desc">请在 <text class="highlight">1小时</text> 内完成付款，否则订单将被取消</text>
+			<view class="result-btns">
+				<view class="btn-primary" @tap="payOrder">重新付款</view>
+				<navigator class="btn-outline" url="/pages/ucenter/order/order" open-type="redirect">查看订单</navigator>
 			</view>
 		</view>
 	</view>
 </template>
 
 <script>
-	const util = require("@/utils/util.js");
-	const api = require('@/utils/api.js');
-	export default {
-		data() {
-			return {
-				status: false,
-				orderId: 0
-			}
-		},
-		methods: {
-			updateSuccess: function() {
-				let that = this
-				util.request(api.OrderQuery, {
-					orderId: that.orderId
-				}).then(function(res) {})
-			},
-			payOrder() {
-				util.payOrder(parseInt(this.orderId)).then(res => {
-					that.status = true
-				}).catch(res => {
-					util.toast('支付失败');
-				});
-			}
-		},
-		onLoad: function(options) {
-			// 页面初始化 options为页面跳转所带来的参数
-			this.orderId = options.orderId || 24
-			this.status = options.status
+const util = require("@/utils/util.js");
+const api = require('@/utils/api.js');
+
+export default {
+	data() {
+		return {
+			status: false,
+			orderId: 0
 		}
+	},
+	methods: {
+		updateSuccess() {
+			util.request(api.OrderQuery, { orderId: this.orderId }).then(() => {});
+		},
+		payOrder() {
+			util.payOrder(parseInt(this.orderId)).then(() => {
+				this.status = true;
+			}).catch(() => {
+				util.toast('支付失败');
+			});
+		}
+	},
+	onLoad(options) {
+		this.orderId = options.orderId || 24;
+		this.status = options.status;
 	}
+}
 </script>
 
 <style lang="scss">
-	page {
-		min-height: 100%;
-		width: 100%;
-		background: #fff;
-	}
+$green: #5B8C5A;
+$green-light: #E8F2E7;
+$green-bg: #F6F7F4;
+$green-dark: #3D6B3C;
+$text-primary: #2D3A2E;
+$text-secondary: #5C6B5D;
+$text-hint: #9CA89D;
+$red: #CF4A3E;
 
-	.container {
-		height: 100%;
-		background: #fff;
-	}
+page {
+	background: $green-bg;
+	min-height: 100vh;
+}
 
-	.pay-result {
-		background: #fff;
-	}
+.page {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	min-height: 100vh;
+	padding: 0 40rpx;
+}
 
-	.pay-result .msg {
-		text-align: center;
-		margin: 100rpx auto;
-		color: #2bab25;
-		font-size: 36rpx;
-	}
+.result-card {
+	width: 100%;
+	background: #fff;
+	border-radius: 24rpx;
+	padding: 80rpx 48rpx 60rpx;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	box-shadow: 0 8rpx 32rpx rgba(91, 140, 90, 0.08);
+}
 
-	.pay-result .btns {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-	}
+.result-icon {
+	width: 120rpx;
+	height: 120rpx;
+	border-radius: 50%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 56rpx;
+	font-weight: 700;
+	color: #fff;
+	margin-bottom: 32rpx;
+}
 
-	.pay-result .btn {
-		text-align: center;
-		height: 80rpx;
-		margin: 0 20rpx;
-		width: 200rpx;
-		line-height: 78rpx;
-		border: 1px solid #868686;
-		color: #000000;
-		border-radius: 5rpx;
-	}
+.success-icon {
+	background: linear-gradient(135deg, $green, $green-dark);
+}
 
-	.pay-result .error .msg {
-		color: #b4282d;
-		margin-bottom: 60rpx;
-	}
+.fail-icon {
+	background: linear-gradient(135deg, #E8A44A, #D4863A);
+}
 
-	.pay-result .error .tips {
-		color: #7f7f7f;
-		margin-bottom: 70rpx;
-	}
+.result-title {
+	font-size: 36rpx;
+	font-weight: 700;
+	color: $text-primary;
+	margin-bottom: 16rpx;
+}
 
-	.pay-result .error .tips .p {
-		font-size: 24rpx;
-		line-height: 42rpx;
-		text-align: center;
-	}
+.fail-title {
+	color: $text-primary;
+}
 
-	.pay-result .error .tips .p {
-		line-height: 42rpx;
-		text-align: center;
-	}
+.result-desc {
+	font-size: 26rpx;
+	color: $text-hint;
+	text-align: center;
+	line-height: 1.6;
+	margin-bottom: 56rpx;
+}
+
+.highlight {
+	color: $red;
+	font-weight: 600;
+}
+
+.result-btns {
+	width: 100%;
+	display: flex;
+	flex-direction: column;
+	gap: 20rpx;
+}
+
+.btn-primary {
+	height: 88rpx;
+	line-height: 88rpx;
+	text-align: center;
+	background: linear-gradient(135deg, $green, $green-dark);
+	color: #fff;
+	border-radius: 44rpx;
+	font-size: 30rpx;
+	font-weight: 600;
+	text-decoration: none;
+}
+
+.btn-outline {
+	height: 84rpx;
+	line-height: 80rpx;
+	text-align: center;
+	border: 2rpx solid $green;
+	color: $green;
+	border-radius: 44rpx;
+	font-size: 30rpx;
+	font-weight: 600;
+	text-decoration: none;
+}
 </style>

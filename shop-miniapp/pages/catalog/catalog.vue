@@ -1,31 +1,57 @@
 <template>
-	<view class="container">
-		<view class="search">
-			<navigator url="/pages/search/search" class="input">
-				<image class="icon"></image>
-				<text class="txt">商品搜索, 共{{goodsCount}}款好物</text>
+	<view class="page">
+		<!-- 搜索栏 -->
+		<view class="search-bar">
+			<navigator url="/pages/search/search" class="search-box">
+				<text class="search-icon">🔍</text>
+				<text class="search-text">搜索商品, 共{{goodsCount}}款好物</text>
 			</navigator>
 		</view>
-		<view class="catalog">
-			<scroll-view class="nav" :scroll-y="true">
-				<view :class="'item ' + (currentCategory.id == item.id ? 'active' : '')" v-for="(item, index) in navList" :key="index"
-				 :data-id="item.id" :data-index="index" @tap="switchCate">{{item.name}}</view>
-			</scroll-view>
-			<scroll-view class="cate" :scroll-y="true">
-				<navigator url="url" class="banner">
-					<image class="image" :src="currentCategory.wapBannerUrl"></image>
-					<view class="txt">{{currentCategory.frontName}}</view>
-				</navigator>
-				<view class="hd">
-					<text class="line"></text>
-					<text class="txt">{{currentCategory.name||''}}分类</text>
+
+		<!-- 分类主体 -->
+		<view class="catalog-body">
+			<!-- 左侧一级分类 -->
+			<scroll-view class="side-nav" scroll-y :style="{height: scrollHeight + 'px'}">
+				<view
+					class="nav-item"
+					:class="{active: currentId === item.id}"
+					v-for="(item, index) in navList"
+					:key="index"
+					@tap="switchCate(item.id)"
+				>
+					<view class="nav-indicator" v-if="currentId === item.id"></view>
+					<text class="nav-text">{{item.name}}</text>
 				</view>
-				<view class="bd">
-					<navigator :url="'/pages/category/category?id='+item.id" :class="'item ' + ((index+1) % 3 == 0 ? 'last' : '')" v-for="(item, index) in currentCategory.subCategoryList"
-					 :key="index">
-						<image class="icon" :src="item.wapBannerUrl"></image>
-						<text class="txt">{{item.name}}</text>
+			</scroll-view>
+
+			<!-- 右侧商品列表 -->
+			<scroll-view class="main-content" scroll-y :style="{height: scrollHeight + 'px'}"
+			 @scrolltolower="loadMore">
+				<!-- 当前分类名 -->
+				<view class="cate-name-bar">
+					<text class="cate-name">{{currentName}}</text>
+					<text class="cate-count">{{goodsList.length}}件商品</text>
+				</view>
+
+				<!-- 商品网格 -->
+				<view class="goods-grid">
+					<navigator class="goods-card" v-for="(item, index) in goodsList" :key="index"
+					 :url="'/pages/goods/goods?id='+item.id">
+						<image class="goods-img" :src="item.listPicUrl" mode="aspectFill"></image>
+						<view class="goods-info">
+							<text class="goods-name">{{item.name||''}}</text>
+							<view class="goods-bottom">
+								<text class="goods-price">¥{{item.retailPrice}}</text>
+							</view>
+						</view>
 					</navigator>
+				</view>
+
+				<view class="load-tip" v-if="goodsList.length > 0">
+					<text class="load-text">{{noMore ? '— 已加载全部 —' : '加载中...'}}</text>
+				</view>
+				<view class="empty-tip" v-if="goodsList.length === 0 && !loading">
+					<text>该分类暂无商品</text>
 				</view>
 			</scroll-view>
 		</view>
@@ -33,229 +59,277 @@
 </template>
 
 <script>
-	const util = require("@/utils/util.js");
-	const api = require('@/utils/api.js');
-	export default {
-		data() {
-			return {
-				navList: [],
-				categoryList: [],
-				currentCategory: {},
-				scrollLeft: 0,
-				scrollTop: 0,
-				goodsCount: 0,
-				scrollHeight: 0
-			}
-		},
-		methods: {
-			getCatalog: function() {
-				//CatalogList
-				let that = this;
-				uni.showLoading({
-					title: '加载中...',
-				});
-				util.request(api.CatalogList).then(function(res) {
-					that.navList = res.data.categoryList
-					that.currentCategory = res.data.currentCategory
-					uni.hideLoading();
-				});
-				util.request(api.GoodsCount).then(function(res) {
-					that.goodsCount = res.data.goodsCount
-				});
+const util = require('@/utils/util.js');
+const api = require('@/utils/api.js');
 
-			},
-			getCurrentCategory: function(id) {
-				let that = this;
-				util.request(api.CatalogCurrent, {
-					id: id
-				}).then(function(res) {
-					that.currentCategory = res.data.currentCategory
-				});
-			},
-			getList: function() {
-				var that = this;
-				util.request(api.Catalog + that.data.currentCategory.id)
-					.then(function(res) {
-						that.categoryList = res.data
-					});
-			},
-			switchCate: function(event) {
-				var that = this;
-				var currentTarget = event.currentTarget;
-				if (this.currentCategory.id == event.currentTarget.dataset.id) {
-					return false;
-				}
-				this.getCurrentCategory(event.currentTarget.dataset.id);
-			}
-		},
-		onLoad: function() {
-			this.getCatalog();
+export default {
+	data() {
+		return {
+			navList: [],
+			currentId: 0,
+			currentName: '',
+			goodsList: [],
+			goodsCount: 0,
+			scrollHeight: 600,
+			page: 1,
+			size: 10,
+			totalPages: 1,
+			noMore: false,
+			loading: false
 		}
+	},
+	methods: {
+		getCatalog() {
+			util.request(api.CatalogList).then(res => {
+				if (res.code === 0) {
+					this.navList = res.data.categoryList;
+					if (res.data.currentCategory) {
+						this.currentId = res.data.currentCategory.id;
+						this.currentName = res.data.currentCategory.name;
+					} else if (this.navList.length > 0) {
+						this.currentId = this.navList[0].id;
+						this.currentName = this.navList[0].name;
+					}
+					this.loadGoods();
+				}
+			});
+			util.request(api.GoodsCount).then(res => {
+				if (res.code === 0) this.goodsCount = res.data.goodsCount;
+			});
+		},
+		switchCate(id) {
+			if (this.currentId === id) return;
+			this.currentId = id;
+			let found = this.navList.find(n => n.id === id);
+			this.currentName = found ? found.name : '';
+			this.page = 1;
+			this.goodsList = [];
+			this.noMore = false;
+			this.loadGoods();
+		},
+		loadGoods() {
+			if (this.noMore || this.loading) return;
+			this.loading = true;
+			util.request(api.GoodsList, {
+				categoryId: this.currentId,
+				page: this.page,
+				size: this.size
+			}).then(res => {
+				if (res.code === 0 && res.data.goodsList) {
+					let records = res.data.goodsList.records || [];
+					this.goodsList = this.goodsList.concat(records);
+					this.totalPages = res.data.goodsList.pages || 1;
+					if (this.page >= this.totalPages || records.length < this.size) {
+						this.noMore = true;
+					}
+					this.page++;
+				}
+				this.loading = false;
+			});
+		},
+		loadMore() {
+			this.loadGoods();
+		},
+		calcHeight() {
+			const sysInfo = uni.getSystemInfoSync();
+			this.scrollHeight = sysInfo.windowHeight - 100;
+		}
+	},
+	onLoad() {
+		this.calcHeight();
+		this.getCatalog();
 	}
+}
 </script>
 
 <style lang="scss">
-	page {
-		height: 100%;
-	}
+$green: #5B8C5A;
+$green-light: #E8F2E7;
+$green-bg: #F6F7F4;
+$text-primary: #2D3A2E;
+$text-secondary: #5C6B5D;
+$text-hint: #9CA89D;
+$red: #CF4A3E;
 
-	.container {
-		background: #f9f9f9;
-		height: 100%;
-		width: 100%;
-		display: flex;
-		flex-direction: column;
-	}
+page {
+	height: 100%;
+	background: #fff;
+}
 
-	.search {
-		height: 88rpx;
-		width: 100%;
-		padding: 0 30rpx;
+.page {
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+}
+
+/* 搜索栏 */
+.search-bar {
+	padding: 12rpx 24rpx;
+	background: #fff;
+	flex-shrink: 0;
+}
+
+.search-box {
+	display: flex;
+	align-items: center;
+	height: 64rpx;
+	background: $green-bg;
+	border-radius: 32rpx;
+	padding: 0 24rpx;
+	text-decoration: none;
+}
+
+.search-icon {
+	font-size: 26rpx;
+	margin-right: 10rpx;
+}
+
+.search-text {
+	font-size: 24rpx;
+	color: $text-hint;
+}
+
+/* 分类主体 */
+.catalog-body {
+	flex: 1;
+	display: flex;
+	overflow: hidden;
+}
+
+/* 左侧导航 */
+.side-nav {
+	width: 176rpx;
+	background: $green-bg;
+	flex-shrink: 0;
+}
+
+.nav-item {
+	position: relative;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	height: 104rpx;
+	color: $text-secondary;
+
+	&.active {
 		background: #fff;
-		display: flex;
-		align-items: center;
+		color: $green;
+		font-weight: 700;
 	}
+}
 
-	.search .input {
-		width: 690rpx;
-		height: 56rpx;
-		background: #ededed;
-		border-radius: 8rpx;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-	}
+.nav-indicator {
+	position: absolute;
+	left: 0;
+	top: 50%;
+	transform: translateY(-50%);
+	width: 6rpx;
+	height: 40rpx;
+	background: $green;
+	border-radius: 0 4rpx 4rpx 0;
+}
 
-	.search .icon {
-		background: url(http://yanxuan.nosdn.127.net/hxm/yanxuan-wap/p/20161201/style/img/icon-normal/search2-2fb94833aa.png) center no-repeat;
-		background-size: 100%;
-		width: 28rpx;
-		height: 28rpx;
-	}
+.nav-text {
+	font-size: 26rpx;
+	max-width: 136rpx;
+	text-align: center;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
 
-	.search .txt {
-		height: 42rpx;
-		line-height: 42rpx;
-		color: #666;
-		padding-left: 10rpx;
-		font-size: 30rpx;
-	}
+/* 右侧内容 */
+.main-content {
+	flex: 1;
+	background: $green-bg;
+}
 
-	.catalog {
-		flex: 1;
-		width: 100%;
-		background: #fff;
-		display: flex;
-		border-top: 1px solid #fafafa;
-	}
+/* 分类名称条 */
+.cate-name-bar {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 20rpx 20rpx 8rpx;
+}
 
-	.catalog .nav {
-		width: 162rpx;
-		height: 100%;
-	}
+.cate-name {
+	font-size: 28rpx;
+	color: $text-primary;
+	font-weight: 700;
+}
 
-	.catalog .nav .item {
-		text-align: center;
-		line-height: 90rpx;
-		width: 162rpx;
-		height: 90rpx;
-		color: #333;
-		font-size: 28rpx;
-		border-left: 6rpx solid #fff;
-	}
+.cate-count {
+	font-size: 22rpx;
+	color: $text-hint;
+}
 
-	.catalog .nav .item.active {
-		color: #ab2b2b;
-		font-size: 36rpx;
-		border-left: 6rpx solid #ab2b2b;
-	}
+/* 商品网格 - 关键: 宽度精确计算 */
+.goods-grid {
+	padding: 8rpx 10rpx;
+	overflow: hidden;
+}
 
-	.catalog .cate {
-		border-left: 1px solid #fafafa;
-		flex: 1;
-		height: 100%;
-		padding: 0 30rpx 0 30rpx;
-	}
+.goods-card {
+	float: left;
+	width: 270rpx;
+	background: #fff;
+	border-radius: 12rpx;
+	overflow: hidden;
+	margin-bottom: 12rpx;
+	text-decoration: none;
+	box-shadow: 0 2rpx 8rpx rgba(0,0,0,0.04);
 
-	.banner {
-		display: block;
-		height: 222rpx;
-		width: 100%;
-		position: relative;
+	&:nth-child(odd) {
+		margin-right: 10rpx;
 	}
+}
 
-	.banner .image {
-		position: absolute;
-		top: 30rpx;
-		left: 0;
-		border-radius: 4rpx;
-		height: 192rpx;
-		width: 100%;
-	}
+.goods-img {
+	width: 270rpx;
+	height: 270rpx;
+	display: block;
+}
 
-	.banner .txt {
-		position: absolute;
-		top: 30rpx;
-		text-align: center;
-		color: #fff;
-		font-size: 28rpx;
-		left: 0;
-		height: 192rpx;
-		line-height: 192rpx;
-		width: 100%;
-	}
+.goods-info {
+	padding: 12rpx 14rpx 16rpx;
+}
 
-	.catalog .hd {
-		height: 108rpx;
-		width: 100%;
-		display: flex;
-		justify-content: center;
-		align-items: center;
-	}
+.goods-name {
+	font-size: 24rpx;
+	color: $text-primary;
+	display: -webkit-box;
+	-webkit-box-orient: vertical;
+	-webkit-line-clamp: 2;
+	overflow: hidden;
+	line-height: 1.4;
+	height: 68rpx;
+}
 
-	.catalog .hd .txt {
-		font-size: 24rpx;
-		text-align: center;
-		color: #333;
-		padding: 0 10rpx;
-		width: auto;
-	}
+.goods-bottom {
+	margin-top: 8rpx;
+}
 
-	.catalog .hd .line {
-		width: 40rpx;
-		height: 1px;
-		background: #d9d9d9;
-	}
+.goods-price {
+	font-size: 28rpx;
+	color: $red;
+	font-weight: 700;
+}
 
-	.catalog .bd {
-		height: auto;
-		width: 100%;
-		overflow: hidden;
-	}
+/* 加载提示 */
+.load-tip {
+	padding: 20rpx 0 40rpx;
+	text-align: center;
+}
 
-	.catalog .bd .item {
-		display: block;
-		float: left;
-		height: 216rpx;
-		width: 144rpx;
-		margin-right: 34rpx;
-	}
+.load-text {
+	font-size: 22rpx;
+	color: $text-hint;
+}
 
-	.catalog .bd .item.last {
-		margin-right: 0;
-	}
-
-	.catalog .bd .item .icon {
-		height: 144rpx;
-		width: 144rpx;
-	}
-
-	.catalog .bd .item .txt {
-		display: block;
-		text-align: center;
-		font-size: 24rpx;
-		color: #333;
-		height: 72rpx;
-		width: 144rpx;
-	}
+.empty-tip {
+	padding: 80rpx 0;
+	text-align: center;
+	font-size: 26rpx;
+	color: $text-hint;
+}
 </style>

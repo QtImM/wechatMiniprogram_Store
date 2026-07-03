@@ -1,531 +1,467 @@
 <template>
-	<view class="container">
-		<view class="address-box">
-			<view class="address-item" @tap="selectAddress" v-if="checkedAddress.id > 0">
-				<view class="l">
-					<text class="name">{{checkedAddress.userName||''}}</text>
-					<text class="default" v-if="checkedAddress.isDefault === 1">默认</text>
+	<view class="page">
+		<!-- 收货地址 -->
+		<view class="address-card" @tap="selectAddress" v-if="checkedAddress.id > 0">
+			<view class="address-left">
+				<view class="address-user">
+					<text class="address-name">{{checkedAddress.userName||''}}</text>
+					<text class="address-phone">{{checkedAddress.telNumber||''}}</text>
+					<view class="address-default" v-if="checkedAddress.isDefault === 1">默认</view>
 				</view>
-				<view class="m">
-					<text class="mobile">{{checkedAddress.telNumber||''}}</text>
-					<text class="address">{{checkedAddress.fullRegion+checkedAddress.detailInfo}}</text>
-				</view>
-				<view class="r">
-					<image src="/static/images/address_right.png"></image>
-				</view>
+				<text class="address-detail">{{checkedAddress.fullRegion + checkedAddress.detailInfo}}</text>
 			</view>
-			<view class="address-item address-empty" @tap="addAddress" v-if="checkedAddress.id <= 0">
-				<view class="m">
-					还没有收货地址，去添加
-				</view>
-				<view class="r">
-					<image src="/static/images/address_right.png"></image>
-				</view>
-			</view>
+			<text class="address-arrow">›</text>
 		</view>
-		<view class="coupon-box" @tap="tapCoupon">
-			<view class="coupon-item">
-				<view class="l">
-					<text class="name">请选择优惠券</text>
-					<text class="txt">{{couponDesc||''}}</text>
-				</view>
-				<view class="r">
-					<image src="/static/images/address_right.png"></image>
-				</view>
-			</view>
+		<view class="address-card address-empty" @tap="addAddress" v-if="checkedAddress.id <= 0">
+			<text class="empty-add">+ 添加收货地址</text>
+			<text class="address-arrow">›</text>
 		</view>
 
-		<view class="order-box">
-			<view class="order-item">
-				<view class="l">
-					<text class="name">商品合计</text>
-				</view>
-				<view class="r">
-					<text class="txt">￥{{goodsTotalPrice||''}}</text>
-				</view>
-			</view>
-			<view class="order-item">
-				<view class="l">
-					<text class="name">运费</text>
-				</view>
-				<view class="r">
-					<text class="txt">￥{{freightPrice||''}}</text>
-				</view>
-			</view>
-			<view class="order-item no-border">
-				<view class="l">
-					<text class="name">优惠券</text>
-				</view>
-				<view class="r">
-					<text class="txt">-￥{{couponPrice||''}}</text>
-				</view>
-			</view>
-		</view>
-
-		<view class="goods-items">
-			<view class="item" v-for="(item, index) in checkedGoodsList" :key="item.id">
-				<view class="img">
-					<image :src="item.listPicUrl"></image>
-				</view>
-				<view class="info">
-					<view class="t">
-						<text class="name">{{item.goodsName||''}}</text>
-						<text class="number">x{{item.number||''}}</text>
+		<!-- 商品列表 -->
+		<view class="goods-card">
+			<view class="goods-item" v-for="(item, index) in checkedGoodsList" :key="item.id">
+				<image class="goods-img" :src="item.listPicUrl" mode="aspectFill"></image>
+				<view class="goods-info">
+					<text class="goods-name">{{item.goodsName||''}}</text>
+					<text class="goods-spec" v-if="item.goodsSpecifitionNameValue">{{item.goodsSpecifitionNameValue}}</text>
+					<view class="goods-bottom">
+						<text class="goods-price">¥{{item.retailPrice||''}}</text>
+						<text class="goods-num">x{{item.number||''}}</text>
 					</view>
-					<view class="m">{{item.goodsSpecifitionNameValue||''}}</view>
-					<view class="b">￥{{item.retailPrice||''}}</view>
 				</view>
 			</view>
 		</view>
 
-		<view class="order-total">
-			<view class="l">实付：￥{{actualPrice}}</view>
-			<view class="r" @tap="submitOrder">去付款</view>
+		<!-- 优惠券 -->
+		<view class="option-card" @tap="tapCoupon">
+			<text class="option-label">优惠券</text>
+			<view class="option-right">
+				<text class="option-value" :class="{'has-coupon': couponDesc}">{{couponDesc || '选择优惠券'}}</text>
+				<text class="option-arrow">›</text>
+			</view>
+		</view>
+
+		<!-- 金额明细 -->
+		<view class="amount-card">
+			<view class="amount-row">
+				<text class="amount-label">商品合计</text>
+				<text class="amount-value">¥{{goodsTotalPrice}}</text>
+			</view>
+			<view class="amount-row">
+				<text class="amount-label">运费</text>
+				<text class="amount-value">¥{{freightPrice}}</text>
+			</view>
+			<view class="amount-row" v-if="couponPrice > 0">
+				<text class="amount-label">优惠券</text>
+				<text class="amount-value discount">-¥{{couponPrice}}</text>
+			</view>
+		</view>
+
+		<!-- 底部提交栏 -->
+		<view class="submit-bar">
+			<view class="submit-left">
+				<text class="submit-label">实付</text>
+				<text class="submit-price">¥{{actualPrice}}</text>
+			</view>
+			<view class="submit-btn" @tap="submitOrder">
+				<text>提交订单</text>
+			</view>
 		</view>
 	</view>
 </template>
 
 <script>
-	const util = require("@/utils/util.js");
-	const api = require('@/utils/api.js');
-	const app = getApp();
-	export default {
-		data() {
-			return {
-				checkedGoodsList: [],
-				checkedAddress: {},
-				checkedCoupon: [],
-				couponList: [],
-				goodsTotalPrice: 0.00, //商品总价
-				freightPrice: 0.00, //快递费
-				couponPrice: 0.00, //优惠券的价格
-				orderTotalPrice: 0.00, //订单总价
-				actualPrice: 0.00, //实际需要支付的总价
-				addressId: 0,
-				couponId: 0,
-				isBuy: false,
-				couponDesc: '',
-				couponCode: '',
-				buyType: ''
-			}
-		},
-		methods: {
-			getCheckoutInfo: function() {
-				let that = this;
-				var url = api.CartCheckout
-				let buyType = that.isBuy ? 'buy' : 'cart'
-				util.request(url, {
-					addressId: that.addressId,
-					couponId: that.couponId,
-					type: buyType
-				}).then(function(res) {
-					if (res.code === 0) {
-						that.checkedGoodsList = res.data.checkedGoodsList
-						that.checkedAddress = res.data.checkedAddress
-						that.actualPrice = res.data.actualPrice
-						that.checkedCoupon = res.data.checkedCoupon ? res.data.checkedCoupon : ""
-						that.couponList = res.data.couponList ? res.data.couponList : ""
-						that.couponPrice = res.data.couponPrice
-						that.freightPrice = res.data.freightPrice
-						that.goodsTotalPrice = res.data.goodsTotalPrice
-						that.orderTotalPrice = res.data.orderTotalPrice
-						//设置默认收获地址
-						if (that.checkedAddress.id) {
-							let addressId = that.checkedAddress.id;
-							if (addressId) {
-								that.addressId = addressId;
-							}
-						} else {
-							uni.showModal({
-								title: '',
-								content: '请添加默认收货地址!',
-								success: function(res) {
-									if (res.confirm) {
-										that.selectAddress();
-									}
-								}
-							})
-						}
-					}
-				});
-			},
-			selectAddress() {
-				uni.navigateTo({
-					url: '/pages/shopping/address/address',
-				})
-			},
-			addAddress() {
-				uni.navigateTo({
-					url: '/pages/shopping/addressAdd/addressAdd',
-				})
-			},
-			getCouponData: function() {
-				let that = this
-				if (app.globalData.userCoupon == 'USE_COUPON') {
-					that.couponDesc = app.globalData.courseCouponCode.name
-					that.couponId = app.globalData.courseCouponCode.user_coupon_id
-				} else if (app.globalData.userCoupon == 'NO_USE_COUPON') {
-					that.couponDesc = "不使用优惠券"
-					that.couponId = ''
-				}
-			},
-			/**
-			 * 选择可用优惠券
-			 */
-			tapCoupon: function() {
-				let that = this;
-				uni.navigateTo({
-					url: '/pages/shopping/selCoupon/selCoupon?buyType=' + that.buyType,
-				})
-			},
-			submitOrder: function() {
-				let that = this
-				if (that.addressId <= 0) {
-					util.toast('请选择收货地址');
-					return false;
-				}
-				util.request(api.OrderSubmit, {
-					addressId: that.addressId,
-					couponId: that.couponId,
-					type: that.buyType
-				}, 'POST', 'application/json').then(res => {
-					if (res.code === 0) {
-						const orderId = res.data.orderInfo.id;
-						util.payOrder(parseInt(orderId)).then(res => {
-							uni.redirectTo({
-								url: '/pages/payResult/payResult?status=1&orderId=' + orderId
-							});
-						}).catch(res => {
-							uni.redirectTo({
-								url: '/pages/payResult/payResult?status=0&orderId=' + orderId
-							});
-						});
-					} else {
-						util.toast('下单失败');
-					}
-				});
-			}
-		},
-		onShow: function() {
-			this.getCouponData()
-			this.getCheckoutInfo();
+const util = require("@/utils/util.js");
+const api = require('@/utils/api.js');
+const app = getApp();
 
-			try {
-				var addressId = uni.getStorageSync('addressId');
-				if (addressId) {
-					this.addressId = addressId;
+export default {
+	data() {
+		return {
+			checkedGoodsList: [],
+			checkedAddress: {},
+			checkedCoupon: [],
+			couponList: [],
+			goodsTotalPrice: 0.00,
+			freightPrice: 0.00,
+			couponPrice: 0.00,
+			orderTotalPrice: 0.00,
+			actualPrice: 0.00,
+			addressId: 0,
+			couponId: 0,
+			isBuy: false,
+			couponDesc: '',
+			couponCode: '',
+			buyType: ''
+		}
+	},
+	methods: {
+		getCheckoutInfo() {
+			let buyType = this.isBuy ? 'buy' : 'cart';
+			util.request(api.CartCheckout, {
+				addressId: this.addressId,
+				couponId: this.couponId,
+				type: buyType
+			}).then(res => {
+				if (res.code === 0) {
+					this.checkedGoodsList = res.data.checkedGoodsList;
+					this.checkedAddress = res.data.checkedAddress;
+					this.actualPrice = res.data.actualPrice;
+					this.checkedCoupon = res.data.checkedCoupon || "";
+					this.couponList = res.data.couponList || "";
+					this.couponPrice = res.data.couponPrice;
+					this.freightPrice = res.data.freightPrice;
+					this.goodsTotalPrice = res.data.goodsTotalPrice;
+					this.orderTotalPrice = res.data.orderTotalPrice;
+					if (this.checkedAddress.id) {
+						this.addressId = this.checkedAddress.id;
+					} else {
+						uni.showModal({
+							title: '',
+							content: '请添加默认收货地址!',
+							confirmColor: '#5B8C5A',
+							success: (res) => {
+								if (res.confirm) this.selectAddress();
+							}
+						});
+					}
 				}
-			} catch (e) {
-				// Do something when catch error
+			});
+		},
+		selectAddress() {
+			uni.navigateTo({ url: '/pages/shopping/address/address' });
+		},
+		addAddress() {
+			uni.navigateTo({ url: '/pages/shopping/addressAdd/addressAdd' });
+		},
+		getCouponData() {
+			if (app.globalData.userCoupon == 'USE_COUPON') {
+				this.couponDesc = app.globalData.courseCouponCode.name;
+				this.couponId = app.globalData.courseCouponCode.user_coupon_id;
+			} else if (app.globalData.userCoupon == 'NO_USE_COUPON') {
+				this.couponDesc = "不使用优惠券";
+				this.couponId = '';
 			}
 		},
-		onLoad: function(options) {
-			// 页面初始化 options为页面跳转所带来的参数
-			if (options.isBuy != null) {
-				this.isBuy = options.isBuy
+		tapCoupon() {
+			uni.navigateTo({ url: '/pages/shopping/selCoupon/selCoupon?buyType=' + this.buyType });
+		},
+		submitOrder() {
+			if (this.addressId <= 0) {
+				util.toast('请选择收货地址');
+				return;
 			}
-			this.buyType = this.isBuy ? 'buy' : 'cart'
-			//每次重新加载界面，清空数据
-			app.globalData.userCoupon = 'NO_USE_COUPON'
-			app.globalData.courseCouponCode = {}
+			util.request(api.OrderSubmit, {
+				addressId: this.addressId,
+				couponId: this.couponId,
+				type: this.buyType
+			}, 'POST', 'application/json').then(res => {
+				if (res.code === 0) {
+					const orderId = res.data.orderInfo.id;
+					util.payOrder(parseInt(orderId)).then(() => {
+						uni.redirectTo({ url: '/pages/payResult/payResult?status=1&orderId=' + orderId });
+					}).catch(() => {
+						uni.redirectTo({ url: '/pages/payResult/payResult?status=0&orderId=' + orderId });
+					});
+				} else {
+					util.toast('下单失败');
+				}
+			});
 		}
+	},
+	onShow() {
+		this.getCouponData();
+		this.getCheckoutInfo();
+		try {
+			var addressId = uni.getStorageSync('addressId');
+			if (addressId) this.addressId = addressId;
+		} catch (e) {}
+	},
+	onLoad(options) {
+		if (options.isBuy != null) this.isBuy = options.isBuy;
+		this.buyType = this.isBuy ? 'buy' : 'cart';
+		app.globalData.userCoupon = 'NO_USE_COUPON';
+		app.globalData.courseCouponCode = {};
 	}
+}
 </script>
 
 <style lang="scss">
-	page {
-		height: 100%;
-		background: #f4f4f4;
-	}
+$green: #5B8C5A;
+$green-light: #E8F2E7;
+$green-bg: #F6F7F4;
+$green-dark: #3D6B3C;
+$text-primary: #2D3A2E;
+$text-secondary: #5C6B5D;
+$text-hint: #9CA89D;
+$red: #CF4A3E;
 
-	.address-box {
-		width: 100%;
-		height: 166.55rpx;
-		background: url('http://yanxuan.nosdn.127.net/hxm/yanxuan-wap/p/20161201/style/img/icon-normal/address-bg-bd30f2bfeb.png') 0 0 repeat-x;
-		background-size: 62.5rpx 10.5rpx;
-		margin-bottom: 20rpx;
-		padding-top: 10.5rpx;
-	}
+page {
+	background: $green-bg;
+}
 
-	.address-item {
-		display: flex;
-		height: 155.55rpx;
-		background: #fff;
-		padding: 41.6rpx 0 41.6rpx 31.25rpx;
-	}
+.page {
+	min-height: 100vh;
+	padding: 16rpx 24rpx 130rpx;
+}
 
-	.address-item.address-empty {
-		line-height: 75rpx;
-		text-align: center;
-	}
+/* 地址卡片 */
+.address-card {
+	background: #fff;
+	border-radius: 20rpx;
+	padding: 28rpx;
+	margin-bottom: 16rpx;
+	display: flex;
+	align-items: center;
+	box-shadow: 0 2rpx 12rpx rgba(91, 140, 90, 0.05);
+}
 
-	.address-box .l {
-		width: 155rpx;
-		height: 100%;
-	}
+.address-left {
+	flex: 1;
+	overflow: hidden;
+}
 
-	.address-box .l .name {
-		margin-left: 6.25rpx;
-		margin-top: -7.25rpx;
-		display: block;
-		width: 155rpx;
-		height: 43rpx;
-		line-height: 43rpx;
-		font-size: 30rpx;
-		color: #333;
-		margin-bottom: 5rpx;
+.address-user {
+	display: flex;
+	align-items: center;
+	margin-bottom: 12rpx;
+}
 
-	}
+.address-name {
+	font-size: 30rpx;
+	font-weight: 700;
+	color: $text-primary;
+	margin-right: 16rpx;
+}
 
-	.address-box .l .default {
-		margin-left: 6.25rpx;
-		display: block;
-		width: 62rpx;
-		height: 33rpx;
-		border-radius: 5rpx;
-		border: 1px solid #b4282d;
-		font-size: 20.5rpx;
-		text-align: center;
-		line-height: 29rpx;
-		color: #b4282d;
-	}
+.address-phone {
+	font-size: 26rpx;
+	color: $text-secondary;
+}
 
-	.address-box .m {
-		flex: 1;
-		height: 72.25rpx;
-		color: #999;
-	}
+.address-default {
+	margin-left: 12rpx;
+	font-size: 20rpx;
+	color: $green;
+	border: 2rpx solid $green;
+	border-radius: 6rpx;
+	padding: 2rpx 10rpx;
+}
 
-	.address-box .mobile {
-		display: block;
-		height: 29rpx;
-		line-height: 29rpx;
-		margin-bottom: 6.25rpx;
-		font-size: 30rpx;
-		color: #333;
-	}
+.address-detail {
+	font-size: 26rpx;
+	color: $text-secondary;
+	line-height: 1.5;
+	display: block;
+}
 
-	.address-box .address {
-		display: block;
-		height: 37.5rpx;
-		line-height: 37.5rpx;
-		font-size: 25rpx;
-		color: #666;
-	}
+.address-arrow {
+	font-size: 36rpx;
+	color: $text-hint;
+	margin-left: 12rpx;
+}
 
-	.address-box .r {
-		width: 77rpx;
-		height: 77rpx;
-		display: flex;
-		justify-content: center;
-		align-items: center;
-	}
+.address-empty {
+	justify-content: center;
+	padding: 40rpx 28rpx;
+}
 
-	.address-box .r image {
-		width: 52.078rpx;
-		height: 52.078rpx;
-	}
+.empty-add {
+	flex: 1;
+	font-size: 28rpx;
+	color: $green;
+	font-weight: 600;
+}
 
-	.coupon-box {
-		width: 100%;
-		height: auto;
-		overflow: hidden;
-		background: #fff;
-	}
+/* 商品卡片 */
+.goods-card {
+	background: #fff;
+	border-radius: 20rpx;
+	padding: 24rpx;
+	margin-bottom: 16rpx;
+	box-shadow: 0 2rpx 12rpx rgba(91, 140, 90, 0.05);
+}
 
-	.coupon-box .coupon-item {
-		width: 100%;
-		height: 108.3rpx;
-		overflow: hidden;
-		background: #fff;
-		display: flex;
-		padding-left: 31.25rpx;
-	}
+.goods-item {
+	display: flex;
+	padding: 16rpx 0;
+	border-bottom: 1rpx solid $green-bg;
 
-	.coupon-box .l {
-		flex: 1;
-		height: 43rpx;
-		line-height: 43rpx;
-		padding-top: 35rpx;
-	}
-
-	.coupon-box .l .name {
-		float: left;
-		font-size: 30rpx;
-		color: #666;
-	}
-
-	.coupon-box .l .txt {
-		float: right;
-		font-size: 30rpx;
-		color: #666;
-	}
-
-	.coupon-box .r {
-		margin-top: 15.5rpx;
-		width: 77rpx;
-		height: 77rpx;
-		display: flex;
-		justify-content: center;
-		align-items: center;
-	}
-
-	.coupon-box .r image {
-		width: 52.078rpx;
-		height: 52.078rpx;
-	}
-
-	.order-box {
-		margin-top: 20rpx;
-		width: 100%;
-		height: auto;
-		overflow: hidden;
-		background: #fff;
-	}
-
-	.order-box .order-item {
-		height: 104.3rpx;
-		overflow: hidden;
-		background: #fff;
-		display: flex;
-		margin-left: 31.25rpx;
-		padding-right: 31.25rpx;
-		padding-top: 26rpx;
-		border-bottom: 1px solid #d9d9d9;
-	}
-
-	.order-box .order-item .l {
-		float: left;
-		height: 52rpx;
-		width: 50%;
-		line-height: 52rpx;
-		overflow: hidden;
-	}
-
-	.order-box .order-item .r {
-		float: right;
-		text-align: right;
-		width: 50%;
-		height: 52rpx;
-		line-height: 52rpx;
-		overflow: hidden;
-	}
-
-	.order-box .order-item.no-border {
+	&:last-child {
 		border-bottom: none;
+		padding-bottom: 0;
 	}
 
-	.goods-items {
-		margin-top: 20rpx;
-		width: 100%;
-		height: auto;
-		overflow: hidden;
-		background: #fff;
-		padding-left: 31.25rpx;
-		margin-bottom: 120rpx;
+	&:first-child {
+		padding-top: 0;
 	}
+}
 
-	.goods-items .item {
-		height: 192rpx;
-		padding-right: 31.25rpx;
-		display: flex;
-		align-items: center;
-		border-bottom: 1px solid rgba(0, 0, 0, 0.15);
+.goods-img {
+	width: 140rpx;
+	height: 140rpx;
+	border-radius: 12rpx;
+	background: $green-bg;
+	margin-right: 20rpx;
+	flex-shrink: 0;
+}
+
+.goods-info {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
+	overflow: hidden;
+}
+
+.goods-name {
+	font-size: 26rpx;
+	color: $text-primary;
+	display: -webkit-box;
+	-webkit-box-orient: vertical;
+	-webkit-line-clamp: 2;
+	overflow: hidden;
+	line-height: 1.4;
+}
+
+.goods-spec {
+	font-size: 22rpx;
+	color: $text-hint;
+	margin-top: 8rpx;
+	background: $green-bg;
+	padding: 4rpx 12rpx;
+	border-radius: 6rpx;
+	align-self: flex-start;
+}
+
+.goods-bottom {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-top: 8rpx;
+}
+
+.goods-price {
+	font-size: 28rpx;
+	color: $red;
+	font-weight: 700;
+}
+
+.goods-num {
+	font-size: 24rpx;
+	color: $text-hint;
+}
+
+/* 选项卡片 */
+.option-card {
+	background: #fff;
+	border-radius: 20rpx;
+	padding: 28rpx;
+	margin-bottom: 16rpx;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	box-shadow: 0 2rpx 12rpx rgba(91, 140, 90, 0.05);
+}
+
+.option-label {
+	font-size: 28rpx;
+	color: $text-primary;
+}
+
+.option-right {
+	display: flex;
+	align-items: center;
+}
+
+.option-value {
+	font-size: 26rpx;
+	color: $text-hint;
+	margin-right: 8rpx;
+
+	&.has-coupon {
+		color: $red;
 	}
+}
 
-	.goods-items .item.no-border {
-		border-bottom: none;
+.option-arrow {
+	font-size: 32rpx;
+	color: $text-hint;
+}
+
+/* 金额卡片 */
+.amount-card {
+	background: #fff;
+	border-radius: 20rpx;
+	padding: 24rpx 28rpx;
+	margin-bottom: 16rpx;
+	box-shadow: 0 2rpx 12rpx rgba(91, 140, 90, 0.05);
+}
+
+.amount-row {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: 12rpx 0;
+}
+
+.amount-label {
+	font-size: 26rpx;
+	color: $text-secondary;
+}
+
+.amount-value {
+	font-size: 26rpx;
+	color: $text-primary;
+
+	&.discount {
+		color: $red;
 	}
+}
 
+/* 底部提交栏 */
+.submit-bar {
+	position: fixed;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	height: 110rpx;
+	background: #fff;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 0 24rpx;
+	box-shadow: 0 -4rpx 16rpx rgba(91, 140, 90, 0.08);
+	z-index: 100;
+}
 
-	.goods-items .item:last-child {
-		border-bottom: none;
-	}
+.submit-left {
+	display: flex;
+	align-items: baseline;
+}
 
-	.goods-items .img {
-		height: 145.83rpx;
-		width: 145.83rpx;
-		background-color: #f4f4f4;
-		margin-right: 20rpx;
-	}
+.submit-label {
+	font-size: 26rpx;
+	color: $text-secondary;
+	margin-right: 8rpx;
+}
 
-	.goods-items .img image {
-		height: 145.83rpx;
-		width: 145.83rpx;
-	}
+.submit-price {
+	font-size: 40rpx;
+	color: $red;
+	font-weight: 700;
+}
 
-	.goods-items .info {
-		flex: 1;
-		height: 145.83rpx;
-		padding-top: 5rpx;
-	}
-
-	.goods-items .t {
-		height: 33rpx;
-		line-height: 33rpx;
-		margin-bottom: 10rpx;
-		overflow: hidden;
-		font-size: 30rpx;
-		color: #333;
-	}
-
-	.goods-items .t .name {
-		display: block;
-		float: left;
-	}
-
-	.goods-items .t .number {
-		display: block;
-		float: right;
-		text-align: right;
-	}
-
-	.goods-items .m {
-		height: 29rpx;
-		overflow: hidden;
-		line-height: 29rpx;
-		margin-bottom: 25rpx;
-		font-size: 25rpx;
-		color: #666;
-	}
-
-	.goods-items .b {
-		height: 41rpx;
-		overflow: hidden;
-		line-height: 41rpx;
-		font-size: 30rpx;
-		color: #333;
-	}
-
-	.order-total {
-		position: fixed;
-		left: 0;
-		bottom: 0;
-		height: 100rpx;
-		width: 100%;
-		display: flex;
-	}
-
-	.order-total .l {
-		flex: 1;
-		height: 100rpx;
-		line-height: 100rpx;
-		color: #b4282d;
-		background: #fff;
-		font-size: 33rpx;
-		padding-left: 31.25rpx;
-		border-top: 1rpx solid rgba(0, 0, 0, 0.2);
-		border-bottom: 1rpx solid rgba(0, 0, 0, 0.2);
-	}
-
-	.order-total .r {
-		width: 233rpx;
-		height: 100rpx;
-		background: #b4282d;
-		border: 1px solid #b4282d;
-		line-height: 100rpx;
-		text-align: center;
-		color: #fff;
-		font-size: 30rpx;
-	}
+.submit-btn {
+	height: 80rpx;
+	padding: 0 56rpx;
+	background: linear-gradient(135deg, $green, $green-dark);
+	border-radius: 40rpx;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 30rpx;
+	color: #fff;
+	font-weight: 600;
+}
 </style>

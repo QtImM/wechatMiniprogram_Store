@@ -1,18 +1,22 @@
 <template>
-	<view class="comments">
-		<view class="b">
-			<view class="item" v-for="(item, index) in comments" :key="item.id">
-				<view class="info">
-					<view class="user">
-						<image :src="item.userInfo.avatar"></image>
-						<text>{{item.userInfo.nickname||''}}</text>
+	<view class="container">
+		<view class="comment-list">
+			<view class="comment-item" v-for="(item, index) in comments" :key="item.id">
+				<view class="comment-header">
+					<view class="comment-user">
+						<image class="user-avatar" :src="item.userInfo.avatar"></image>
+						<text class="user-name">{{item.userInfo.nickname||''}}</text>
 					</view>
-					<view class="time">{{item.addTime||''}}</view>
+					<text class="comment-time">{{item.addTime||''}}</text>
 				</view>
-				<view class="comment">{{item.content||''}}</view>
-				<view class="imgs" v-if="item.picList.length > 0">
-					<image class="img" v-for="(pitem, index) in item.picList" :key="pitem.id" :src="pitem.picUrl"></image>
+				<view class="comment-content">{{item.content||''}}</view>
+				<view class="comment-imgs" v-if="item.picList && item.picList.length > 0">
+					<image class="comment-pic" v-for="(pitem, pindex) in item.picList" :key="pitem.id"
+					 :src="pitem.picUrl" mode="aspectFill"></image>
 				</view>
+			</view>
+			<view class="empty-view" v-if="comments.length === 0">
+				<text class="empty-text">暂无留言</text>
 			</view>
 		</view>
 	</view>
@@ -26,27 +30,19 @@
 			return {
 				comments: [],
 				allCommentList: [],
-				picCommentList: [],
 				typeId: 0,
 				valueId: 0,
-				showType: 0,
-				allCount: 0,
-				hasPicCount: 0,
 				allPage: 1,
-				picPage: 1,
-				size: 20
+				size: 20,
+				allCount: 0
 			}
 		},
 		methods: {
 			getCommentCount: function() {
 				let that = this;
-				util.request(api.CommentCount, {
-					valueId: that.valueId,
-					typeId: that.typeId
-				}).then(function(res) {
+				util.request(api.CommentCount, { valueId: that.valueId, typeId: that.typeId }).then(function(res) {
 					if (res.code === 0) {
-						that.allCount = res.data.allCount
-						that.hasPicCount = res.data.hasPicCount
+						that.allCount = res.data.allCount || 0;
 					}
 				});
 			},
@@ -56,163 +52,110 @@
 					valueId: that.valueId,
 					typeId: that.typeId,
 					size: that.size,
-					page: (that.showType == 0 ? that.allPage : that.picPage),
-					showType: that.showType
+					page: that.allPage
 				}).then(function(res) {
 					if (res.code === 0) {
-						if (that.showType == 0) {
-							that.allCommentList = that.allCommentList.concat(res.data.data)
-							that.allPage = res.data.currentPage
-							that.comments = that.allCommentList.concat(res.data.data)
-						} else {
-							that.picCommentList = that.picCommentList.concat(res.data.data)
-							that.picPage = res.data.currentPage
-							that.comments = that.picCommentList.concat(res.data.data)
-						}
+						let data = res.data.data || res.data.records || [];
+						that.allCommentList = that.allCommentList.concat(data);
+						that.comments = that.allCommentList;
 					}
 				});
-			},
-			switchTab: function() {
-				this.showType = this.showType == 1 ? 0 : 1
-
-				this.getCommentList();
-			},
+			}
 		},
 		onLoad: function(options) {
-			// 页面初始化 options为页面跳转所带来的参数
-			this.typeId = options.typeId
-			this.valueId = options.valueId
+			this.typeId = options.typeId;
+			this.valueId = options.valueId;
 			this.getCommentCount();
 			this.getCommentList();
 		},
 		onReachBottom: function() {
-			if (this.showType == 0) {
-
-				if (this.allCount / this.size < this.allPage) {
-					return false;
-				}
-				this.setData({
-					'allPage': this.allPage + 1
-				});
-			} else {
-				if (this.hasPicCount / this.size < this.picPage) {
-					return false;
-				}
-
-				this.picPage = this.picPage + 1
-			}
+			if (this.allCount / this.size < this.allPage) return;
+			this.allPage++;
 			this.getCommentList();
 		}
 	}
 </script>
 
 <style lang="scss">
-	.comments {
+	$green: #5B8C5A;
+	$green-bg: #F6F7F4;
+
+	page {
+		background: $green-bg;
+	}
+
+	.container {
+		padding: 24rpx;
+	}
+
+	.comment-list {
 		width: 100%;
-		height: auto;
-		padding-left: 30rpx;
+	}
+
+	.comment-item {
 		background: #fff;
-		margin: 20rpx 0;
+		border-radius: 16rpx;
+		padding: 28rpx;
+		margin-bottom: 16rpx;
+		box-shadow: 0 2rpx 8rpx rgba(91,140,90,0.06);
 	}
 
-	.comments .b {
-		height: auto;
-		width: 720rpx;
+	.comment-header {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		margin-bottom: 18rpx;
 	}
 
-	.comments .b.no-h {
-		margin-top: 0;
+	.comment-user {
+		display: flex;
+		align-items: center;
 	}
 
-	.comments .item {
-		height: auto;
-		width: 720rpx;
-		overflow: hidden;
-		border-bottom: 1px solid #d9d9d9;
-		padding-bottom: 25rpx;
-	}
-
-	.comments .info {
-		height: 127rpx;
-		width: 100%;
-		padding: 33rpx 0 27rpx 0;
-	}
-
-	.comments .user {
-		float: left;
-		width: auto;
-		height: 67rpx;
-		line-height: 67rpx;
-		font-size: 0;
-	}
-
-	.comments .user image {
-		float: left;
-		width: 67rpx;
-		height: 67rpx;
-		margin-right: 17rpx;
+	.user-avatar {
+		width: 60rpx;
+		height: 60rpx;
 		border-radius: 50%;
+		margin-right: 14rpx;
 	}
 
-	.comments .user text {
-		display: inline-block;
-		width: auto;
-		height: 66rpx;
-		overflow: hidden;
-		font-size: 29rpx;
-		line-height: 66rpx;
+	.user-name {
+		font-size: 26rpx;
+		color: #333;
 	}
 
-	.comments .time {
-		display: block;
-		float: right;
-		width: auto;
-		height: 67rpx;
-		line-height: 67rpx;
-		color: #7f7f7f;
-		font-size: 25rpx;
-		margin-right: 30rpx;
+	.comment-time {
+		font-size: 22rpx;
+		color: #999;
 	}
 
-	.comments .comment {
-		width: 720rpx;
-		padding-right: 30rpx;
-		line-height: 45.8rpx;
-		font-size: 29rpx;
+	.comment-content {
+		font-size: 28rpx;
+		color: #333;
+		line-height: 1.7;
 		margin-bottom: 16rpx;
 	}
 
-	.comments .imgs {
-		width: 720rpx;
-		height: 150rpx;
-		margin-bottom: 25rpx;
+	.comment-imgs {
+		display: flex;
+		flex-wrap: wrap;
 	}
 
-	.comments .imgs .img {
-		height: 150rpx;
+	.comment-pic {
 		width: 150rpx;
-		margin-right: 28rpx;
+		height: 150rpx;
+		border-radius: 8rpx;
+		margin-right: 12rpx;
+		margin-bottom: 12rpx;
 	}
 
-	.comments .customer-service {
-		width: 690rpx;
-		height: auto;
-		overflow: hidden;
-		margin-top: 23rpx;
-		background: rgba(0, 0, 0, .03);
-		padding: 21rpx;
+	.empty-view {
+		padding: 100rpx 0;
+		text-align: center;
 	}
 
-
-	.comments .customer-service .u {
-		font-size: 24rpx;
-		color: #333;
-		line-height: 37.5rpx;
-	}
-
-	.comments .customer-service .c {
-		font-size: 24rpx;
+	.empty-text {
+		font-size: 28rpx;
 		color: #999;
-		line-height: 37.5rpx;
 	}
 </style>

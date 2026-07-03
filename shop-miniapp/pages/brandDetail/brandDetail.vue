@@ -1,29 +1,24 @@
 <template>
 	<view class="container">
-		<view class="brand-info">
-			<view class="name">
-				<image class="img" :src="brand.appListPicUrl" background-size="cover"></image>
-				<view class="info-box">
-					<view class="info">
-						<text class="txt">{{brand.name||''}}</text>
-						<text class="line"></text>
-					</view>
-				</view>
-			</view>
-			<view class="desc">
-				{{brand.simpleDesc}}
+		<view class="brand-header">
+			<image class="brand-banner" :src="brand.appListPicUrl || brand.picUrl" mode="aspectFill"></image>
+			<view class="brand-overlay"></view>
+			<view class="brand-title">
+				<text class="brand-name">{{brand.name||''}}</text>
+				<view class="brand-line"></view>
 			</view>
 		</view>
-
-		<view class="cate-item">
-			<view class="b">
-				<block v-for="(iitem, iindex) in goodsList" :key="iindex">
-					<navigator :class="'item ' + (iindex % 2 == 0 ? 'item-b' : '')" :url="'../goods/goods?id='+iitem.id">
-						<image class="img" :src="iitem.listPicUrl" background-size="cover"></image>
-						<text class="name">{{iitem.name||''}}</text>
-						<text class="price">￥{{iitem.retailPrice||0}}</text>
-					</navigator>
-				</block>
+		<view class="brand-desc" v-if="brand.simpleDesc">
+			<text>{{brand.simpleDesc}}</text>
+		</view>
+		<view class="goods-section">
+			<view class="section-title">品牌商品</view>
+			<view class="goods-grid">
+				<navigator class="goods-item" v-for="(item, index) in goodsList" :key="index" :url="'../goods/goods?id='+item.id">
+					<image class="goods-img" :src="item.listPicUrl" mode="aspectFill"></image>
+					<text class="goods-name">{{item.name||''}}</text>
+					<text class="goods-price">¥{{item.retailPrice||0}}</text>
+				</navigator>
 			</view>
 		</view>
 	</view>
@@ -45,149 +40,149 @@
 		methods: {
 			getBrand: function() {
 				let that = this;
-				util.request(api.BrandDetail, {
-					id: that.id
-				}).then(function(res) {
+				util.request(api.BrandDetail, { id: that.id }).then(function(res) {
 					if (res.code === 0) {
-						that.brand = res.data.brand
-
+						that.brand = res.data.brand;
 						that.getGoodsList();
 					}
 				});
 			},
 			getGoodsList() {
-				var that = this;
-
+				let that = this;
 				util.request(api.GoodsList, {
 					brandId: that.id,
 					page: that.page,
 					size: that.size
 				}).then(function(res) {
 					if (res.code === 0) {
-						that.goodsList = res.data.goodsList.records;
+						that.goodsList = res.data.goodsList ? res.data.goodsList.records : [];
 					}
 				});
 			}
 		},
 		onLoad: function(options) {
-			// 页面初始化 options为页面跳转所带来的参数
-			var that = this;
-			that.id = parseInt(options.id);
+			this.id = parseInt(options.id);
 			this.getBrand();
 		}
 	}
 </script>
 
 <style lang="scss">
+	$green: #5B8C5A;
+	$green-light: #7BAF7A;
+	$green-bg: #F6F7F4;
+	$red: #CF4A3E;
+
 	page {
-		background: #f4f4f4;
+		background: $green-bg;
 	}
 
-	.brand-info .name {
-		width: 100%;
-		height: 290rpx;
+	.container {
+		padding-bottom: 30rpx;
+	}
+
+	.brand-header {
 		position: relative;
+		width: 100%;
+		height: 320rpx;
 	}
 
-	.brand-info .img {
+	.brand-banner {
+		width: 100%;
+		height: 100%;
+	}
+
+	.brand-overlay {
 		position: absolute;
 		top: 0;
 		left: 0;
 		width: 100%;
-		height: 290rpx;
+		height: 100%;
+		background: rgba(0,0,0,0.3);
 	}
 
-	.brand-info .info-box {
+	.brand-title {
 		position: absolute;
-		top: 0;
-		left: 0;
-		width: 100%;
-		height: 290rpx;
+		top: 50%;
+		left: 50%;
+		transform: translate(-50%, -50%);
 		text-align: center;
-		display: flex;
-		justify-content: center;
-		align-items: center;
 	}
 
-	.brand-info .info {
+	.brand-name {
 		display: block;
-	}
-
-	.brand-info .txt {
-		display: block;
-		height: 37.5rpx;
-		font-size: 37.5rpx;
+		font-size: 40rpx;
+		font-weight: bold;
 		color: #fff;
+		letter-spacing: 4rpx;
 	}
 
-	.brand-info .line {
-		margin: 0 auto;
-		margin-top: 16rpx;
-		display: block;
-		height: 2rpx;
-		width: 145rpx;
-		background: #fff;
+	.brand-line {
+		width: 120rpx;
+		height: 3rpx;
+		background: rgba(255,255,255,0.7);
+		margin: 20rpx auto 0;
 	}
 
-	.brand-info .desc {
+	.brand-desc {
 		background: #fff;
-		width: 100%;
-		height: auto;
-		overflow: hidden;
-		padding: 41.5rpx 31.25rpx;
-		font-size: 30rpx;
+		padding: 30rpx;
+		font-size: 26rpx;
 		color: #666;
-		line-height: 41.5rpx;
+		line-height: 1.8;
 		text-align: center;
 	}
 
-	.cate-item .b {
-		width: 750rpx;
-		height: auto;
-		overflow: hidden;
-		border-top: 1rpx solid #f4f4f4;
-		margin-top: 20rpx;
+	.goods-section {
+		padding: 24rpx;
 	}
 
-	.cate-item .b .item {
-		float: left;
-		background: #fff;
-		width: 375rpx;
-		padding-bottom: 33.333rpx;
-		border-bottom: 1rpx solid #f4f4f4;
-		height: auto;
-		overflow: hidden;
-		text-align: center;
-	}
-
-	.cate-item .b .item-b {
-		border-right: 1rpx solid #f4f4f4;
-	}
-
-	.cate-item .item .img {
-		margin-top: 10rpx;
-		width: 302rpx;
-		height: 302rpx;
-	}
-
-	.cate-item .item .name {
-		display: block;
-		width: 365.625rpx;
-		height: 35rpx;
-		padding: 0 20rpx;
-		overflow: hidden;
-		margin: 11.5rpx 0 22rpx 0;
-		text-align: center;
+	.section-title {
 		font-size: 30rpx;
+		font-weight: bold;
 		color: #333;
+		margin-bottom: 20rpx;
+		padding-left: 8rpx;
 	}
 
-	.cate-item .item .price {
+	.goods-grid {
+		overflow: hidden;
+	}
+
+	.goods-item {
+		float: left;
+		width: 335rpx;
+		background: #fff;
+		border-radius: 16rpx;
+		overflow: hidden;
+		margin-bottom: 20rpx;
+		box-shadow: 0 2rpx 10rpx rgba(91,140,90,0.08);
+
+		&:nth-child(odd) {
+			margin-right: 16rpx;
+		}
+	}
+
+	.goods-img {
+		width: 100%;
+		height: 335rpx;
+	}
+
+	.goods-name {
 		display: block;
-		width: 365.625rpx;
-		height: 30rpx;
-		text-align: center;
-		font-size: 30rpx;
-		color: #b4282d;
+		padding: 16rpx 20rpx 8rpx;
+		font-size: 26rpx;
+		color: #333;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	.goods-price {
+		display: block;
+		padding: 0 20rpx 20rpx;
+		font-size: 28rpx;
+		font-weight: bold;
+		color: $red;
 	}
 </style>

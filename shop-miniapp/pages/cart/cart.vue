@@ -1,668 +1,708 @@
 <template>
-	<view class="container">
-		<view class="service-policy">
-			<view class="item">30天无忧退货</view>
-			<view class="item">48小时快速退款</view>
-			<view class="item">满88元免邮费</view>
-		</view>
-		<view class="no-cart" v-if="cartGoods.length <= 0">
-			<view class="c">
-				<view class="title-box">
-					购物车空空如也～
-				</view>
-				<view class="to-index-btn" @tap="toIndexPage">
-					去逛逛
-				</view>
+	<view class="page">
+		<!-- 顶部服务保障 -->
+		<view class="guarantee-bar" v-if="cartGoods.length > 0">
+			<view class="guarantee-item">
+				<text class="guarantee-dot">✓</text>
+				<text>正品保障</text>
+			</view>
+			<view class="guarantee-item">
+				<text class="guarantee-dot">✓</text>
+				<text>极速退款</text>
+			</view>
+			<view class="guarantee-item">
+				<text class="guarantee-dot">✓</text>
+				<text>满299包邮</text>
 			</view>
 		</view>
-		<view class="cart-view" v-if="cartGoods.length > 0">
-			<view class="list">
-				<view class="group-item">
-					<view class="goods">
-						<view :class="'item ' + (isEditCart ? 'edit' : '')" v-for="(item, index) in cartGoods" :key="item.id">
-							<view :class="'checkbox ' + (item.checked ? 'checked' : '')" @tap="checkedItem" :data-item-index="index"></view>
-							<view class="cart-goods">
-								<image class="img" :src="item.listPicUrl"></image>
-								<view class="info">
-									<view class="t">
-										<text class="name">{{item.goodsName}}</text>
-										<text class="num">x{{item.number}}</text>
-									</view>
-									<view class="attr">{{ isEditCart ? '已选择:' : ''}}{{item.goodsSpecifitionNameValue||''}}</view>
-									<view class="b">
-										<text class="price">￥{{item.retailPrice}}</text>
-										<view class="selnum">
-											<view class="cut" @tap="cutNumber" :data-item-index="index">-</view>
-											<input :value="item.number" class="number" :disabled="true" type="number" />
-											<view class="add" @tap="addNumber" :data-item-index="index">+</view>
-										</view>
-									</view>
-								</view>
+
+		<!-- 包邮进度条 -->
+		<view class="shipping-bar" v-if="cartGoods.length > 0">
+			<view class="shipping-info" v-if="freeShippingDiff > 0">
+				<text class="shipping-text">再买</text>
+				<text class="shipping-amount">¥{{freeShippingDiff}}</text>
+				<text class="shipping-text">即可享受包邮~</text>
+			</view>
+			<view class="shipping-info" v-else>
+				<text class="shipping-done">🎉 已满足包邮条件</text>
+			</view>
+			<view class="shipping-progress">
+				<view class="shipping-progress-fill" :style="{width: shippingPercent + '%'}"></view>
+			</view>
+		</view>
+
+		<!-- 空购物车 -->
+		<view class="empty-cart" v-if="cartGoods.length <= 0">
+			<view class="empty-icon">🛒</view>
+			<text class="empty-title">购物车是空的</text>
+			<text class="empty-desc">去逛逛，发现更多好物吧</text>
+			<view class="empty-btn" @tap="toIndexPage">去逛逛</view>
+		</view>
+
+		<!-- 购物车列表 -->
+		<view class="cart-list" v-if="cartGoods.length > 0">
+			<view
+				class="cart-item"
+				v-for="(item, index) in cartGoods"
+				:key="item.id"
+			>
+				<view class="checkbox" :class="{checked: item.checked}" @tap="checkedItem(index)">
+					<text class="check-icon" v-if="item.checked">✓</text>
+				</view>
+
+				<navigator :url="'/pages/goods/goods?id=' + item.goodsId" class="item-img-wrap">
+					<image class="item-img" :src="item.listPicUrl" mode="aspectFill"></image>
+				</navigator>
+
+				<view class="item-info">
+					<text class="item-name">{{item.goodsName}}</text>
+					<text class="item-spec" v-if="item.goodsSpecifitionNameValue">{{item.goodsSpecifitionNameValue}}</text>
+					<view class="item-bottom">
+						<text class="item-price">¥{{item.retailPrice}}</text>
+						<view class="stepper">
+							<view class="stepper-btn minus" :class="{disabled: item.number <= 1}" @tap="cutNumber(index)">
+								<text>−</text>
+							</view>
+							<text class="stepper-num">{{item.number}}</text>
+							<view class="stepper-btn plus" @tap="addNumber(index)">
+								<text>+</text>
 							</view>
 						</view>
 					</view>
 				</view>
 			</view>
-			<view class="cart-bottom">
-				<view :class="'checkbox ' + (checkedAllStatus ? 'checked' : '')" @tap="checkedAll">全选({{cartTotal.checkedGoodsCount}})</view>
-				<view class="total">{{!isEditCart ? '￥'+cartTotal.checkedGoodsAmount : ''}}</view>
-				<view class="delete" @tap="editCart">{{!isEditCart ? '编辑' : '完成'}}</view>
-				<view class="checkout" @tap="deleteCart" v-if="isEditCart">删除所选</view>
-				<view class="checkout" @tap="checkoutOrder" v-if="!isEditCart">下单</view>
+		</view>
+
+		<!-- 凑单助手 - 仅未满包邮时显示 -->
+		<view class="addon-section" v-if="freeShippingDiff > 0 && recommendList.length > 0">
+			<view class="addon-header">
+				<text class="addon-title">再凑¥{{freeShippingDiff}}即可包邮</text>
+				<text class="addon-hint">左滑查看更多</text>
+			</view>
+			<scroll-view class="addon-scroll" scroll-x>
+				<view class="addon-list">
+					<navigator class="addon-card" v-for="(item, index) in recommendList"
+					 :key="index" :url="'/pages/goods/goods?id='+item.id">
+						<image class="addon-img" :src="item.listPicUrl" mode="aspectFill"></image>
+						<text class="addon-name">{{item.name}}</text>
+						<text class="addon-price">¥{{item.retailPrice}}</text>
+					</navigator>
+				</view>
+			</scroll-view>
+		</view>
+
+		<!-- 底部结算栏 -->
+		<view class="bottom-bar" v-if="cartGoods.length > 0">
+			<view class="bottom-left">
+				<view class="checkbox bottom-check" :class="{checked: checkedAllStatus}" @tap="checkedAll">
+					<text class="check-icon" v-if="checkedAllStatus">✓</text>
+				</view>
+				<text class="bottom-all-text">全选</text>
+			</view>
+
+			<view class="bottom-center">
+				<text class="total-label">合计:</text>
+				<text class="total-price">¥{{cartTotal.checkedGoodsAmount}}</text>
+			</view>
+
+			<view class="bottom-right">
+				<view class="edit-btn" @tap="editCart" v-if="!isEditCart">
+					<text>编辑</text>
+				</view>
+				<view class="edit-btn" @tap="editCart" v-else>
+					<text>完成</text>
+				</view>
+
+				<view class="delete-btn" @tap="deleteCart" v-if="isEditCart">
+					<text>删除</text>
+				</view>
+				<view class="checkout-btn" @tap="checkoutOrder" v-if="!isEditCart">
+					<text>结算({{cartTotal.checkedGoodsCount}})</text>
+				</view>
 			</view>
 		</view>
 	</view>
 </template>
 
 <script>
-	const util = require("@/utils/util.js")
-	const api = require('@/utils/api.js');
-	export default {
-		data() {
-			return {
-				cartGoods: [],
-				cartTotal: {
-					"goodsCount": 0,
-					"goodsAmount": 0.00,
-					"checkedGoodsCount": 0,
-					"checkedGoodsAmount": 0.00
-				},
-				isEditCart: false,
-				checkedAllStatus: true,
-				editCartList: []
+const util = require('@/utils/util.js');
+const api = require('@/utils/api.js');
+
+export default {
+	data() {
+		return {
+			cartGoods: [],
+			cartTotal: {
+				goodsCount: 0,
+				goodsAmount: 0.00,
+				checkedGoodsCount: 0,
+				checkedGoodsAmount: 0.00
+			},
+			isEditCart: false,
+			checkedAllStatus: true,
+			recommendList: []
+		}
+	},
+	computed: {
+		freeShippingDiff() {
+			const threshold = 299;
+			const amount = parseFloat(this.cartTotal.checkedGoodsAmount) || 0;
+			const diff = threshold - amount;
+			return diff > 0 ? diff.toFixed(2) : 0;
+		},
+		shippingPercent() {
+			const threshold = 299;
+			const amount = parseFloat(this.cartTotal.checkedGoodsAmount) || 0;
+			return Math.min(100, (amount / threshold) * 100);
+		}
+	},
+	methods: {
+		getCartList() {
+			util.request(api.CartList).then(res => {
+				if (res.code === 0) {
+					this.cartGoods = res.data.cartList;
+					this.cartTotal = res.data.cartTotal;
+				}
+				this.checkedAllStatus = this.isCheckedAll();
+			});
+		},
+		getRecommend() {
+			util.request(api.GoodsList, { page: 1, size: 6 }).then(res => {
+				if (res.code === 0 && res.data.goodsList) {
+					this.recommendList = res.data.goodsList.records || [];
+				}
+			});
+		},
+		isCheckedAll() {
+			return this.cartGoods.every(item => item.checked === true);
+		},
+		getCheckedGoodsCount() {
+			let count = 0;
+			this.cartGoods.forEach(v => {
+				if (v.checked) count += v.number;
+			});
+			return count;
+		},
+		checkedItem(index) {
+			if (!this.isEditCart) {
+				util.request(api.CartChecked, {
+					productIds: this.cartGoods[index].productId,
+					isChecked: this.cartGoods[index].checked ? 0 : 1
+				}, 'POST', 'application/json').then(res => {
+					if (res.code === 0) {
+						this.cartGoods = res.data.cartList;
+						this.cartTotal = res.data.cartTotal;
+					}
+					this.checkedAllStatus = this.isCheckedAll();
+				});
+			} else {
+				this.cartGoods[index].checked = !this.cartGoods[index].checked;
+				this.cartGoods = [...this.cartGoods];
+				this.cartTotal.checkedGoodsCount = this.getCheckedGoodsCount();
+				this.checkedAllStatus = this.isCheckedAll();
 			}
 		},
-		methods: {
-			getCartList: function() {
-				let that = this;
-				util.request(api.CartList).then(function(res) {
+		checkedAll() {
+			if (!this.isEditCart) {
+				const productIds = this.cartGoods.map(v => v.productId);
+				util.request(api.CartChecked, {
+					productIds: productIds.join(','),
+					isChecked: this.isCheckedAll() ? 0 : 1
+				}, 'POST', 'application/json').then(res => {
 					if (res.code === 0) {
-						that.cartGoods = res.data.cartList
-						that.cartTotal = res.data.cartTotal
+						this.cartGoods = res.data.cartList;
+						this.cartTotal = res.data.cartTotal;
 					}
-
-					that.checkedAllStatus = that.isCheckedAll()
+					this.checkedAllStatus = this.isCheckedAll();
 				});
-			},
-			isCheckedAll: function() {
-				//判断购物车商品已全选
-				return this.cartGoods.every(function(element, index, array) {
-					if (element.checked == true) {
-						return true;
-					} else {
-						return false;
-					}
-				});
-			},
-			checkedItem: function(event) {
-				let itemIndex = event.target.dataset.itemIndex;
-				let that = this;
-
-				if (!that.isEditCart) {
-					util.request(api.CartChecked, {
-						productIds: that.cartGoods[itemIndex].productId,
-						isChecked: that.cartGoods[itemIndex].checked ? 0 : 1
-					}, "POST", "application/json").then(function(res) {
-						if (res.code === 0) {
-							that.cartGoods = res.data.cartList
-							that.cartTotal = res.data.cartTotal
-						}
-
-						that.checkedAllStatus = that.isCheckedAll()
-					});
-				} else {
-					//编辑状态
-					let tmpCartData = that.cartGoods.map(function(element, index, array) {
-						if (index == itemIndex) {
-							element.checked = !element.checked;
-						}
-
-						return element;
-					});
-
-					that.cartGoods = tmpCartData
-					that.cartTotal.checkedGoodsCount = that.getCheckedGoodsCount()
-					that.checkedAllStatus = that.isCheckedAll()
-				}
-			},
-			getCheckedGoodsCount: function() {
-				let checkedGoodsCount = 0;
-				this.cartGoods.forEach(function(v) {
-					if (v.checked === true) {
-						checkedGoodsCount += v.number;
-					}
-				});
-				return checkedGoodsCount;
-			},
-			checkedAll: function() {
-				let that = this;
-
-				if (!that.isEditCart) {
-					var productIds = that.cartGoods.map(function(v) {
-						return v.productId;
-					});
-					util.request(api.CartChecked, {
-						productIds: productIds.join(','),
-						isChecked: that.isCheckedAll() ? 0 : 1
-					}, "POST", "application/json").then(function(res) {
-						if (res.code === 0) {
-							that.cartGoods = res.data.cartList
-							that.cartTotal = res.data.cartTotal
-						}
-
-						that.checkedAllStatus = that.isCheckedAll()
-					});
-				} else {
-					//编辑状态
-					let checkedAllStatus = that.isCheckedAll();
-					let tmpCartData = that.cartGoods.map(function(v) {
-						v.checked = !checkedAllStatus;
-						return v;
-					});
-					that.cartGoods = tmpCartData
-					that.cartTotal.checkedGoodsCount = that.getCheckedGoodsCount()
-					that.checkedAllStatus = that.isCheckedAll()
-				}
-
-			},
-			editCart: function() {
-				var that = this;
-				if (that.isEditCart) {
-					that.getCartList();
-					that.isEditCart = !that.isEditCart
-				} else {
-					//编辑状态
-					let tmpCartList = that.cartGoods.map(function(v) {
-						v.checked = false;
-						return v;
-					});
-					that.editCartList = that.cartGoods
-					that.isEditCart = !that.isEditCart
-					that.cartGoods = tmpCartList
-					that.cartTotal.checkedGoodsCount = that.getCheckedGoodsCount()
-					that.checkedAllStatus = that.isCheckedAll()
-				}
-
-			},
-			toIndexPage: function() {
-				uni.switchTab({
-					url: "/pages/index/index"
-				});
-			},
-			updateCart: function(productId, goodsId, number, id) {
-				let that = this;
-
-				util.request(api.CartUpdate, {
-					productId: productId,
-					goodsId: goodsId,
-					number: number,
-					id: id
-				}).then(function(res) {
-					that.checkedAllStatus = that.isCheckedAll()
-				});
-
-			},
-			cutNumber: function(event) {
-
-				let itemIndex = event.target.dataset.itemIndex;
-				let cartItem = this.cartGoods[itemIndex];
-				let number = (cartItem.number - 1 > 1) ? cartItem.number - 1 : 1;
-				cartItem.number = number;
-				this.cartGoods = this.cartGoods
-				this.updateCart(cartItem.productId, cartItem.goodsId, number, cartItem.id);
-			},
-			addNumber: function(event) {
-				let itemIndex = event.target.dataset.itemIndex;
-				let cartItem = this.cartGoods[itemIndex];
-				let number = cartItem.number + 1;
-				cartItem.number = number;
-				this.cartGoods = this.cartGoods
-				this.updateCart(cartItem.productId, cartItem.goodsId, number, cartItem.id);
-
-			},
-			checkoutOrder: function() {
-				//获取已选择的商品
-				let that = this;
-				var checkedGoods = that.cartGoods.filter(function(element, index, array) {
-					if (element.checked == true) {
-						return true;
-					} else {
-						return false;
-					}
-				});
-
-				if (checkedGoods.length <= 0) {
-					return false;
-				}
-				uni.navigateTo({
-					url: '../shopping/checkout/checkout'
-				})
-			},
-			deleteCart: function() {
-				//获取已选择的商品
-				let that = this;
-
-				let productIds = that.cartGoods.filter(function(element, index, array) {
-					if (element.checked == true) {
-						return true;
-					} else {
-						return false;
-					}
-				});
-
-				if (productIds.length <= 0) {
-					return false;
-				}
-
-				productIds = productIds.map(function(element, index, array) {
-					if (element.checked == true) {
-						return element.productId;
-					}
-				});
-
-
-				util.request(api.CartDelete, {
-					productIds: productIds.join(',')
-				}, 'POST', 'application/json').then(function(res) {
-					if (res.code === 0) {
-						let cartList = res.data.cartList.map(v => {
-							v.checked = false;
-							return v;
-						});
-
-						that.cartGoods = cartList
-						that.cartTotal = res.data.cartTotal
-					}
-
-					that.checkedAllStatus = that.isCheckedAll()
-				});
+			} else {
+				const allChecked = this.isCheckedAll();
+				this.cartGoods = this.cartGoods.map(v => ({ ...v, checked: !allChecked }));
+				this.cartTotal.checkedGoodsCount = this.getCheckedGoodsCount();
+				this.checkedAllStatus = this.isCheckedAll();
 			}
 		},
-		onShow: function() {
-			// 页面显示
-			this.getCartList();
+		editCart() {
+			if (this.isEditCart) {
+				this.getCartList();
+			} else {
+				this.cartGoods = this.cartGoods.map(v => ({ ...v, checked: false }));
+				this.cartTotal.checkedGoodsCount = 0;
+				this.checkedAllStatus = false;
+			}
+			this.isEditCart = !this.isEditCart;
 		},
-		onLoad: function() {}
+		cutNumber(index) {
+			const item = this.cartGoods[index];
+			if (item.number <= 1) return;
+			item.number -= 1;
+			this.cartGoods = [...this.cartGoods];
+			this.updateCart(item.productId, item.goodsId, item.number, item.id);
+		},
+		addNumber(index) {
+			const item = this.cartGoods[index];
+			item.number += 1;
+			this.cartGoods = [...this.cartGoods];
+			this.updateCart(item.productId, item.goodsId, item.number, item.id);
+		},
+		updateCart(productId, goodsId, number, id) {
+			util.request(api.CartUpdate, { productId, goodsId, number, id }).then(res => {
+				this.checkedAllStatus = this.isCheckedAll();
+			});
+		},
+		deleteCart() {
+			const productIds = this.cartGoods
+				.filter(v => v.checked)
+				.map(v => v.productId);
+			if (productIds.length <= 0) return;
+
+			util.request(api.CartDelete, {
+				productIds: productIds.join(',')
+			}, 'POST', 'application/json').then(res => {
+				if (res.code === 0) {
+					this.cartGoods = res.data.cartList.map(v => ({ ...v, checked: false }));
+					this.cartTotal = res.data.cartTotal;
+				}
+				this.checkedAllStatus = this.isCheckedAll();
+			});
+		},
+		checkoutOrder() {
+			const checked = this.cartGoods.filter(v => v.checked);
+			if (checked.length <= 0) {
+				uni.showToast({ title: '请选择商品', icon: 'none' });
+				return;
+			}
+			uni.navigateTo({ url: '/pages/shopping/checkout/checkout' });
+		},
+		toIndexPage() {
+			uni.switchTab({ url: '/pages/index/index' });
+		}
+	},
+	onShow() {
+		this.isEditCart = false;
+		this.getCartList();
+		this.getRecommend();
 	}
+}
 </script>
 
 <style lang="scss">
-	page {
-		height: 100%;
-		min-height: 100%;
-		background: #f4f4f4;
+$green: #5B8C5A;
+$green-light: #E8F2E7;
+$green-bg: #F6F7F4;
+$green-dark: #3D6B3C;
+$text-primary: #2D3A2E;
+$text-secondary: #5C6B5D;
+$text-hint: #9CA89D;
+$red: #CF4A3E;
+
+page {
+	background: $green-bg;
+	height: 100%;
+}
+
+.page {
+	min-height: 100%;
+	padding-bottom: 130rpx;
+}
+
+/* 服务保障 */
+.guarantee-bar {
+	display: flex;
+	justify-content: center;
+	padding: 18rpx 24rpx;
+	background: #fff;
+}
+
+.guarantee-item {
+	display: flex;
+	align-items: center;
+	font-size: 22rpx;
+	color: $text-secondary;
+	margin: 0 20rpx;
+}
+
+.guarantee-dot {
+	color: $green;
+	font-size: 22rpx;
+	margin-right: 6rpx;
+	font-weight: 700;
+}
+
+/* 包邮进度条 */
+.shipping-bar {
+	margin: 16rpx 24rpx 0;
+	background: #fff;
+	border-radius: 14rpx;
+	padding: 20rpx 24rpx;
+	box-shadow: 0 2rpx 8rpx rgba(91,140,90,0.05);
+}
+
+.shipping-info {
+	margin-bottom: 12rpx;
+}
+
+.shipping-text {
+	font-size: 24rpx;
+	color: $text-secondary;
+}
+
+.shipping-amount {
+	font-size: 26rpx;
+	color: $red;
+	font-weight: 700;
+	margin: 0 4rpx;
+}
+
+.shipping-done {
+	font-size: 24rpx;
+	color: $green;
+	font-weight: 500;
+}
+
+.shipping-progress {
+	height: 8rpx;
+	background: #eee;
+	border-radius: 4rpx;
+	overflow: hidden;
+}
+
+.shipping-progress-fill {
+	height: 100%;
+	background: linear-gradient(90deg, $green-light, $green);
+	border-radius: 4rpx;
+	transition: width 0.3s;
+}
+
+/* 空购物车 */
+.empty-cart {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	padding-top: 240rpx;
+}
+
+.empty-icon {
+	font-size: 120rpx;
+	opacity: 0.6;
+}
+
+.empty-title {
+	font-size: 32rpx;
+	color: $text-primary;
+	margin-top: 24rpx;
+	font-weight: 600;
+}
+
+.empty-desc {
+	font-size: 26rpx;
+	color: $text-hint;
+	margin-top: 12rpx;
+}
+
+.empty-btn {
+	margin-top: 48rpx;
+	width: 240rpx;
+	height: 80rpx;
+	line-height: 80rpx;
+	text-align: center;
+	background: $green;
+	color: #fff;
+	border-radius: 40rpx;
+	font-size: 28rpx;
+	font-weight: 600;
+}
+
+/* 购物车列表 */
+.cart-list {
+	padding: 16rpx 24rpx 0;
+}
+
+.cart-item {
+	display: flex;
+	align-items: center;
+	background: #fff;
+	border-radius: 20rpx;
+	padding: 24rpx;
+	margin-bottom: 16rpx;
+	box-shadow: 0 2rpx 12rpx rgba(91, 140, 90, 0.05);
+}
+
+/* 选择框 */
+.checkbox {
+	width: 44rpx;
+	height: 44rpx;
+	border-radius: 50%;
+	border: 3rpx solid #ddd;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+
+	&.checked {
+		background: $green;
+		border-color: $green;
+	}
+}
+
+.check-icon {
+	color: #fff;
+	font-size: 24rpx;
+	font-weight: 700;
+}
+
+/* 商品图 */
+.item-img-wrap {
+	margin: 0 20rpx;
+	flex-shrink: 0;
+}
+
+.item-img {
+	width: 160rpx;
+	height: 160rpx;
+	border-radius: 16rpx;
+	background: $green-bg;
+}
+
+/* 商品信息 */
+.item-info {
+	flex: 1;
+	overflow: hidden;
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
+	min-height: 160rpx;
+}
+
+.item-name {
+	font-size: 26rpx;
+	color: $text-primary;
+	display: -webkit-box;
+	-webkit-box-orient: vertical;
+	-webkit-line-clamp: 2;
+	overflow: hidden;
+	line-height: 1.4;
+}
+
+.item-spec {
+	font-size: 22rpx;
+	color: $text-hint;
+	background: $green-bg;
+	padding: 4rpx 12rpx;
+	border-radius: 6rpx;
+	margin-top: 8rpx;
+	align-self: flex-start;
+}
+
+.item-bottom {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	margin-top: 12rpx;
+}
+
+.item-price {
+	font-size: 30rpx;
+	color: $red;
+	font-weight: 700;
+}
+
+/* 数量步进器 */
+.stepper {
+	display: flex;
+	align-items: center;
+	height: 52rpx;
+	border-radius: 26rpx;
+	background: $green-bg;
+	overflow: hidden;
+}
+
+.stepper-btn {
+	width: 52rpx;
+	height: 52rpx;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 28rpx;
+	color: $text-primary;
+
+	&.disabled {
+		color: $text-hint;
+		opacity: 0.5;
 	}
 
-	.container {
-		background: #f4f4f4;
-		width: 100%;
-		height: auto;
-		min-height: 100%;
-		overflow: hidden;
+	&.plus {
+		color: $green;
+		font-weight: 700;
 	}
+}
 
-	.service-policy {
-		width: 750rpx;
-		height: 73rpx;
-		background: #f4f4f4;
-		padding: 0 31.25rpx;
-		display: flex;
-		flex-flow: row nowrap;
-		align-items: center;
-		justify-content: space-between;
-	}
+.stepper-num {
+	min-width: 56rpx;
+	text-align: center;
+	font-size: 26rpx;
+	color: $text-primary;
+	font-weight: 600;
+}
 
-	.service-policy .item {
-		background: url(http://nos.netease.com/mailpub/hxm/yanxuan-wap/p/20150730/style/img/icon-normal/servicePolicyRed-518d32d74b.png) 0 center no-repeat;
-		background-size: 10rpx;
-		padding-left: 15rpx;
-		display: flex;
-		align-items: center;
-		font-size: 25rpx;
-		color: #666;
-	}
+/* 凑单助手 */
+.addon-section {
+	padding: 24rpx 0 0;
+	margin-top: 8rpx;
+}
 
-	.no-cart {
-		width: 100%;
-		height: auto;
-		margin: 0 auto;
-	}
+.addon-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 0 24rpx 16rpx;
+}
 
-	.no-cart .c {
-		width: 100%;
-		height: auto;
-		margin-top: 200rpx;
-	}
+.addon-title {
+	font-size: 26rpx;
+	color: $green;
+	font-weight: 600;
+}
 
-	.no-cart .c image {
-		margin: 0 auto;
-		display: block;
-		text-align: center;
-		width: 258rpx;
-		height: 258rpx;
-	}
+.addon-hint {
+	font-size: 22rpx;
+	color: $text-hint;
+}
 
-	.no-cart .c text {
-		margin: 0 auto;
-		display: block;
-		width: 258rpx;
-		height: 29rpx;
-		line-height: 29rpx;
-		text-align: center;
-		font-size: 29rpx;
-		color: #999;
-	}
+.addon-scroll {
+	white-space: nowrap;
+	padding-left: 24rpx;
+}
 
-	.title-box {
-		width: 100%;
-		padding-top: 330rpx;
-		text-align: center;
-		font-size: 28rpx;
-		color: #999;
-		background: url(https://platform-wxmall.oss-cn-beijing.aliyuncs.com/upload/20180727/15015039793f4e.png) no-repeat center 205rpx;
-		background-size: 100rpx auto;
-		margin-bottom: 50rpx;
-	}
+.addon-list {
+	display: inline-flex;
+}
 
-	.to-index-btn {
-		color: #fff;
-		background: #e64340;
-		border-radius: 6px;
-		width: 300rpx;
-		height: auto;
-		line-height: 70rpx;
-		text-align: center;
-		font-size: 28rpx;
-		margin: 0 auto;
-		display: block;
-	}
+.addon-card {
+	display: inline-flex;
+	flex-direction: column;
+	width: 200rpx;
+	margin-right: 16rpx;
+	background: #fff;
+	border-radius: 14rpx;
+	overflow: hidden;
+	box-shadow: 0 2rpx 8rpx rgba(91,140,90,0.06);
+	text-decoration: none;
+	flex-shrink: 0;
+}
 
-	.cart-view {
-		width: 100%;
-		height: auto;
-		overflow: hidden;
+.addon-img {
+	width: 200rpx;
+	height: 200rpx;
+}
 
-	}
+.addon-name {
+	font-size: 22rpx;
+	color: $text-primary;
+	padding: 10rpx 12rpx 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
 
-	.cart-view .list {
-		height: auto;
-		width: 100%;
-		overflow: hidden;
-		margin-bottom: 120rpx;
-	}
+.addon-price {
+	font-size: 26rpx;
+	color: $red;
+	font-weight: 700;
+	padding: 4rpx 12rpx 14rpx;
+}
 
-	.cart-view .group-item {
-		height: auto;
-		width: 100%;
-		background: #fff;
-		margin-bottom: 18rpx;
-	}
+/* 底部结算栏 */
+.bottom-bar {
+	position: fixed;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	height: 110rpx;
+	background: #fff;
+	display: flex;
+	align-items: center;
+	padding: 0 24rpx;
+	box-shadow: 0 -4rpx 16rpx rgba(91, 140, 90, 0.08);
+	z-index: 100;
+}
 
-	.cart-view .item {
-		height: 164rpx;
-		width: 100%;
-		overflow: hidden;
-	}
+.bottom-left {
+	display: flex;
+	align-items: center;
+}
 
-	.cart-view .item .checkbox {
-		float: left;
-		height: 34rpx;
-		width: 34rpx;
-		margin: 65rpx 18rpx 65rpx 26rpx;
-		background: url(http://nos.netease.com/mailpub/hxm/yanxuan-wap/p/20150730/style/img/icon-normal/checkbox-0e09baa37e.png) no-repeat;
-		background-size: 34rpx;
-	}
+.bottom-check {
+	width: 40rpx;
+	height: 40rpx;
+}
 
-	.cart-view .item .checkbox.checked {
-		background: url(http://nos.netease.com/mailpub/hxm/yanxuan-wap/p/20150730/style/img/icon-normal/checkbox-checked-822e54472a.png) no-repeat;
-		background-size: 34rpx;
-	}
+.bottom-all-text {
+	font-size: 26rpx;
+	color: $text-secondary;
+	margin-left: 12rpx;
+}
 
-	.cart-view .item .cart-goods {
-		float: right;
-		height: 164rpx;
-		width: 672rpx;
-		border-bottom: 1px solid #f4f4f4;
-	}
+.bottom-center {
+	flex: 1;
+	display: flex;
+	align-items: baseline;
+	justify-content: flex-end;
+	margin-right: 20rpx;
+}
 
-	.cart-view .item .img {
-		float: left;
-		height: 125rpx;
-		width: 125rpx;
-		background: #f4f4f4;
-		margin: 19.5rpx 18rpx 19.5rpx 0;
-	}
+.total-label {
+	font-size: 26rpx;
+	color: $text-secondary;
+}
 
-	.cart-view .item .info {
-		float: left;
-		height: 125rpx;
-		width: 503rpx;
-		margin: 19.5rpx 26rpx 19.5rpx 0;
-	}
+.total-price {
+	font-size: 36rpx;
+	color: $red;
+	font-weight: 700;
+	margin-left: 4rpx;
+}
 
-	.cart-view .item .t {
-		margin: 8rpx 0;
-		height: 28rpx;
-		font-size: 25rpx;
-		color: #333;
-		overflow: hidden;
-	}
+.bottom-right {
+	display: flex;
+	align-items: center;
+}
 
+.edit-btn {
+	height: 68rpx;
+	padding: 0 24rpx;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 26rpx;
+	color: $text-secondary;
+	border: 2rpx solid #ddd;
+	border-radius: 34rpx;
+	margin-right: 12rpx;
+}
 
-	.cart-view .item .name {
-		height: 28rpx;
-		max-width: 310rpx;
-		line-height: 28rpx;
-		font-size: 25rpx;
-		color: #333;
-		overflow: hidden;
-	}
+.delete-btn {
+	height: 68rpx;
+	padding: 0 32rpx;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 26rpx;
+	color: #fff;
+	background: $red;
+	border-radius: 34rpx;
+}
 
-	.cart-view .item .num {
-		height: 28rpx;
-		line-height: 28rpx;
-		float: right;
-	}
-
-	.cart-view .item .attr {
-		margin-bottom: 17rpx;
-		height: 24rpx;
-		line-height: 24rpx;
-		font-size: 22rpx;
-		color: #666;
-		overflow: hidden;
-	}
-
-	.cart-view .item .b {
-		height: 28rpx;
-		line-height: 28rpx;
-		font-size: 25rpx;
-		color: #333;
-		overflow: hidden;
-	}
-
-	.cart-view .item .price {
-		float: left;
-	}
-
-	.cart-view .item .open {
-		height: 28rpx;
-		width: 150rpx;
-		display: block;
-		float: right;
-		background: url(http://nos.netease.com/mailpub/hxm/yanxuan-wap/p/20150730/style/img/icon-normal/arrowDown-d48093db25.png) right center no-repeat;
-		background-size: 25rpx;
-		font-size: 25rpx;
-		color: #333;
-	}
-
-	.cart-view .item.edit .t {
-		display: none;
-	}
-
-	.cart-view .item.edit .attr {
-		text-align: right;
-		background: url(http://yanxuan.nosdn.127.net/hxm/yanxuan-wap/p/20161201/style/img/icon-normal/arrow-right1-e9828c5b35.png) right center no-repeat;
-		padding-right: 25rpx;
-		background-size: 12rpx 20rpx;
-		margin-bottom: 24rpx;
-		height: 39rpx;
-		line-height: 39rpx;
-		font-size: 24rpx;
-		color: #999;
-		overflow: hidden;
-	}
-
-	.cart-view .item.edit .b {
-		display: flex;
-		height: 52rpx;
-		overflow: hidden;
-	}
-
-	.cart-view .item.edit .price {
-		line-height: 52rpx;
-		height: 52rpx;
-		flex: 1;
-	}
-
-	.cart-view .item .selnum {
-		display: none;
-	}
-
-	.cart-view .item.edit .selnum {
-		width: 235rpx;
-		height: 52rpx;
-		border: 1rpx solid #ccc;
-		display: flex;
-	}
-
-	.selnum .cut {
-		width: 70rpx;
-		height: 100%;
-		text-align: center;
-		line-height: 50rpx;
-	}
-
-	.selnum .number {
-		flex: 1;
-		height: 100%;
-		text-align: center;
-		line-height: 68.75rpx;
-		border-left: 1px solid #ccc;
-		border-right: 1px solid #ccc;
-		float: left;
-	}
-
-	.selnum .add {
-		width: 80rpx;
-		height: 100%;
-		text-align: center;
-		line-height: 50rpx;
-	}
-
-
-	.cart-view .group-item .header {
-		width: 100%;
-		height: 94rpx;
-		line-height: 94rpx;
-		padding: 0 26rpx;
-		border-bottom: 1px solid #f4f4f4;
-	}
-
-	.cart-view .promotion .icon {
-		display: inline-block;
-		height: 24rpx;
-		width: 15rpx;
-	}
-
-	.cart-view .promotion {
-		margin-top: 25.5rpx;
-		float: left;
-		height: 43rpx;
-		width: 480rpx;
-		/*margin-right: 84rpx;*/
-		line-height: 43rpx;
-		font-size: 0;
-	}
-
-	.cart-view .promotion .tag {
-		border: 1px solid #f48f18;
-		height: 37rpx;
-		line-height: 31rpx;
-		padding: 0 9rpx;
-		margin-right: 10rpx;
-		color: #f48f18;
-		font-size: 24.5rpx;
-	}
-
-	.cart-view .promotion .txt {
-		height: 43rpx;
-		line-height: 43rpx;
-		padding-right: 10rpx;
-		color: #333;
-		font-size: 29rpx;
-		overflow: hidden;
-	}
-
-	.cart-view .get {
-		margin-top: 18rpx;
-		float: right;
-		height: 58rpx;
-		padding-left: 14rpx;
-		border-left: 1px solid #d9d9d9;
-		line-height: 58rpx;
-		font-size: 29rpx;
-		color: #333;
-	}
-
-	.cart-bottom {
-		position: fixed;
-		bottom: 0;
-		left: 0;
-		height: 100rpx;
-		width: 100%;
-		background: #fff;
-		display: flex;
-	}
-
-	.cart-bottom .checkbox {
-		height: 34rpx;
-
-		padding-left: 60rpx;
-		line-height: 34rpx;
-		margin: 33rpx 18rpx 33rpx 26rpx;
-		background: url(http://nos.netease.com/mailpub/hxm/yanxuan-wap/p/20150730/style/img/icon-normal/checkbox-0e09baa37e.png) no-repeat;
-		background-size: 34rpx;
-		font-size: 29rpx;
-	}
-
-	.cart-bottom .checkbox.checked {
-		background: url(http://nos.netease.com/mailpub/hxm/yanxuan-wap/p/20150730/style/img/icon-normal/checkbox-checked-822e54472a.png) no-repeat;
-		background-size: 34rpx;
-	}
-
-	.cart-bottom .total {
-		height: 34rpx;
-		flex: 1;
-		margin: 33rpx 10rpx;
-		font-size: 29rpx;
-	}
-
-
-	.cart-bottom .delete {
-		height: 34rpx;
-		width: auto;
-		margin: 33rpx 18rpx;
-		font-size: 29rpx;
-	}
-
-	.cart-bottom .checkout {
-		height: 100rpx;
-		width: 210rpx;
-		text-align: center;
-		line-height: 100rpx;
-		font-size: 29rpx;
-		background: #b4282d;
-		color: #fff;
-	}
+.checkout-btn {
+	height: 68rpx;
+	padding: 0 36rpx;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 28rpx;
+	color: #fff;
+	background: linear-gradient(135deg, $green, $green-dark);
+	border-radius: 34rpx;
+	font-weight: 600;
+}
 </style>

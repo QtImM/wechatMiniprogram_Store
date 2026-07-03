@@ -1,41 +1,124 @@
 <template>
-	<view class="container">
+	<view class="page">
+		<!-- 顶部用户区（绿色渐变背景） -->
 		<view class="header">
-			<button v-if="canIUseGetUserProfile" class="profile-btn" @tap="getUserProfile">
+			<view class="user-section" @tap="onUserTap">
 				<image class="avatar" :src="avatarUrl" mode="aspectFill"></image>
-				<view class="meta">
+				<view class="user-info">
 					<text class="nickname">{{ nicknameText }}</text>
-					<text class="desc">{{ userInfo.userName || '点击完善资料并体验完整功能' }}</text>
+					<text class="user-desc" v-if="!isLogin">点击登录，享受更多权益</text>
+					<text class="user-desc" v-else>{{ userInfo.mobile || '欢迎回来' }}</text>
 				</view>
-			</button>
-			<button v-else class="profile-btn" open-type="getUserInfo" @getuserinfo="bindGetUserInfo">
-				<image class="avatar" :src="avatarUrl" mode="aspectFill"></image>
-				<view class="meta">
-					<text class="nickname">{{ nicknameText }}</text>
-					<text class="desc">{{ userInfo.userName || '点击完善资料并体验完整功能' }}</text>
+				<view class="vip-card" @tap.stop="goMember">
+					<text class="vip-title">会员中心</text>
+					<text class="vip-sub">专享折扣/优先发货</text>
 				</view>
-			</button>
+			</view>
 		</view>
 
-		<view class="menu-card">
-			<navigator v-for="item in menuItems" :key="item.url" :url="item.url" class="menu-item">
-				<view class="icon-badge">{{ item.badge }}</view>
-				<text class="txt">{{ item.title }}</text>
+		<!-- 数据统计行 -->
+		<view class="stats-row">
+			<navigator url="/pages/ucenter/coupon/coupon" class="stat-item">
+				<text class="stat-num">{{ couponCount }}</text>
+				<text class="stat-label">优惠券</text>
 			</navigator>
-
-			<button class="menu-item contact-btn" open-type="contact">
-				<view class="icon-badge">服</view>
-				<text class="txt">联系客服</text>
-			</button>
-
-			<navigator v-if="!hasMobile" url="/pages/auth/mobile/mobile" class="menu-item">
-				<view class="icon-badge">绑</view>
-				<text class="txt">绑定手机</text>
+			<navigator url="/pages/ucenter/collect/collect" class="stat-item">
+				<text class="stat-num">{{ collectCount }}</text>
+				<text class="stat-label">收藏</text>
 			</navigator>
+			<navigator url="/pages/ucenter/footprint/footprint" class="stat-item">
+				<text class="stat-num">{{ footprintCount }}</text>
+				<text class="stat-label">足迹</text>
+			</navigator>
+			<view class="stat-item" @tap="goMember">
+				<text class="stat-num stat-vip">VIP</text>
+				<text class="stat-label">会员</text>
+			</view>
 		</view>
 
-		<view class="company">安徽微同科技有限公司提供技术支持 © openwtai.com</view>
-		<view class="logout" v-if="userInfo.userName != '点击去登录'" @tap="exitLogin">退出登录</view>
+		<!-- 我的订单 -->
+		<view class="section-card">
+			<view class="section-header">
+				<text class="section-title">我的订单</text>
+				<navigator url="/pages/ucenter/order/order" class="section-more">
+					<text>全部订单</text>
+					<text class="arrow">›</text>
+				</navigator>
+			</view>
+			<view class="order-tabs">
+				<navigator :url="'/pages/ucenter/order/order?status=1'" class="order-tab">
+					<view class="order-icon">📋</view>
+					<text class="order-label">待付款</text>
+				</navigator>
+				<navigator :url="'/pages/ucenter/order/order?status=2'" class="order-tab">
+					<view class="order-icon">📦</view>
+					<text class="order-label">待发货</text>
+				</navigator>
+				<navigator :url="'/pages/ucenter/order/order?status=3'" class="order-tab">
+					<view class="order-icon">🚚</view>
+					<text class="order-label">待收货</text>
+				</navigator>
+				<navigator :url="'/pages/ucenter/order/order?status=4'" class="order-tab">
+					<view class="order-icon">⭐</view>
+					<text class="order-label">待评价</text>
+				</navigator>
+				<navigator :url="'/pages/ucenter/order/order?status=5'" class="order-tab">
+					<view class="order-icon">🔄</view>
+					<text class="order-label">退款/售后</text>
+				</navigator>
+			</view>
+		</view>
+
+		<!-- 我的服务 -->
+		<view class="section-card">
+			<view class="section-header">
+				<text class="section-title">我的服务</text>
+			</view>
+			<view class="service-grid">
+				<navigator url="/pages/ucenter/address/address" class="service-item">
+					<view class="service-icon" style="background-color: #E8F2E7;">📍</view>
+					<text class="service-label">地址管理</text>
+				</navigator>
+				<view class="service-item" @tap="goMember">
+					<view class="service-icon" style="background-color: #FBF4E4;">👑</view>
+					<text class="service-label">会员中心</text>
+				</view>
+				<view class="service-item" @tap="goDistribution">
+					<view class="service-icon" style="background-color: #EAF0F9;">💰</view>
+					<text class="service-label">分销中心</text>
+				</view>
+				<button class="service-item service-btn" open-type="contact">
+					<view class="service-icon" style="background-color: #E8F2E7;">💬</view>
+					<text class="service-label">在线客服</text>
+				</button>
+				<navigator url="/pages/ucenter/coupon/coupon" class="service-item">
+					<view class="service-icon" style="background-color: #FEF0E5;">🎫</view>
+					<text class="service-label">优惠券</text>
+				</navigator>
+				<view class="service-item" @tap="goWallet">
+					<view class="service-icon" style="background-color: #F3EFF8;">💳</view>
+					<text class="service-label">余额钱包</text>
+				</view>
+				<navigator url="/pages/ucenter/feedback/feedback" class="service-item">
+					<view class="service-icon" style="background-color: #E8F2E7;">📝</view>
+					<text class="service-label">意见反馈</text>
+				</navigator>
+				<navigator url="/pages/ucenter/help/help" class="service-item">
+					<view class="service-icon" style="background-color: #F6F7F4;">❓</view>
+					<text class="service-label">帮助中心</text>
+				</navigator>
+			</view>
+		</view>
+
+		<!-- 底部 -->
+		<view class="footer">
+			<text class="footer-text">药食同源 · 让健康触手可及</text>
+		</view>
+
+		<!-- 退出登录 -->
+		<view class="logout-btn" v-if="isLogin" @tap="exitLogin">
+			<text>退出登录</text>
+		</view>
 	</view>
 </template>
 
@@ -49,321 +132,312 @@ const DEFAULT_AVATAR = 'https://platform-wxmall.oss-cn-beijing.aliyuncs.com/uplo
 export default {
 	data() {
 		return {
-			canIUseGetUserProfile: false,
 			userInfo: {},
-			hasMobile: '',
-			menuItems: [{
-					title: '我的订单',
-					url: '/pages/ucenter/order/order',
-					badge: '单'
-				},
-				{
-					title: '优惠券',
-					url: '/pages/ucenter/coupon/coupon',
-					badge: '券'
-				},
-				{
-					title: '我的收藏',
-					url: '/pages/ucenter/collect/collect',
-					badge: '藏'
-				},
-				{
-					title: '我的足迹',
-					url: '/pages/ucenter/footprint/footprint',
-					badge: '迹'
-				},
-				{
-					title: '地址管理',
-					url: '/pages/ucenter/address/address',
-					badge: '址'
-				},
-				{
-					title: '帮助中心',
-					url: '/pages/ucenter/help/help',
-					badge: '助'
-				},
-				{
-					title: '意见反馈',
-					url: '/pages/ucenter/feedback/feedback',
-					badge: '评'
-				}
-			]
+			couponCount: 0,
+			collectCount: 0,
+			footprintCount: 0
 		};
 	},
 	computed: {
+		isLogin() {
+			return !!(this.userInfo && this.userInfo.nickname && this.userInfo.nickname !== 'Hi, 游客');
+		},
 		nicknameText() {
-			return this.userInfo.nickname || 'Hi, 游客';
+			return this.userInfo.nickname || '点击登录';
 		},
 		avatarUrl() {
 			return this.userInfo.avatar || DEFAULT_AVATAR;
 		}
 	},
 	methods: {
-		loginByWeixin: function(userInfo) {
-			let code = null;
-			return new Promise(function(resolve, reject) {
-				return util.login().then((res) => {
-					code = res.code;
-					return userInfo;
-				}).then((userInfo) => {
-					util.request(api.AuthLoginByWeixin, {
-						code: code,
-						userInfo: userInfo
-					}, 'POST', 'application/json').then(res => {
-						if (res.code === 0) {
-							uni.setStorageSync('userInfo', res.data.userInfo);
-							uni.setStorageSync('token', res.data.token);
-							resolve(res);
-						} else {
-							util.toast(res.msg);
-							reject(res);
-						}
-					}).catch((err) => {
-						reject(err);
-					});
-				}).catch((err) => {
-					reject(err);
-				});
-			});
+		onUserTap() {
+			if (!this.isLogin) {
+				uni.navigateTo({ url: '/pages/auth/btnAuth/btnAuth' });
+			}
 		},
-		getUserProfile() {
-			let that = this;
-			wx.getUserProfile({
-				desc: '用于完善会员资料',
-				success: (resp) => {
-					that.loginByWeixin(resp).then(res => {
-						that.userInfo = res.data.userInfo;
-						app.globalData.userInfo = res.data.userInfo;
-						app.globalData.token = res.data.token;
-					}).catch((err) => {
-						console.log(err);
-					});
-				}
-			});
+		goMember() {
+			uni.showToast({ title: '会员中心开发中', icon: 'none' });
 		},
-		bindGetUserInfo(e) {
-			let that = this;
-			that.loginByWeixin(e.detail).then(res => {
-				that.userInfo = res.data.userInfo;
-				app.globalData.userInfo = res.data.userInfo;
-				app.globalData.token = res.data.token;
-			}).catch((err) => {
-				console.log(err);
-			});
+		goDistribution() {
+			uni.showToast({ title: '分销中心开发中', icon: 'none' });
 		},
-		exitLogin: function() {
+		goWallet() {
+			uni.showToast({ title: '余额钱包开发中', icon: 'none' });
+		},
+		exitLogin() {
 			uni.showModal({
-				title: '',
-				confirmColor: '#d1554f',
-				content: '退出登录？',
-				success: function(res) {
+				title: '提示',
+				content: '确定退出登录？',
+				confirmColor: '#5B8C5A',
+				success: (res) => {
 					if (res.confirm) {
 						uni.removeStorageSync('token');
 						uni.removeStorageSync('userInfo');
-						app.globalData.userInfo = {
-							nickname: 'Hi, 游客',
-							userName: '点击去登录',
-							avatar: DEFAULT_AVATAR
-						};
-						util.toast('退出成功');
-						uni.switchTab({
-							url: '/pages/index/index'
-						});
+						app.globalData.userInfo = {};
+						this.userInfo = {};
+						util.toast('已退出登录');
 					}
 				}
 			});
 		}
 	},
-	onShow: function() {
-		let that = this;
+	onShow() {
 		let userInfo = uni.getStorageSync('userInfo');
 		let token = uni.getStorageSync('token');
 		if (userInfo && token) {
+			this.userInfo = userInfo;
 			app.globalData.userInfo = userInfo;
 			app.globalData.token = token;
 		} else {
-			uni.login({
-				success: function(res) {
-					if (res.code) {
-						that.code = res.code;
-					}
-				}
-			});
-		}
-		that.userInfo = app.globalData.userInfo || {};
-	},
-	onLoad: function() {
-		if (wx.getUserProfile) {
-			this.canIUseGetUserProfile = true;
+			this.userInfo = {};
 		}
 	}
 };
 </script>
 
 <style lang="scss">
+$green: #5B8C5A;
+$green-light: #E8F2E7;
+$green-bg: #F6F7F4;
+$green-dark: #3D6B3C;
+$gold: #B8860B;
+$gold-light: #FBF4E4;
+$text-primary: #2D3A2E;
+$text-secondary: #5C6B5D;
+$text-hint: #9CA89D;
+$red: #CF4A3E;
+
 page {
-	height: 100%;
-	background: #f2f5f9;
+	background: $green-bg;
 }
 
-.container {
-	min-height: 100%;
-	padding: 0 24rpx 36rpx;
-	box-sizing: border-box;
-	background:
-		radial-gradient(circle at 14% 12%, rgba(255, 214, 194, .95), transparent 42%),
-		radial-gradient(circle at 82% 2%, rgba(159, 214, 255, .72), transparent 34%),
-		linear-gradient(180deg, #10253f 0rpx, #173657 390rpx, #f2f5f9 700rpx);
+.page {
+	min-height: 100vh;
+	padding-bottom: env(safe-area-inset-bottom);
 }
 
+/* 顶部区域 */
 .header {
-	padding-top: 36rpx;
+	background: linear-gradient(160deg, $green 0%, #4A7D49 60%, #3D6B3C 100%);
+	padding: 80rpx 30rpx 60rpx;
+	border-radius: 0 0 40rpx 40rpx;
 }
 
-.profile-btn {
+.user-section {
 	display: flex;
 	align-items: center;
-	width: 100%;
-	padding: 26rpx 28rpx;
-	border: 0;
-	border-radius: 28rpx;
-	background: linear-gradient(130deg, rgba(16, 26, 42, .88), rgba(34, 59, 90, .88));
-	box-shadow: 0 22rpx 54rpx rgba(10, 18, 33, .28);
-	text-align: left;
-}
-
-.profile-btn::after {
-	border: none;
 }
 
 .avatar {
-	width: 128rpx;
-	height: 128rpx;
+	width: 120rpx;
+	height: 120rpx;
 	border-radius: 50%;
-	box-shadow: 0 0 0 6rpx rgba(255, 255, 255, .22);
+	border: 4rpx solid rgba(255, 255, 255, 0.4);
+	flex-shrink: 0;
 }
 
-.meta {
+.user-info {
+	flex: 1;
 	margin-left: 24rpx;
-	display: flex;
-	flex-direction: column;
 	overflow: hidden;
 }
 
 .nickname {
+	font-size: 34rpx;
+	font-weight: 700;
 	color: #fff;
-	font-size: 36rpx;
-	font-weight: 600;
-	line-height: 1.25;
+	display: block;
 }
 
-.desc {
-	margin-top: 10rpx;
-	color: rgba(245, 249, 255, .82);
+.user-desc {
 	font-size: 24rpx;
-	line-height: 1.45;
+	color: rgba(255, 255, 255, 0.75);
+	margin-top: 6rpx;
+	display: block;
 }
 
-.menu-card {
-	margin-top: 24rpx;
-	background: rgba(255, 255, 255, .97);
-	border-radius: 26rpx;
-	padding: 8rpx 0;
-	box-shadow: 0 18rpx 38rpx rgba(16, 34, 59, .09);
-	display: flex;
-	flex-wrap: wrap;
-	overflow: hidden;
-}
-
-.menu-item {
-	width: 33.3333%;
-	height: 180rpx;
+.vip-card {
+	flex-shrink: 0;
+	background: linear-gradient(135deg, #D4A843, $gold);
+	border-radius: 16rpx;
+	padding: 16rpx 20rpx;
 	display: flex;
 	flex-direction: column;
 	align-items: center;
-	justify-content: center;
-	text-decoration: none;
+}
+
+.vip-title {
+	font-size: 22rpx;
+	color: #fff;
+	font-weight: 700;
+}
+
+.vip-sub {
+	font-size: 18rpx;
+	color: rgba(255, 255, 255, 0.8);
+	margin-top: 4rpx;
+}
+
+/* 数据统计行 */
+.stats-row {
+	display: flex;
+	background: #fff;
+	margin: -30rpx 24rpx 0;
+	border-radius: 20rpx;
+	padding: 28rpx 0;
 	position: relative;
+	z-index: 10;
+	box-shadow: 0 8rpx 24rpx rgba(91, 140, 90, 0.08);
 }
 
-.menu-item::before {
-	content: '';
-	position: absolute;
-	left: 18rpx;
-	right: 18rpx;
-	bottom: 0;
-	height: 1rpx;
-	background: rgba(21, 50, 89, .08);
+.stat-item {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	text-decoration: none;
 }
 
-.menu-item::after {
-	content: '';
-	position: absolute;
-	right: 0;
-	top: 28rpx;
-	bottom: 28rpx;
-	width: 1rpx;
-	background: rgba(21, 50, 89, .08);
+.stat-num {
+	font-size: 34rpx;
+	font-weight: 700;
+	color: $text-primary;
 }
 
-.menu-item:nth-child(3n)::after {
-	display: none;
+.stat-vip {
+	color: $gold;
 }
 
-.menu-item:nth-last-child(-n + 3)::before {
-	display: none;
+.stat-label {
+	font-size: 22rpx;
+	color: $text-hint;
+	margin-top: 6rpx;
 }
 
-.icon-badge {
-	width: 64rpx;
-	height: 64rpx;
-	border-radius: 18rpx;
+/* 区块卡片 */
+.section-card {
+	background: #fff;
+	margin: 20rpx 24rpx 0;
+	border-radius: 20rpx;
+	padding: 28rpx 28rpx 8rpx;
+}
+
+.section-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 24rpx;
+}
+
+.section-title {
+	font-size: 30rpx;
+	font-weight: 700;
+	color: $text-primary;
+}
+
+.section-more {
 	display: flex;
 	align-items: center;
-	justify-content: center;
-	background: linear-gradient(145deg, #1f6db3, #144d8f);
-	color: #fff;
-	font-size: 30rpx;
-	font-weight: 600;
-	box-shadow: 0 10rpx 18rpx rgba(26, 82, 143, .26);
-}
-
-.txt {
-	margin-top: 14rpx;
-	color: #203853;
 	font-size: 24rpx;
-	font-weight: 500;
+	color: $text-hint;
+	text-decoration: none;
 }
 
-.contact-btn {
+.arrow {
+	font-size: 32rpx;
+	margin-left: 4rpx;
+}
+
+/* 订单Tab */
+.order-tabs {
+	display: flex;
+	padding-bottom: 20rpx;
+}
+
+.order-tab {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	text-decoration: none;
+}
+
+.order-icon {
+	font-size: 44rpx;
+	margin-bottom: 10rpx;
+}
+
+.order-label {
+	font-size: 22rpx;
+	color: $text-secondary;
+}
+
+/* 服务网格 */
+.service-grid {
+	display: flex;
+	flex-wrap: wrap;
+}
+
+.service-item {
+	width: 25%;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	padding: 20rpx 0;
+	text-decoration: none;
+}
+
+.service-btn {
 	margin: 0;
-	padding: 0;
+	padding: 20rpx 0;
 	border: 0;
 	background: transparent;
 	border-radius: 0;
 	line-height: normal;
+	font-size: inherit;
+
+	&::after {
+		border: none;
+	}
 }
 
-.contact-btn::after {
-	border: none;
+.service-icon {
+	width: 80rpx;
+	height: 80rpx;
+	border-radius: 50%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 36rpx;
+	margin-bottom: 12rpx;
 }
 
-.company {
-	margin-top: 34rpx;
+.service-label {
 	font-size: 22rpx;
-	color: #6f7c8f;
+	color: $text-primary;
+}
+
+/* 底部 */
+.footer {
+	padding: 48rpx 0 20rpx;
 	text-align: center;
 }
 
-.logout {
-	margin-top: 22rpx;
-	height: 90rpx;
-	line-height: 90rpx;
-	text-align: center;
+.footer-text {
+	font-size: 22rpx;
+	color: $text-hint;
+}
+
+/* 退出登录 */
+.logout-btn {
+	margin: 20rpx 24rpx 40rpx;
+	height: 88rpx;
+	display: flex;
+	align-items: center;
+	justify-content: center;
 	background: #fff;
 	border-radius: 20rpx;
 	font-size: 28rpx;
-	color: #ca4f49;
-	box-shadow: 0 12rpx 24rpx rgba(16, 34, 59, .08);
+	color: $red;
 }
 </style>

@@ -23,23 +23,9 @@ public class SecurityAutoConfiguration {
             .csrf(AbstractHttpConfigurer::disable)
             .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                // Public endpoints
-                .requestMatchers("/app-api/member/auth/**").permitAll()
-                .requestMatchers("/admin-api/system/auth/**").permitAll()
-                .requestMatchers("/app-api/product/**").permitAll()
-                .requestMatchers("/admin-api/product/**").permitAll()  // Demo阶段免登录
-                .requestMatchers("/app-api/index/**").permitAll()      // 首页接口
-                .requestMatchers("/app-api/auth/**").permitAll()       // 登录相关
-                .requestMatchers("/app-api/catalog/**").permitAll()   // 分类
-                .requestMatchers("/app-api/goods/**").permitAll()     // 商品统计
-                .requestMatchers("/app-api/topic/**").permitAll()     // 专题
-                .requestMatchers("/app-api/cart/**").permitAll()      // 购物车
-                .requestMatchers("/app-api/user/**").permitAll()      // 用户
-                .requestMatchers("/app-api/brand/**").permitAll()     // 品牌
-                .requestMatchers("/app-api/comment/**").permitAll()   // 评论
-                .requestMatchers("/app-api/collect/**").permitAll()   // 收藏
-                .requestMatchers("/app-api/buy/**").permitAll()       // 购买
-                // All other endpoints require auth
+                // 开发阶段：放行所有小程序接口
+                .requestMatchers("/app-api/**").permitAll()
+                .requestMatchers("/admin-api/**").permitAll()
                 .anyRequest().authenticated()
             )
             .exceptionHandling(ex -> ex

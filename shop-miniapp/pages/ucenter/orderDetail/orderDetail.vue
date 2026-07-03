@@ -1,69 +1,72 @@
 <template>
 	<view class="container">
 		<view class="order-info">
-			<view class="item-a">下单时间：{{orderInfo.addTime}}</view>
-			<view class="item-b">订单编号：{{orderInfo.orderSn}}</view>
-			<view class="item-c">
-				<view class="l">实付：<text class="cost">￥{{orderInfo.actualPrice}}</text></view>
-				<view class="r">
-					<view v-if="orderInfo.handleOption.pay">
-						<view class="btn" @tap="cancelOrder">取消订单</view>
-						<view class="btn active" @tap="payOrder">立即支付</view>
+			<view class="info-row">
+				<text class="info-label">下单时间</text>
+				<text class="info-value">{{orderInfo.addTime}}</text>
+			</view>
+			<view class="info-row">
+				<text class="info-label">订单编号</text>
+				<text class="info-value">{{orderInfo.orderSn}}</text>
+			</view>
+			<view class="action-row">
+				<view class="actual-price">
+					实付：<text class="price-num">¥{{orderInfo.actualPrice}}</text>
+				</view>
+				<view class="action-btns">
+					<view v-if="orderInfo.handleOption && orderInfo.handleOption.pay">
+						<view class="action-btn" @tap="cancelOrder">取消订单</view>
+						<view class="action-btn primary" @tap="payOrder">立即支付</view>
 					</view>
-					<view v-else-if="orderInfo.handleOption.confirm">
-						<view class="btn" @tap="cancelOrder">取消订单</view>
-						<view class="btn active" @tap="confirmOrder">确认收货</view>
+					<view v-else-if="orderInfo.handleOption && orderInfo.handleOption.confirm">
+						<view class="action-btn" @tap="cancelOrder">取消订单</view>
+						<view class="action-btn primary" @tap="confirmOrder">确认收货</view>
 					</view>
 					<view v-else>
-						<view class="btn active" @tap="cancelOrder">取消订单</view>
+						<view class="action-btn" @tap="cancelOrder">取消订单</view>
 					</view>
 				</view>
 			</view>
 		</view>
 
 		<view class="order-goods">
-			<view class="h">
-				<view class="label">商品信息</view>
-				<view class="status">{{orderInfo.orderStatusText}}</view>
+			<view class="section-header">
+				<text class="section-title">商品信息</text>
+				<text class="order-status">{{orderInfo.orderStatusText}}</text>
 			</view>
-			<view class="goods">
-				<view class="item" v-for="(item, index) in orderGoods" :key="item.id">
-					<view class="img">
-						<image :src="item.listPicUrl"></image>
+			<view class="goods-item" v-for="(item, index) in orderGoods" :key="item.id">
+				<image class="goods-img" :src="item.listPicUrl" mode="aspectFill"></image>
+				<view class="goods-info">
+					<view class="goods-top">
+						<text class="goods-name">{{item.goodsName}}</text>
+						<text class="goods-num">x{{item.number}}</text>
 					</view>
-					<view class="info">
-						<view class="t">
-							<text class="name">{{item.goodsName}}</text>
-							<text class="number">x{{item.number}}</text>
-						</view>
-						<view class="attr">{{item.goodsSpecifitionNameValue||''}}</view>
-						<view class="price">￥{{item.retailPrice}}</view>
-					</view>
+					<text class="goods-spec">{{item.goodsSpecifitionNameValue||''}}</text>
+					<text class="goods-price">¥{{item.retailPrice}}</text>
 				</view>
 			</view>
 		</view>
 
-		<view class="order-bottom">
-			<view class="address">
-				<view class="t">
-					<text class="name">{{orderInfo.consignee}}</text>
-					<text class="mobile">{{orderInfo.mobile}}</text>
-				</view>
-				<view class="b">{{orderInfo.fullRegion + orderInfo.address}}</view>
+		<view class="order-address">
+			<view class="address-info">
+				<text class="address-name">{{orderInfo.consignee}}</text>
+				<text class="address-tel">{{orderInfo.mobile}}</text>
 			</view>
-			<view class="total">
-				<view class="t">
-					<text class="label">商品合计：</text>
-					<text class="txt">￥{{orderInfo.goodsPrice}}</text>
-				</view>
-				<view class="t">
-					<text class="label">运费：</text>
-					<text class="txt">￥{{orderInfo.freightPrice}}</text>
-				</view>
+			<text class="address-detail">{{(orderInfo.fullRegion || '') + (orderInfo.address || '')}}</text>
+		</view>
+
+		<view class="order-total">
+			<view class="total-row">
+				<text class="total-label">商品合计</text>
+				<text class="total-value">¥{{orderInfo.goodsPrice}}</text>
 			</view>
-			<view class="pay-fee">
-				<text class="label">实付：</text>
-				<text class="txt">￥{{orderInfo.actualPrice}}</text>
+			<view class="total-row">
+				<text class="total-label">运费</text>
+				<text class="total-value">¥{{orderInfo.freightPrice}}</text>
+			</view>
+			<view class="total-row final">
+				<text class="total-label">实付金额</text>
+				<text class="total-value highlight">¥{{orderInfo.actualPrice}}</text>
 			</view>
 		</view>
 	</view>
@@ -84,94 +87,35 @@
 		methods: {
 			getOrderDetail() {
 				let that = this;
-				util.request(api.OrderDetail, {
-					orderId: that.orderId
-				}).then(function(res) {
+				util.request(api.OrderDetail, { orderId: that.orderId }).then(function(res) {
 					if (res.code === 0) {
-						that.orderInfo = res.data.orderInfo
-						that.orderGoods = res.data.orderGoods
-						that.handleOption = res.data.handleOption
-						//that.payTimer();
+						that.orderInfo = res.data.orderInfo || {};
+						that.orderGoods = res.data.orderGoods || [];
+						that.handleOption = res.data.handleOption || {};
 					}
 				});
 			},
-			payTimer() {
-				let that = this;
-				let orderInfo = that.orderInfo;
-
-				setInterval(() => {
-					orderInfo.addTime -= 1;
-					that.orderInfo = orderInfo;
-				}, 1000);
-			},
 			cancelOrder() {
 				let that = this;
-				let orderInfo = that.orderInfo;
-
-				var orderStatus = orderInfo.orderStatus;
-
-				var errorMessage = '';
-				switch (orderStatus) {
-					case 300:
-						{
-							errorMessage = '订单已发货';
-							break;
-						}
-					case 301:
-						{
-							errorMessage = '订单已收货';
-							break;
-						}
-					case 101:
-						{
-							errorMessage = '订单已取消';
-							break;
-						}
-					case 102:
-						{
-							errorMessage = '订单已删除';
-							break;
-						}
-					case 401:
-						{
-							errorMessage = '订单已退款';
-							break;
-						}
-					case 402:
-						{
-							errorMessage = '订单已退货';
-							break;
-						}
-				}
-
-				if (errorMessage != '') {
-					util.toast(errorMessage);
-					return false;
-				}
-
 				uni.showModal({
-					title: '',
+					title: '提示',
 					content: '确定要取消此订单？',
+					confirmColor: '#5B8C5A',
 					success: function(res) {
 						if (res.confirm) {
-							util.request(api.OrderCancel, {
-								orderId: orderInfo.id
-							}).then(function(res) {
+							util.request(api.OrderCancel, { orderId: that.orderInfo.id }).then(function(res) {
 								if (res.code === 0) {
 									uni.showModal({
 										title: '提示',
-										content: res.data,
+										content: res.data || '订单已取消',
 										showCancel: false,
-										confirmText: '继续',
-										success: function(res) {
-											uni.navigateBack({
-												url: 'pages/ucenter/order/order',
-											});
+										confirmColor: '#5B8C5A',
+										success: function() {
+											uni.navigateBack();
 										}
 									});
 								}
 							});
-
 						}
 					}
 				});
@@ -185,73 +129,26 @@
 				});
 			},
 			confirmOrder() {
-				//确认收货
 				let that = this;
-				let orderInfo = that.orderInfo;
-
-				var orderStatus = orderInfo.orderStatus;
-
-				var errorMessage = '';
-				switch (orderStatus) {
-					// case 300: {
-					//   errorMessage = '订单已发货';
-					//   break;
-					// }
-					case 301:
-						{
-							errorMessage = '订单已收货';
-							break;
-						}
-					case 101:
-						{
-							errorMessage = '订单已取消';
-							break;
-						}
-					case 102:
-						{
-							errorMessage = '订单已删除';
-							break;
-						}
-					case 401:
-						{
-							errorMessage = '订单已退款';
-							break;
-						}
-					case 402:
-						{
-							errorMessage = '订单已退货';
-							break;
-						}
-				}
-
-				if (errorMessage != '') {
-					util.toast(errorMessage);
-					return false;
-				}
-
 				uni.showModal({
-					title: '',
+					title: '提示',
 					content: '确定已经收到商品？',
+					confirmColor: '#5B8C5A',
 					success: function(res) {
 						if (res.confirm) {
-							util.request(api.OrderConfirm, {
-								orderId: orderInfo.id
-							}).then(function(res) {
+							util.request(api.OrderConfirm, { orderId: that.orderInfo.id }).then(function(res) {
 								if (res.code === 0) {
 									uni.showModal({
 										title: '提示',
-										content: res.data,
+										content: res.data || '已确认收货',
 										showCancel: false,
-										confirmText: '继续',
-										success: function(res) {
-											uni.navigateBack({
-												url: 'pages/ucenter/order/order',
-											});
+										confirmColor: '#5B8C5A',
+										success: function() {
+											uni.navigateBack();
 										}
 									});
 								}
 							});
-
 						}
 					}
 				});
@@ -265,259 +162,225 @@
 </script>
 
 <style lang="scss">
+	$green: #5B8C5A;
+	$green-light: #7BAF7A;
+	$green-bg: #F6F7F4;
+	$red: #CF4A3E;
+
 	page {
-		height: 100%;
-		width: 100%;
-		background: #f4f4f4;
+		background: $green-bg;
+	}
+
+	.container {
+		padding: 24rpx;
 	}
 
 	.order-info {
-		padding-top: 25rpx;
 		background: #fff;
-		height: auto;
-		overflow: hidden;
+		border-radius: 16rpx;
+		padding: 28rpx 30rpx;
+		margin-bottom: 20rpx;
+		box-shadow: 0 2rpx 10rpx rgba(91,140,90,0.08);
 	}
 
-	.item-a {
-		padding-left: 31.25rpx;
-		height: 42.5rpx;
-		padding-bottom: 12.5rpx;
-		line-height: 30rpx;
-		font-size: 30rpx;
-		color: #666;
+	.info-row {
+		display: flex;
+		justify-content: space-between;
+		margin-bottom: 16rpx;
 	}
 
-	.item-b {
-		padding-left: 31.25rpx;
-		height: 29rpx;
-		line-height: 29rpx;
-		margin-top: 12.5rpx;
-		margin-bottom: 41.5rpx;
-		font-size: 30rpx;
-		color: #666;
+	.info-label {
+		font-size: 26rpx;
+		color: #999;
 	}
 
-	.item-c {
-		margin-left: 31.25rpx;
-		border-top: 1px solid #f4f4f4;
-		height: 103rpx;
-		line-height: 103rpx;
+	.info-value {
+		font-size: 26rpx;
+		color: #333;
 	}
 
-	.item-c .l {
-		float: left;
-	}
-
-	.item-c .r {
-		height: 103rpx;
-		float: right;
+	.action-row {
 		display: flex;
 		align-items: center;
-		padding-right: 16rpx;
+		justify-content: space-between;
+		padding-top: 20rpx;
+		border-top: 1rpx solid #f0f0f0;
+		margin-top: 10rpx;
 	}
 
-	.item-c .r .btn {
-		float: right;
+	.actual-price {
+		font-size: 26rpx;
+		color: #333;
 	}
 
-	.item-c .cost {
-		color: #b4282d;
+	.price-num {
+		color: $red;
+		font-weight: bold;
+		font-size: 30rpx;
 	}
 
-	.item-c .btn {
-		line-height: 66rpx;
-		border-radius: 5rpx;
-		text-align: center;
-		margin: 0 15rpx;
-		padding: 0 20rpx;
-		height: 66rpx;
+	.action-btns {
+		display: flex;
 	}
 
-	.item-c .btn.active {
-		background: #b4282d;
-		color: #fff;
+	.action-btn {
+		display: inline-block;
+		font-size: 24rpx;
+		padding: 10rpx 24rpx;
+		border-radius: 24rpx;
+		border: 1rpx solid #ddd;
+		color: #666;
+		margin-left: 16rpx;
+
+		&.primary {
+			background: $green;
+			color: #fff;
+			border-color: $green;
+		}
 	}
 
 	.order-goods {
-		margin-top: 20rpx;
 		background: #fff;
+		border-radius: 16rpx;
+		padding: 0 30rpx;
+		margin-bottom: 20rpx;
+		box-shadow: 0 2rpx 10rpx rgba(91,140,90,0.08);
 	}
 
-	.order-goods .h {
-		height: 93.75rpx;
-		line-height: 93.75rpx;
-		margin-left: 31.25rpx;
-		border-bottom: 1px solid #f4f4f4;
-		padding-right: 31.25rpx;
-	}
-
-	.order-goods .h .label {
-		float: left;
-		font-size: 30rpx;
-		color: #333;
-	}
-
-	.order-goods .h .status {
-		float: right;
-		font-size: 30rpx;
-		color: #b4282d;
-	}
-
-	.order-goods .item {
+	.section-header {
 		display: flex;
 		align-items: center;
-		height: 192rpx;
-		margin-left: 31.25rpx;
-		padding-right: 31.25rpx;
-		border-bottom: 1px solid #f4f4f4;
+		justify-content: space-between;
+		height: 88rpx;
+		border-bottom: 1rpx solid #f0f0f0;
 	}
 
-	.order-goods .item:last-child {
-		border-bottom: none;
-	}
-
-	.order-goods .item .img {
-		height: 145.83rpx;
-		width: 145.83rpx;
-		background: #f4f4f4;
-	}
-
-	.order-goods .item .img image {
-		height: 145.83rpx;
-		width: 145.83rpx;
-	}
-
-	.order-goods .item .info {
-		flex: 1;
-		height: 145.83rpx;
-		margin-left: 20rpx;
-	}
-
-	.order-goods .item .t {
-		margin-top: 8rpx;
-		height: 33rpx;
-		line-height: 33rpx;
-		margin-bottom: 10.5rpx;
-	}
-
-	.order-goods .item .t .name {
-		display: block;
-		float: left;
-		height: 33rpx;
-		line-height: 33rpx;
+	.section-title {
+		font-size: 28rpx;
+		font-weight: bold;
 		color: #333;
-		font-size: 30rpx;
 	}
 
-	.order-goods .item .t .number {
-		display: block;
-		float: right;
-		height: 33rpx;
-		text-align: right;
-		line-height: 33rpx;
-		color: #333;
-		font-size: 30rpx;
+	.order-status {
+		font-size: 26rpx;
+		color: $green;
+		font-weight: 500;
 	}
 
-	.order-goods .item .attr {
-		height: 29rpx;
-		line-height: 29rpx;
-		color: #666;
-		margin-bottom: 25rpx;
-		font-size: 25rpx;
-	}
-
-	.order-goods .item .price {
-		height: 30rpx;
-		line-height: 30rpx;
-		color: #333;
-		font-size: 30rpx;
-	}
-
-	.order-bottom {
-		margin-top: 20rpx;
-		padding-left: 31.25rpx;
-		height: auto;
-		overflow: hidden;
-		background: #fff;
-	}
-
-	.order-bottom .address {
-		height: 128rpx;
-		padding-top: 25rpx;
-		border-bottom: 1px solid #f4f4f4;
-	}
-
-	.order-bottom .address .t {
-		height: 35rpx;
-		line-height: 35rpx;
-		margin-bottom: 7.5rpx;
-	}
-
-	.order-bottom .address .name {
-		display: inline-block;
-		height: 35rpx;
-		width: 140rpx;
-		line-height: 35rpx;
-		font-size: 25rpx;
-	}
-
-	.order-bottom .address .mobile {
-		display: inline-block;
-		height: 35rpx;
-		line-height: 35rpx;
-		font-size: 25rpx;
-	}
-
-	.order-bottom .address .b {
-		height: 35rpx;
-		line-height: 35rpx;
-		font-size: 25rpx;
-	}
-
-	.order-bottom .total {
-		height: 106rpx;
-		padding-top: 20rpx;
-		border-bottom: 1px solid #f4f4f4;
-	}
-
-	.order-bottom .total .t {
-		height: 25rpx;
-		line-height: 25rpx;
-		margin-bottom: 7.5rpx;
+	.goods-item {
 		display: flex;
+		padding: 24rpx 0;
+		border-bottom: 1rpx solid #f5f5f5;
+
+		&:last-child {
+			border-bottom: none;
+		}
 	}
 
-	.order-bottom .total .label {
-		width: 140rpx;
-		display: inline-block;
-		height: 35rpx;
-		line-height: 35rpx;
-		font-size: 25rpx;
+	.goods-img {
+		width: 150rpx;
+		height: 150rpx;
+		border-radius: 12rpx;
+		margin-right: 20rpx;
 	}
 
-	.order-bottom .total .txt {
+	.goods-info {
 		flex: 1;
-		display: inline-block;
-		height: 35rpx;
-		line-height: 35rpx;
-		font-size: 25rpx;
 	}
 
-	.order-bottom .pay-fee {
-		height: 81rpx;
-		line-height: 81rpx;
+	.goods-top {
+		display: flex;
+		justify-content: space-between;
+		margin-bottom: 10rpx;
 	}
 
-	.order-bottom .pay-fee .label {
-		display: inline-block;
-		width: 140rpx;
-		color: #b4282d;
+	.goods-name {
+		font-size: 26rpx;
+		color: #333;
+		flex: 1;
 	}
 
-	.order-bottom .pay-fee .txt {
-		display: inline-block;
-		width: 140rpx;
-		color: #b4282d;
+	.goods-num {
+		font-size: 26rpx;
+		color: #999;
+		margin-left: 10rpx;
+	}
+
+	.goods-spec {
+		display: block;
+		font-size: 22rpx;
+		color: #999;
+		margin-bottom: 12rpx;
+	}
+
+	.goods-price {
+		font-size: 28rpx;
+		color: #333;
+		font-weight: 500;
+	}
+
+	.order-address {
+		background: #fff;
+		border-radius: 16rpx;
+		padding: 28rpx 30rpx;
+		margin-bottom: 20rpx;
+		box-shadow: 0 2rpx 10rpx rgba(91,140,90,0.08);
+	}
+
+	.address-info {
+		margin-bottom: 10rpx;
+	}
+
+	.address-name {
+		font-size: 28rpx;
+		color: #333;
+		font-weight: 500;
+		margin-right: 20rpx;
+	}
+
+	.address-tel {
+		font-size: 26rpx;
+		color: #666;
+	}
+
+	.address-detail {
+		font-size: 24rpx;
+		color: #999;
+		line-height: 1.5;
+	}
+
+	.order-total {
+		background: #fff;
+		border-radius: 16rpx;
+		padding: 24rpx 30rpx;
+		box-shadow: 0 2rpx 10rpx rgba(91,140,90,0.08);
+	}
+
+	.total-row {
+		display: flex;
+		justify-content: space-between;
+		margin-bottom: 16rpx;
+
+		&.final {
+			padding-top: 16rpx;
+			border-top: 1rpx solid #f0f0f0;
+			margin-bottom: 0;
+		}
+	}
+
+	.total-label {
+		font-size: 26rpx;
+		color: #666;
+	}
+
+	.total-value {
+		font-size: 26rpx;
+		color: #333;
+
+		&.highlight {
+			color: $red;
+			font-weight: bold;
+			font-size: 30rpx;
+		}
 	}
 </style>

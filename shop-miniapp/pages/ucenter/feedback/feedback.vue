@@ -1,25 +1,25 @@
 <template>
 	<view class="container">
-		<picker @change="bindPickerChange" v-model="index" :range="array">
-			<view class="picker">
-				<view class="fb-type">
-					<view class="type-label">{{array[index]}}</view>
-					<image class="type-icon" src="http://yanxuan.nosdn.127.net/hxm/yanxuan-wap/p/20161201/style/img/icon-normal/pickerArrow-a8b918f05f.png"></image>
+		<view class="form-card">
+			<picker @change="bindPickerChange" v-model="index" :range="array">
+				<view class="form-item form-item--picker">
+					<text class="form-label">反馈类型</text>
+					<text class="picker-value">{{array[index]}}</text>
+					<text class="picker-arrow">›</text>
 				</view>
+			</picker>
+			<view class="form-item form-item--textarea">
+				<textarea class="form-textarea" placeholder="对我们的商品、服务有什么建议吗？请告诉我们..."
+				 @input="contentInput" :maxlength="500" v-model="content"></textarea>
+				<text class="text-count">{{contentLength}}/500</text>
 			</view>
-		</picker>
-		<view class="fb-body">
-			<textarea class="content" placeholder="对我们网站、商品、服务，你还有什么建议吗？你还希望在严选上买到什么？请告诉我们..." @input="contentInput" :maxlength="500"
-			 :auto-focus="true" v-model="content"></textarea>
-			<view class="text-count">{{contentLength}}/500</view>
-		</view>
-		<view class="fb-mobile">
-			<view class="label">手机号码</view>
-			<view class="mobile-box">
-				<input class="mobile" :maxlength="11" type="number" placeholder="方便我们与你联系" @input="mobileInput" v-model="mobile" />
+			<view class="form-item">
+				<text class="form-label">手机号码</text>
+				<input class="form-input" :maxlength="11" type="number" placeholder="方便我们与您联系"
+				 @input="mobileInput" v-model="mobile" />
 			</view>
 		</view>
-		<view class="fb-btn" @tap="sbmitFeedback">提交</view>
+		<view class="submit-btn" @tap="sbmitFeedback">提交反馈</view>
 	</view>
 </template>
 
@@ -38,33 +38,20 @@
 		},
 		methods: {
 			bindPickerChange: function(e) {
-				this.index = e.detail.value
+				this.index = e.detail.value;
 			},
 			mobileInput: function(e) {
-				let that = this;
-				this.mobile = e.detail.value
+				this.mobile = e.detail.value;
 			},
 			contentInput: function(e) {
-				let that = this;
-				that.contentLength = e.detail.cursor
-				that.content = e.detail.value
+				this.contentLength = e.detail.cursor;
+				this.content = e.detail.value;
 			},
-			sbmitFeedback: function(e) {
+			sbmitFeedback: function() {
 				let that = this;
-				if (that.index == 0) {
-					util.toast('请选择反馈类型');
-					return false;
-				}
-
-				if (that.content == '') {
-					util.toast('请输入反馈内容');
-					return false;
-				}
-
-				if (that.mobile == '') {
-					util.toast('请输入手机号码');
-					return false;
-				}
+				if (that.index == 0) { util.toast('请选择反馈类型'); return; }
+				if (that.content == '') { util.toast('请输入反馈内容'); return; }
+				if (that.mobile == '') { util.toast('请输入手机号码'); return; }
 
 				util.request(api.FeedbackAdd, {
 					mobile: that.mobile,
@@ -73,19 +60,17 @@
 				}, "POST", "application/json").then(function(res) {
 					if (res.code === 0) {
 						uni.showToast({
-							title: res.data,
+							title: '提交成功',
 							icon: 'success',
 							duration: 2000,
 							complete: function() {
 								setTimeout(function() {
-									uni.switchTab({
-										url: '/pages/ucenter/index/index',
-									});
+									uni.switchTab({ url: '/pages/ucenter/index/index' });
 								}, 2000)
 							}
 						});
 					} else {
-						util.toast(res.data);
+						util.toast(res.data || '提交失败');
 					}
 				});
 			}
@@ -94,124 +79,102 @@
 </script>
 
 <style lang="scss">
+	$green: #5B8C5A;
+	$green-light: #7BAF7A;
+	$green-bg: #F6F7F4;
+
 	page {
-		background: #f4f4f4;
+		background: $green-bg;
 		min-height: 100%;
 	}
 
 	.container {
-		background: #f4f4f4;
-		min-height: 100%;
-		padding-top: 30rpx;
+		padding: 24rpx;
+		padding-bottom: 140rpx;
 	}
 
-	.fb-type {
-		height: 104rpx;
-		width: 100%;
+	.form-card {
 		background: #fff;
-		margin-bottom: 20rpx;
-		display: flex;
-		flex-direction: row;
-		align-items: center;
-		padding-left: 30rpx;
-		padding-right: 30rpx;
+		border-radius: 20rpx;
+		overflow: hidden;
+		box-shadow: 0 2rpx 12rpx rgba(91,140,90,0.08);
 	}
 
-	.fb-type .type-label {
-		height: 36rpx;
+	.form-item {
+		display: flex;
+		align-items: center;
+		padding: 28rpx 30rpx;
+		border-bottom: 1rpx solid #f5f5f5;
+
+		&:last-child {
+			border-bottom: none;
+		}
+
+		&--picker {
+			justify-content: space-between;
+		}
+
+		&--textarea {
+			flex-direction: column;
+			align-items: stretch;
+		}
+	}
+
+	.form-label {
+		font-size: 28rpx;
+		color: #333;
+		font-weight: 500;
+		margin-right: 20rpx;
+		white-space: nowrap;
+	}
+
+	.form-input {
 		flex: 1;
-		color: #333;
 		font-size: 28rpx;
-	}
-
-	.fb-type .type-icon {
-		height: 36rpx;
-		width: 36rpx;
-	}
-
-	.fb-body {
-		width: 100%;
-		background: #fff;
-		height: 374rpx;
-		padding: 18rpx 30rpx 64rpx 30rpx;
-	}
-
-	.fb-body .content {
-		width: 100%;
-		height: 100%;
 		color: #333;
-		line-height: 40rpx;
-		font-size: 28rpx;
 	}
 
-	.fb-body .text-count {
-		padding-top: 17rpx;
-		line-height: 30rpx;
-		float: right;
+	.picker-value {
+		flex: 1;
+		font-size: 28rpx;
 		color: #666;
-		font-size: 24rpx;
+		text-align: right;
 	}
 
-	.fb-mobile {
-		height: 162rpx;
+	.picker-arrow {
+		font-size: 36rpx;
+		color: #ccc;
+		margin-left: 10rpx;
+	}
+
+	.form-textarea {
 		width: 100%;
-	}
-
-	.fb-mobile .label {
-		height: 58rpx;
-		width: 100%;
-		padding-top: 14rpx;
-		padding-bottom: 11rpx;
-		color: #7f7f7f;
-		font-size: 24rpx;
-		padding-left: 30rpx;
-		padding-right: 30rpx;
-		line-height: 33rpx;
-	}
-
-	.fb-mobile .mobile-box {
-		height: 104rpx;
-		width: 100%;
-		color: #333;
-		padding-left: 30rpx;
-		padding-right: 30rpx;
-		font-size: 24rpx;
-		background: #fff;
-		position: relative;
-	}
-
-	.fb-mobile .mobile {
-		position: absolute;
-		top: 27rpx;
-		left: 30rpx;
-		height: 50rpx;
-		width: 100%;
-		color: #333;
-		line-height: 50rpx;
-		font-size: 24rpx;
-	}
-
-	.clear-icon {
-		position: absolute;
-		top: 43rpx;
-		right: 30rpx;
-		width: 28rpx;
-		height: 28rpx;
-	}
-
-	.fb-btn {
-		display: flex;
-		justify-content: center;
-		align-items: center;
-		width: 100%;
-		height: 98rpx;
-		line-height: 98rpx;
-		background: #b4282d;
-		position: fixed;
-		bottom: 0;
-		left: 0;
-		border-radius: 0;
-		color: #fff;
+		height: 240rpx;
 		font-size: 28rpx;
+		color: #333;
+		line-height: 1.6;
+	}
+
+	.text-count {
+		text-align: right;
+		font-size: 22rpx;
+		color: #999;
+		margin-top: 10rpx;
+	}
+
+	.submit-btn {
+		position: fixed;
+		bottom: 30rpx;
+		left: 24rpx;
+		right: 24rpx;
+		height: 90rpx;
+		line-height: 90rpx;
+		text-align: center;
+		background: linear-gradient(135deg, $green 0%, $green-light 100%);
+		border-radius: 45rpx;
+		color: #fff;
+		font-size: 30rpx;
+		font-weight: 500;
+		box-shadow: 0 6rpx 24rpx rgba(91,140,90,0.3);
 	}
 </style>

@@ -1,9 +1,9 @@
 /**app.css**/
 .container {
   box-sizing: border-box;
-  background-color: #f4f4f4;
+  background-color: #F6F7F4;
   font-family: PingFangSC-Light,helvetica,'Heiti SC';
-} 
+}
 
 view,image,text,navigator{
   box-sizing: border-box;
@@ -27,7 +27,7 @@ button::after {
 }
 ::-webkit-scrollbar {
   width: 5px;
-  background-color: #f5f5f5;
+  background-color: #F6F7F4;
 }
 
 ::-webkit-scrollbar-thumb {

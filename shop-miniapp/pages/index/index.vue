@@ -1,615 +1,690 @@
 <template>
-	<view class="container">
-		<ai-guide-entry text="AI导购" :context="aiAgentContext" right="24rpx" bottom="280rpx"></ai-guide-entry>
-		<swiper class="banner" indicator-dots="true" autoplay="true" interval="3000" duration="1000">
-			<swiper-item v-for="(item, index) in banner" :key="index">
-				<navigator v-if="item.link" :url="item.link">
-					<image :src="item.imageUrl" background-size="cover"></image>
-				</navigator>
-				<image v-else :src="item.imageUrl" background-size="cover"></image>
-			</swiper-item>
-		</swiper>
-		<view class="a-section a-topic" v-if="channel.length > 0">
-			<view class="m-menu">
-				<navigator class="item" v-for="(item, index) in channel" :key="index" :url="item.url">
-					<image :src="item.iconUrl" background-size="cover"></image>
-					<text>{{item.name}}</text>
-				</navigator>
+	<view class="page" :style="{paddingTop: statusBarHeight + 'px'}">
+		<!-- 自定义顶部导航 -->
+		<view class="nav-bar" :style="{top: statusBarHeight + 'px'}">
+			<view class="nav-brand">
+				<image class="nav-logo" src="/static/images/logo.png" mode="aspectFit"></image>
+				<view class="nav-title">
+					<text class="brand-name">药食同源</text>
+					<text class="brand-slogan">让健康触手可及</text>
+				</view>
 			</view>
 		</view>
 
-		<view class="a-section a-topic" v-if="brands.length > 0">
-			<view class="a-section a-brand">
-				<view class="h">
-					<navigator url="/pages/brand/brand">
-						<text class="txt">品牌制造商直供</text>
-					</navigator>
-				</view>
+		<!-- 搜索栏 -->
+		<view class="search-bar">
+			<navigator url="/pages/search/search" class="search-box">
+				<image class="search-icon" src="/static/images/icon-search.png" mode="aspectFit"></image>
+				<text class="search-placeholder">搜索商品、品牌</text>
+			</navigator>
+		</view>
+
+		<!-- 分类横滑Tab -->
+		<scroll-view scroll-x class="category-tabs" :show-scrollbar="false">
+			<view
+				class="tab-item"
+				:class="{active: currentTab === index}"
+				v-for="(item, index) in categoryTabs"
+				:key="index"
+				@tap="switchTab(index)"
+			>
+				<text>{{item.name}}</text>
+				<view class="tab-line" v-if="currentTab === index"></view>
 			</view>
-			<view class="b">
-				<scroll-view scroll-x="true" class="list">
-					<view class="item" v-for="(item, index) in brands" :key="index">
-						<navigator :url="'/pages/brandDetail/brandDetail?id='+item.id">
-							<image class="img" :src="item.newPicUrl" background-size="cover"></image>
-							<view class="np">
-								<text class="name">{{item.name}}</text>
-								<text class="price">￥{{item.floorPrice}}元起</text>
-							</view>
-							<text class="desc">{{item.simpleDesc}}</text>
-						</navigator>
+		</scroll-view>
+
+		<!-- 轮播Banner -->
+		<view class="banner-wrap">
+			<swiper class="banner-swiper" indicator-dots circular autoplay :interval="4000" :duration="500"
+				indicator-color="rgba(91,140,90,0.3)" indicator-active-color="#5B8C5A">
+				<swiper-item v-for="(item, index) in banner" :key="index">
+					<navigator v-if="item.link" :url="item.link">
+						<image class="banner-img" :src="item.imageUrl" mode="aspectFill"></image>
+					</navigator>
+					<image v-else class="banner-img" :src="item.imageUrl" mode="aspectFill"></image>
+				</swiper-item>
+			</swiper>
+		</view>
+
+		<!-- 金刚区 -->
+		<view class="grid-menu">
+			<view class="menu-item" v-for="(item, index) in menuItems" :key="index" @tap="onMenuTap(item)">
+				<view class="menu-icon" :style="{backgroundColor: item.bgColor}">
+					<text class="menu-icon-text">{{item.icon}}</text>
+				</view>
+				<text class="menu-label">{{item.name}}</text>
+			</view>
+		</view>
+
+		<!-- 公告栏 -->
+		<view class="notice-bar" v-if="notice">
+			<text class="notice-tag">公告</text>
+			<swiper class="notice-swiper" vertical autoplay :interval="3000" circular :show-indicator="false">
+				<swiper-item v-for="(item, index) in notices" :key="index">
+					<text class="notice-text">{{item.text}}</text>
+				</swiper-item>
+			</swiper>
+		</view>
+
+		<!-- 限时特惠 + 热卖双栏 -->
+		<view class="dual-section">
+			<view class="dual-left" @tap="goToHot">
+				<view class="dual-header">
+					<text class="dual-title">限时特惠</text>
+					<text class="dual-sub">低至5折</text>
+				</view>
+				<view class="dual-products">
+					<view class="dual-product" v-for="(item, index) in hotGoods.slice(0,2)" :key="index">
+						<image class="dual-product-img" :src="item.listPicUrl" mode="aspectFill"></image>
+						<text class="dual-product-price">¥{{item.retailPrice}}</text>
 					</view>
-				</scroll-view>
-			</view>
-		</view>
-
-		<view class="a-section a-topic" v-if="topics.length > 0">
-			<view class="a-section a-brand">
-				<view class="h">
-					<navigator open-type="switchTab" url="/pages/topic/topic">
-						<text class="txt">专题精选</text>
-					</navigator>
 				</view>
 			</view>
-			<view class="b">
-				<scroll-view scroll-x="true" class="list">
-					<view class="item" v-for="(item, index) in topics" :key="index">
-						<navigator :url="'/pages/topicDetail/topicDetail?id='+item.id">
-							<image class="img" :src="item.scenePicUrl" background-size="cover"></image>
-							<view class="np">
-								<text class="name">{{item.title}}</text>
-								<text class="price">￥{{item.priceInfo}}元起</text>
-							</view>
-							<text class="desc">{{item.subtitle}}</text>
-						</navigator>
+			<view class="dual-right">
+				<view class="dual-card" @tap="goToNew">
+					<text class="dual-card-title">新品尝鲜</text>
+					<text class="dual-card-sub">每周上新</text>
+					<view class="dual-card-img-wrap" v-if="newGoods.length > 0">
+						<image class="dual-card-img" :src="newGoods[0].listPicUrl" mode="aspectFill"></image>
 					</view>
-				</scroll-view>
-			</view>
-		</view>
-
-		<view class="a-section a-new" v-if="newGoods.length > 0">
-			<view class="h">
-				<view>
-					<navigator url="../newGoods/newGoods">
-						<text class="txt">周一周四 · 新品首发</text>
-					</navigator>
 				</view>
-			</view>
-			<view class="b">
-				<view class="item" v-for="(item, index) in newGoods" :key="index">
-					<navigator :url="'/pages/goods/goods?id='+item.id">
-						<image class="img" :src="item.listPicUrl" background-size="cover"></image>
-						<text class="name">{{item.name}}</text>
-						<text class="price">￥{{item.retailPrice}}</text>
-					</navigator>
+				<view class="dual-card" @tap="goToBrand">
+					<text class="dual-card-title">品牌精选</text>
+					<text class="dual-card-sub">大牌直供</text>
+					<view class="dual-card-img-wrap" v-if="brands.length > 0">
+						<image class="dual-card-img" :src="brands[0].newPicUrl" mode="aspectFill"></image>
+					</view>
 				</view>
 			</view>
 		</view>
 
-		<view class="a-section a-popular" v-if="hotGoods.length > 0">
-			<view class="h">
-				<view>
-					<navigator url="../hotGoods/hotGoods">
-						<text class="txt">人气推荐</text>
-					</navigator>
-				</view>
+		<!-- 活动Tab区 -->
+		<view class="section-tabs">
+			<view
+				class="section-tab"
+				:class="{active: activeSection === index}"
+				v-for="(item, index) in sectionTabs"
+				:key="index"
+				@tap="activeSection = index"
+			>
+				<text>{{item}}</text>
 			</view>
-			<view class="b">
-				<view class="item" v-for="(item, index) in hotGoods" :key="index">
-					<navigator :url="'/pages/goods/goods?id='+item.id">
-						<image class="img" :src="item.listPicUrl" background-size="cover"></image>
-						<view class="right">
-							<view class="text">
-								<text class="name">{{item.name}}</text>
-								<text class="desc">{{item.goodsBrief}}</text>
-								<text class="price">￥{{item.retailPrice}}</text>
-							</view>
+		</view>
+
+		<!-- 商品列表 (双列瀑布流) -->
+		<view class="goods-grid">
+			<view class="goods-column">
+				<view class="goods-card" v-for="(item, index) in leftGoods" :key="index" @tap="goToGoods(item.id)">
+					<image class="goods-img" :src="item.listPicUrl" mode="aspectFill"></image>
+					<view class="goods-info">
+						<text class="goods-name">{{item.name}}</text>
+						<view class="goods-price-row">
+							<text class="goods-price">¥{{item.retailPrice}}</text>
+							<text class="goods-sales" v-if="item.salesCount">已售{{item.salesCount}}</text>
 						</view>
-					</navigator>
+					</view>
+				</view>
+			</view>
+			<view class="goods-column">
+				<view class="goods-card" v-for="(item, index) in rightGoods" :key="index" @tap="goToGoods(item.id)">
+					<image class="goods-img" :src="item.listPicUrl" mode="aspectFill"></image>
+					<view class="goods-info">
+						<text class="goods-name">{{item.name}}</text>
+						<view class="goods-price-row">
+							<text class="goods-price">¥{{item.retailPrice}}</text>
+							<text class="goods-sales" v-if="item.salesCount">已售{{item.salesCount}}</text>
+						</view>
+					</view>
 				</view>
 			</view>
 		</view>
 
-		<view class="good-grid" v-for="(item, index) in floorGoods" :key="index">
-			<view class="h">
-				<view>
-					<text>{{item.name}}</text>
-				</view>
-			</view>
-			<view class="b">
-				<view class="item" v-for="(iitem, iindex) in item.goodsList" :key="iindex">
-					<view :class="'item ' + iindex % 2 == 0 ? '' : 'item-b'">
-						<navigator :url="'/pages/goods/goods?id='+iitem.id">
-							<image class="img" :src="iitem.listPicUrl" background-size="cover"></image>
-							<text class="name">{{iitem.name}}</text>
-							<text class="price">￥{{iitem.retailPrice}}</text>
-						</navigator>
-					</view>
-				</view>
-				<view class="item item-b item-more">
-					<navigator :url="'/pages/category/category?id='+item.id" class="more-a">
-						<view class="txt">{{'更多'+item.name+'好物'}}</view>
-						<image class="icon" src="../../static/images/icon_go_more.png" background-size="cover"></image>
-					</navigator>
-				</view>
-			</view>
+		<!-- 加载更多 -->
+		<view class="load-more" v-if="goodsList.length > 0">
+			<text class="load-more-text">— 更多好物探索中 —</text>
 		</view>
 	</view>
 </template>
 
 <script>
-	const api = require('@/utils/api.js');
-	const util = require("@/utils/util.js")
-	import AiGuideEntry from '@/components/ai-guide-entry/ai-guide-entry.vue'
-	export default {
-		components: {
-			AiGuideEntry
-		},
-		data() {
-			return {
-				newGoods: [],
-				hotGoods: [],
-				topics: [],
-				brands: [],
-				floorGoods: [],
-				banner: [],
-				channel: [],
-				aiAgentContext: '当前页面是商城首页，包含轮播、品牌、专题、新品、热销、分类楼层。优先根据用户需求做商品推荐、商品搜索，并在用户明确想买时引导进入商品详情和结算。'
-			}
-		},
-		methods: {
-			getIndexData: function() {
-				let that = this;
-				util.request(api.IndexUrlNewGoods).then(function(res) {
-					if (res.code === 0) {
-						that.newGoods = res.data.newGoodsList
-					}
-				});
-				util.request(api.IndexUrlHotGoods).then(function(res) {
-					if (res.code === 0) {
-						that.hotGoods = res.data.hotGoodsList
-					}
-				});
-				util.request(api.IndexUrlTopic).then(function(res) {
-					if (res.code === 0) {
-						that.topics = res.data.topicList
-					}
-				});
-				util.request(api.IndexUrlBrand).then(function(res) {
-					if (res.code === 0) {
-						that.brands = res.data.brandList
-					}
-				});
-				util.request(api.IndexUrlCategory).then(function(res) {
-					if (res.code === 0) {
-						that.floorGoods = res.data.categoryList
-					}
-				});
-				util.request(api.IndexUrlBanner).then(function(res) {
-					if (res.code === 0) {
-						that.banner = res.data.banner
-					}
-				});
-				util.request(api.IndexUrlChannel).then(function(res) {
-					if (res.code === 0) {
-						that.channel = res.data.channel
-					}
-				});
+const api = require('@/utils/api.js');
+const util = require('@/utils/util.js');
 
-			},
+export default {
+	data() {
+		return {
+			statusBarHeight: 44,
+			currentTab: 0,
+			activeSection: 0,
+			banner: [],
+			channel: [],
+			brands: [],
+			newGoods: [],
+			hotGoods: [],
+			goodsList: [],
+			notice: true,
+			notices: [
+				{ text: '欢迎光临药食同源商城，新人享专属优惠~' },
+				{ text: '会员年卡限时特惠 99元/年，尊享9折' }
+			],
+			categoryTabs: [
+				{ name: '精选', id: 0 },
+				{ name: '食品保健', id: 1 },
+				{ name: '美妆护肤', id: 2 },
+				{ name: '农特产品', id: 3 },
+				{ name: '课程研学', id: 4 },
+				{ name: '礼盒套装', id: 5 }
+			],
+			menuItems: [
+				{ name: '新人礼', icon: '🎁', bgColor: '#FEF0E5', url: '' },
+				{ name: '会员', icon: '👑', bgColor: '#FBF4E4', url: '' },
+				{ name: '优惠券', icon: '🎫', bgColor: '#E8F2E7', url: '' },
+				{ name: '分销', icon: '🤝', bgColor: '#EAF0F9', url: '' },
+				{ name: '全部分类', icon: '📋', bgColor: '#F3EFF8', url: '/pages/catalog/catalog' }
+			],
+			sectionTabs: ['今日主推', '热销爆款', '新品上架']
+		}
+	},
+	computed: {
+		displayGoods() {
+			if (this.activeSection === 0) return this.goodsList;
+			if (this.activeSection === 1) return this.hotGoods;
+			return this.newGoods;
 		},
-		// 增加下拉刷新数据的功能
-		onPullDownRefresh() {
-			this.getIndexData();
+		leftGoods() {
+			return this.displayGoods.filter((_, i) => i % 2 === 0);
 		},
-		onShareAppMessage: function() {
-			return {
-				title: '微同开源商城',
-				path: '/pages/index/index'
+		rightGoods() {
+			return this.displayGoods.filter((_, i) => i % 2 === 1);
+		}
+	},
+	methods: {
+		getIndexData() {
+			util.request(api.IndexUrlBanner).then(res => {
+				if (res.code === 0) this.banner = res.data.banner;
+			});
+			util.request(api.IndexUrlChannel).then(res => {
+				if (res.code === 0) this.channel = res.data.channel;
+			});
+			util.request(api.IndexUrlBrand).then(res => {
+				if (res.code === 0) this.brands = res.data.brandList;
+			});
+			util.request(api.IndexUrlNewGoods).then(res => {
+				if (res.code === 0) this.newGoods = res.data.newGoodsList;
+			});
+			util.request(api.IndexUrlHotGoods).then(res => {
+				if (res.code === 0) this.hotGoods = res.data.hotGoodsList;
+			});
+			util.request(api.IndexUrlCategory).then(res => {
+				if (res.code === 0) {
+					let all = [];
+					res.data.categoryList.forEach(cat => {
+						if (cat.goodsList) all = all.concat(cat.goodsList);
+					});
+					this.goodsList = all;
+				}
+			});
+		},
+		switchTab(index) {
+			this.currentTab = index;
+		},
+		onMenuTap(item) {
+			if (item.url) {
+				if (item.url.indexOf('/pages/catalog') > -1) {
+					uni.switchTab({ url: item.url });
+				} else {
+					uni.navigateTo({ url: item.url });
+				}
 			}
 		},
-		onLoad: function() {
-      uni.login({
-        success: (resp) => {
-          util.request(api.Code + resp.code, {}, 'GET').then(function (res) {
-            if (res.code === 0) {
-              //存储用户信息
-              uni.setStorageSync('userInfo', res.data.userInfo);
-              uni.setStorageSync('token', res.data.token);
-              uni.setStorageSync('userId', res.data.userId);
-            } else {
-              uni.showModal({
-                title: '提示',
-                content: res.msg,
-                showCancel: false
-              });
-            }
-          });
-        },
-      })
-			this.getIndexData();
+		goToGoods(id) {
+			uni.navigateTo({ url: '/pages/goods/goods?id=' + id });
+		},
+		goToHot() {
+			uni.navigateTo({ url: '/pages/hotGoods/hotGoods' });
+		},
+		goToNew() {
+			uni.navigateTo({ url: '/pages/newGoods/newGoods' });
+		},
+		goToBrand() {
+			uni.navigateTo({ url: '/pages/brand/brand' });
 		}
+	},
+	onPullDownRefresh() {
+		this.getIndexData();
+		setTimeout(() => uni.stopPullDownRefresh(), 800);
+	},
+	onShareAppMessage() {
+		return {
+			title: '药食同源商城 - 让健康触手可及',
+			path: '/pages/index/index'
+		}
+	},
+	onLoad() {
+		const sysInfo = uni.getSystemInfoSync();
+		this.statusBarHeight = sysInfo.statusBarHeight || 44;
+
+		uni.login({
+			success: (resp) => {
+				util.request(api.Code + resp.code, {}, 'GET').then(res => {
+					if (res.code === 0) {
+						uni.setStorageSync('userInfo', res.data.userInfo);
+						uni.setStorageSync('token', res.data.token);
+						uni.setStorageSync('userId', res.data.userId);
+					}
+				});
+			}
+		});
+		this.getIndexData();
 	}
+}
 </script>
 
 <style lang="scss">
-	.banner {
-		width: 750rpx;
-		height: 417rpx;
-	}
+$green: #5B8C5A;
+$green-light: #E8F2E7;
+$green-bg: #F6F7F4;
+$gold: #B8860B;
+$gold-light: #FBF4E4;
+$orange: #E07C4F;
+$red: #CF4A3E;
+$text-primary: #2D3A2E;
+$text-secondary: #5C6B5D;
+$text-hint: #9CA89D;
 
-	.banner image {
-		width: 100%;
-		height: 417rpx;
-	}
+.page {
+	background-color: $green-bg;
+	min-height: 100vh;
+	padding-bottom: 20rpx;
+}
 
-	.m-menu {
-		display: flex;
-		height: 181rpx;
-		width: 750rpx;
-		flex-flow: row nowrap;
-		align-items: center;
-		justify-content: space-between;
-		background-color: #fff;
-	}
+/* 顶部导航 */
+.nav-bar {
+	position: sticky;
+	top: 0;
+	z-index: 100;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 16rpx 30rpx;
+	background: #fff;
+}
 
-	.m-menu .item {
-		flex: 1;
-		display: block;
-		padding: 20rpx 0;
-	}
+.nav-brand {
+	display: flex;
+	align-items: center;
+}
 
-	.m-menu image {
-		display: block;
-		width: 58rpx;
-		height: 58rpx;
-		margin: 0 auto;
-		margin-bottom: 12rpx;
-	}
+.nav-logo {
+	width: 64rpx;
+	height: 64rpx;
+	border-radius: 50%;
+	margin-right: 16rpx;
+}
 
-	.m-menu text {
-		display: block;
-		font-size: 24rpx;
-		text-align: center;
-		margin: 0 auto;
-		line-height: 1;
-		color: #333;
-	}
+.nav-title {
+	display: flex;
+	flex-direction: column;
+}
 
-	.a-section {
-		width: 750rpx;
-		height: auto;
-		overflow: hidden;
-		background: #fff;
-		color: #333;
-		margin-top: 20rpx;
-	}
+.brand-name {
+	font-size: 32rpx;
+	font-weight: 700;
+	color: $green;
+}
 
-	.a-section .h {
-		display: flex;
-		flex-flow: row nowrap;
-		align-items: center;
-		justify-content: center;
-		height: 130rpx;
-	}
+.brand-slogan {
+	font-size: 20rpx;
+	color: $text-hint;
+	margin-top: 2rpx;
+}
 
-	.a-section .h .txt {
-		padding-right: 30rpx;
-		background-size: 16.656rpx 27rpx;
-		display: inline-block;
-		height: 36rpx;
-		font-size: 33rpx;
-		line-height: 36rpx;
-	}
+/* 搜索栏 */
+.search-bar {
+	padding: 12rpx 30rpx 20rpx;
+	background: #fff;
+}
 
-	.a-brand .b {
-		width: 750rpx;
-		height: auto;
-		overflow: hidden;
-		position: relative;
-	}
+.search-box {
+	display: flex;
+	align-items: center;
+	height: 72rpx;
+	background: $green-bg;
+	border-radius: 36rpx;
+	padding: 0 28rpx;
+}
 
-	.a-brand .wrap {
-		position: relative;
-	}
+.search-icon {
+	width: 32rpx;
+	height: 32rpx;
+	margin-right: 12rpx;
+	opacity: 0.5;
+}
 
-	.a-brand .img {
-		position: absolute;
-		left: 0;
-		top: 0;
-	}
+.search-placeholder {
+	font-size: 26rpx;
+	color: $text-hint;
+}
 
-	.a-brand .mt {
-		position: absolute;
-		z-index: 2;
-		padding: 27rpx 31rpx;
-		left: 0;
-		top: 0;
-	}
+/* 分类Tab */
+.category-tabs {
+	white-space: nowrap;
+	background: #fff;
+	padding: 0 20rpx 20rpx;
+}
 
-	.a-brand .mt .brand {
-		display: block;
-		font-size: 33rpx;
-		height: 43rpx;
-		color: #333;
-	}
+.tab-item {
+	display: inline-flex;
+	flex-direction: column;
+	align-items: center;
+	padding: 12rpx 24rpx;
+	font-size: 28rpx;
+	color: $text-secondary;
+	position: relative;
 
-	.a-brand .mt .price,
-	.a-brand .mt .unit {
-		font-size: 25rpx;
-		color: #999;
-	}
-
-	.a-brand .item-1 {
-		float: left;
-		width: 375rpx;
-		height: 252rpx;
-		overflow: hidden;
-		border-top: 1rpx solid #fff;
-		margin-left: 1rpx;
-	}
-
-	.a-brand .item-1:nth-child(2n+1) {
-		margin-left: 0;
-		width: 374rpx;
-	}
-
-	.a-brand .item-1 .img {
-		width: 375rpx;
-		height: 253rpx;
-	}
-
-	.a-new .b {
-		width: 750rpx;
-		height: auto;
-		overflow: hidden;
-		padding: 0 31rpx 45rpx 31rpx;
-	}
-
-	.a-new .b .item {
-		float: left;
-		width: 302rpx;
-		margin-top: 10rpx;
-		margin-left: 21rpx;
-		margin-right: 21rpx;
-	}
-
-	.a-new .b .item-b {
-		margin-left: 42rpx;
-	}
-
-	.a-new .b .img {
-		width: 302rpx;
-		height: 302rpx;
-	}
-
-	.a-new .b .name {
-		text-align: center;
-		display: block;
-		width: 302rpx;
-		height: 35rpx;
-		margin-bottom: 14rpx;
-		overflow: hidden;
-		font-size: 30rpx;
-		color: #333;
-	}
-
-	.a-new .b .price {
-		display: block;
-		text-align: center;
-		line-height: 30rpx;
-		font-size: 30rpx;
-		color: #b4282d;
-	}
-
-	.a-popular {
-		width: 750rpx;
-		height: auto;
-		overflow: hidden;
-	}
-
-	.a-popular .b .item {
-		border-top: 1px solid #d9d9d9;
-		margin: 0 20rpx;
-		height: 264rpx;
-		width: 710rpx;
-	}
-
-	.a-popular .b .img {
-		margin-top: 12rpx;
-		margin-right: 12rpx;
-		float: left;
-		width: 240rpx;
-		height: 240rpx;
-	}
-
-	.a-popular .b .right {
-		float: left;
-		height: 264rpx;
-		width: 456rpx;
-		display: flex;
-		flex-flow: row nowrap;
-	}
-
-	.a-popular .b .text {
-		display: flex;
-		flex-wrap: nowrap;
-		flex-direction: column;
-		justify-content: center;
-		overflow: hidden;
-		height: 264rpx;
-		width: 456rpx;
-	}
-
-	.a-popular .b .name {
-		width: 456rpx;
-		display: block;
-		color: #333;
-		line-height: 50rpx;
+	&.active {
+		color: $green;
+		font-weight: 700;
 		font-size: 30rpx;
 	}
+}
 
-	.a-popular .b .desc {
-		width: 456rpx;
-		display: block;
-		color: #999;
-		line-height: 50rpx;
-		font-size: 25rpx;
-	}
+.tab-line {
+	width: 40rpx;
+	height: 6rpx;
+	background: $green;
+	border-radius: 3rpx;
+	margin-top: 6rpx;
+}
 
-	.a-popular .b .price {
-		width: 456rpx;
-		display: block;
-		color: #b4282d;
-		line-height: 50rpx;
-		font-size: 33rpx;
-	}
+/* Banner */
+.banner-wrap {
+	padding: 20rpx 24rpx;
+}
 
-	.a-topic .b {
-		height: 533rpx;
-		width: 750rpx;
-		padding: 0 0 48rpx 0;
-	}
+.banner-swiper {
+	height: 320rpx;
+	border-radius: 20rpx;
+	overflow: hidden;
+}
 
-	.a-topic .b .list {
-		height: 533rpx;
-		width: 750rpx;
-		white-space: nowrap;
-	}
+.banner-img {
+	width: 100%;
+	height: 320rpx;
+	border-radius: 20rpx;
+}
 
-	.a-topic .b .item {
-		display: inline-block;
-		height: 533rpx;
-		width: 680.5rpx;
-		margin-left: 30rpx;
-		overflow: hidden;
-	}
+/* 金刚区 */
+.grid-menu {
+	display: flex;
+	justify-content: space-around;
+	padding: 24rpx 20rpx 32rpx;
+	background: #fff;
+	margin: 0 24rpx;
+	border-radius: 20rpx;
+}
 
-	.a-topic .b .item:last-child {
-		margin-right: 30rpx;
-	}
+.menu-item {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+}
 
-	.a-topic .b .img {
-		height: 387.5rpx;
-		width: 680.5rpx;
-		margin-bottom: 30rpx;
-	}
+.menu-icon {
+	width: 88rpx;
+	height: 88rpx;
+	border-radius: 50%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	margin-bottom: 12rpx;
+}
 
-	.a-topic .b .np {
-		height: 35rpx;
-		margin-bottom: 13.5rpx;
-		color: #333;
-		font-size: 30rpx;
-	}
+.menu-icon-text {
+	font-size: 40rpx;
+}
 
-	.a-topic .b .np .price {
-		margin-left: 20.8rpx;
-		color: #b4282d;
-	}
+.menu-label {
+	font-size: 22rpx;
+	color: $text-primary;
+}
 
-	.a-topic .b .desc {
-		display: block;
-		height: 30rpx;
-		color: #999;
-		font-size: 24rpx;
-		white-space: nowrap;
-		overflow: hidden;
-		text-overflow: ellipsis;
-	}
+/* 公告栏 */
+.notice-bar {
+	display: flex;
+	align-items: center;
+	margin: 20rpx 24rpx 0;
+	padding: 16rpx 24rpx;
+	background: #fff;
+	border-radius: 16rpx;
+}
 
-	.good-grid {
-		width: 750rpx;
-		height: auto;
-		overflow: hidden;
-	}
+.notice-tag {
+	font-size: 20rpx;
+	color: #fff;
+	background: $green;
+	padding: 4rpx 12rpx;
+	border-radius: 8rpx;
+	margin-right: 16rpx;
+	flex-shrink: 0;
+}
 
-	.good-grid .h {
-		display: flex;
-		flex-flow: row nowrap;
-		align-items: center;
-		justify-content: center;
-		height: 130rpx;
-		font-size: 33rpx;
-		color: #333;
-	}
+.notice-swiper {
+	height: 36rpx;
+	flex: 1;
+}
 
-	.good-grid .b {
-		width: 750rpx;
-		padding: 0 6.25rpx;
-		height: auto;
-		overflow: hidden;
-	}
+.notice-text {
+	font-size: 24rpx;
+	color: $text-secondary;
+	line-height: 36rpx;
+}
 
-	.good-grid .b .item {
-		float: left;
-		background: #fff;
-		width: 365rpx;
-		margin-bottom: 6.25rpx;
-		height: 452rpx;
-		overflow: hidden;
-		text-align: center;
-	}
+/* 双栏区 */
+.dual-section {
+	display: flex;
+	margin: 20rpx 24rpx 0;
+	gap: 16rpx;
+	height: 340rpx;
+}
 
-	.good-grid .b .item .a {
-		height: 452rpx;
-		width: 100%;
-	}
+.dual-left {
+	flex: 1.2;
+	background: #fff;
+	border-radius: 20rpx;
+	padding: 24rpx;
+	display: flex;
+	flex-direction: column;
+}
 
-	.good-grid .b .item-b {
-		margin-left: 6.25rpx;
-	}
+.dual-header {
+	display: flex;
+	align-items: baseline;
+	margin-bottom: 16rpx;
+}
 
-	.good-grid .item .img {
-		margin-top: 20rpx;
-		width: 302rpx;
-		height: 302rpx;
-	}
+.dual-title {
+	font-size: 28rpx;
+	font-weight: 700;
+	color: $text-primary;
+}
 
-	.good-grid .item .name {
-		display: block;
-		width: 365.625rpx;
-		padding: 0 20rpx;
-		overflow: hidden;
-		height: 35rpx;
-		margin: 11.5rpx 0 22rpx 0;
-		text-align: center;
-		font-size: 30rpx;
-		color: #333;
-	}
+.dual-sub {
+	font-size: 20rpx;
+	color: $orange;
+	margin-left: 8rpx;
+	background: #FEF0E5;
+	padding: 2rpx 10rpx;
+	border-radius: 8rpx;
+}
 
-	.good-grid .item .price {
-		display: block;
-		width: 365.625rpx;
-		height: 30rpx;
-		text-align: center;
-		font-size: 30rpx;
-		color: #b4282d;
-	}
+.dual-products {
+	display: flex;
+	gap: 12rpx;
+	flex: 1;
+}
 
-	.good-grid .more-item {
-		height: 100%;
-		width: 100%;
-	}
+.dual-product {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+}
 
-	.more-a {
-		height: 100%;
-		width: 100%;
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		justify-content: center;
-	}
+.dual-product-img {
+	width: 100%;
+	height: 160rpx;
+	border-radius: 12rpx;
+}
 
-	.good-grid .more-a .txt {
-		height: 33rpx;
-		width: 100%;
-		line-height: 33rpx;
-		color: #333;
-		font-size: 33rpx;
-	}
+.dual-product-price {
+	font-size: 26rpx;
+	color: $red;
+	font-weight: 700;
+	margin-top: 8rpx;
+}
 
-	.good-grid .more-a .icon {
-		margin: 60rpx auto 0 auto;
-		width: 70rpx;
-		height: 70rpx;
+.dual-right {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	gap: 16rpx;
+}
+
+.dual-card {
+	flex: 1;
+	background: #fff;
+	border-radius: 20rpx;
+	padding: 20rpx;
+	position: relative;
+	overflow: hidden;
+}
+
+.dual-card-title {
+	font-size: 26rpx;
+	font-weight: 700;
+	color: $text-primary;
+	display: block;
+}
+
+.dual-card-sub {
+	font-size: 20rpx;
+	color: $text-hint;
+	display: block;
+	margin-top: 4rpx;
+}
+
+.dual-card-img-wrap {
+	position: absolute;
+	right: 12rpx;
+	bottom: 12rpx;
+	width: 80rpx;
+	height: 80rpx;
+}
+
+.dual-card-img {
+	width: 80rpx;
+	height: 80rpx;
+	border-radius: 10rpx;
+}
+
+/* 活动Tab */
+.section-tabs {
+	display: flex;
+	padding: 32rpx 24rpx 20rpx;
+}
+
+.section-tab {
+	font-size: 28rpx;
+	color: $text-hint;
+	margin-right: 48rpx;
+	padding-bottom: 8rpx;
+	position: relative;
+
+	&.active {
+		color: $text-primary;
+		font-weight: 700;
+
+		&::after {
+			content: '';
+			position: absolute;
+			bottom: 0;
+			left: 50%;
+			transform: translateX(-50%);
+			width: 32rpx;
+			height: 6rpx;
+			background: $green;
+			border-radius: 3rpx;
+		}
 	}
+}
+
+/* 商品双列网格 */
+.goods-grid {
+	display: flex;
+	padding: 0 24rpx;
+	gap: 16rpx;
+}
+
+.goods-column {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	gap: 16rpx;
+}
+
+.goods-card {
+	background: #fff;
+	border-radius: 20rpx;
+	overflow: hidden;
+	box-shadow: 0 4rpx 16rpx rgba(91, 140, 90, 0.06);
+}
+
+.goods-img {
+	width: 100%;
+	height: 340rpx;
+}
+
+.goods-info {
+	padding: 16rpx 20rpx 20rpx;
+}
+
+.goods-name {
+	font-size: 26rpx;
+	color: $text-primary;
+	display: -webkit-box;
+	-webkit-box-orient: vertical;
+	-webkit-line-clamp: 2;
+	overflow: hidden;
+	line-height: 1.4;
+}
+
+.goods-price-row {
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	margin-top: 12rpx;
+}
+
+.goods-price {
+	font-size: 32rpx;
+	color: $red;
+	font-weight: 700;
+}
+
+.goods-sales {
+	font-size: 20rpx;
+	color: $text-hint;
+}
+
+/* 加载更多 */
+.load-more {
+	padding: 40rpx 0;
+	text-align: center;
+}
+
+.load-more-text {
+	font-size: 24rpx;
+	color: $text-hint;
+}
 </style>

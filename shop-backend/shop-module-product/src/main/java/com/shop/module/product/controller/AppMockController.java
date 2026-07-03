@@ -72,8 +72,13 @@ public class AppMockController {
     public Map<String, Object> goodsList(
             @RequestParam(value = "categoryId", defaultValue = "0") Long categoryId,
             @RequestParam(value = "brandId", defaultValue = "0") Long brandId,
+            @RequestParam(value = "keyword", defaultValue = "") String keyword,
+            @RequestParam(value = "isHot", defaultValue = "0") int isHot,
+            @RequestParam(value = "isNew", defaultValue = "0") int isNew,
             @RequestParam(value = "page", defaultValue = "1") int page,
-            @RequestParam(value = "size", defaultValue = "10") int size) {
+            @RequestParam(value = "size", defaultValue = "10") int size,
+            @RequestParam(value = "sort", defaultValue = "default") String sort,
+            @RequestParam(value = "order", defaultValue = "desc") String order) {
         List<String> goodsNames = List.of(
                 "东阿阿胶糕", "同仁堂枸杞", "江中健胃消食片", "云南白药三七粉",
                 "百花蜂蜜", "宁夏枸杞王", "长白山人参", "铁皮石斛",
@@ -108,14 +113,41 @@ public class AppMockController {
                     "retailPrice", String.format("%.2f", price)
             ));
         }
-        Map<String, Object> goodsList = Map.of(
+
+        List<Map<String, Object>> filterCategory = List.of(
+                Map.of("id", 1, "name", "滋补养生", "checked", false),
+                Map.of("id", 2, "name", "茶饮花茶", "checked", false),
+                Map.of("id", 3, "name", "零食坚果", "checked", false)
+        );
+
+        Map<String, Object> goodsListMap = Map.of(
                 "records", records,
                 "current", page,
                 "size", size,
                 "total", total,
                 "pages", pages
         );
-        return ok(Map.of("goodsList", goodsList, "filterCategoryList", List.of(), "categoryId", categoryId));
+        return ok(Map.of("goodsList", goodsListMap, "filterCategory", filterCategory));
+    }
+
+    // =========== 热销/新品 ===========
+
+    @RequestMapping("/app-api/goods/hot")
+    public Map<String, Object> goodsHot() {
+        Map<String, Object> bannerInfo = Map.of(
+                "imgUrl", "https://picsum.photos/seed/hot/750/300",
+                "name", "热销爆款"
+        );
+        return ok(Map.of("bannerInfo", bannerInfo));
+    }
+
+    @RequestMapping("/app-api/goods/new")
+    public Map<String, Object> goodsNew() {
+        Map<String, Object> bannerInfo = Map.of(
+                "imgUrl", "https://picsum.photos/seed/new/750/300",
+                "name", "新品推荐"
+        );
+        return ok(Map.of("bannerInfo", bannerInfo));
     }
 
     // =========== 商品详情 ===========
@@ -126,27 +158,24 @@ public class AppMockController {
         String brief = "精选优质原料，传统工艺制作";
         double price = 29.9 + (id * 7.3) % 200;
 
-        // 轮播图
         List<Map<String, Object>> gallery = List.of(
                 Map.of("id", 1, "imgUrl", "https://picsum.photos/seed/dg1/600/600"),
                 Map.of("id", 2, "imgUrl", "https://picsum.photos/seed/dg2/600/600"),
                 Map.of("id", 3, "imgUrl", "https://picsum.photos/seed/dg3/600/600")
         );
 
-        // 商品基本信息
-        Map<String, Object> info = Map.of(
-                "id", id,
-                "name", name,
-                "goodsBrief", brief,
-                "retailPrice", String.format("%.2f", price),
-                "listPicUrl", "https://picsum.photos/seed/dg1/600/600",
-                "goodsDesc", "<p>" + name + "，源自道地产区，严格筛选，品质保证。</p>"
-        );
+        Map<String, Object> info = new LinkedHashMap<>();
+        info.put("id", id);
+        info.put("name", name);
+        info.put("goodsBrief", brief);
+        info.put("retailPrice", String.format("%.2f", price));
+        info.put("counterPrice", String.format("%.2f", price * 1.5));
+        info.put("sellVolume", 328);
+        info.put("listPicUrl", "https://picsum.photos/seed/dg1/600/600");
+        info.put("goodsDesc", "<p><img src='https://picsum.photos/seed/desc1/750/400'/></p><p>" + name + "，源自道地产区，严格筛选，品质保证。</p><p><img src='https://picsum.photos/seed/desc2/750/400'/></p>");
 
-        // 品牌
         Map<String, Object> brand = Map.of("id", 1, "name", "药食同源精选");
 
-        // 参数
         List<Map<String, Object>> attribute = List.of(
                 Map.of("name", "产地", "value", "中国"),
                 Map.of("name", "品牌", "value", "药食同源精选"),
@@ -155,32 +184,25 @@ public class AppMockController {
                 Map.of("name", "储存方式", "value", "密封、阴凉、干燥处")
         );
 
-        // 常见问题
         List<Map<String, Object>> issue = List.of(
-                Map.of("id", 1, "question", "如何保存？",
-                        "answer", "请密封后放置于阴凉干燥处，避免阳光直射。"),
-                Map.of("id", 2, "question", "保质期多久？",
-                        "answer", "保质期为24个月，请在有效期内食用。"),
-                Map.of("id", 3, "question", "如何食用？",
-                        "answer", "可直接食用，也可泡水或煲汤，建议每日10-20g。")
+                Map.of("id", 1, "question", "如何保存？", "answer", "请密封后放置于阴凉干燥处，避免阳光直射。"),
+                Map.of("id", 2, "question", "保质期多久？", "answer", "保质期为24个月，请在有效期内食用。"),
+                Map.of("id", 3, "question", "如何食用？", "answer", "可直接食用，也可泡水或煲汤，建议每日10-20g。")
         );
 
-        // 规格列表
+        List<Map<String, Object>> specValueList = new ArrayList<>();
+        specValueList.add(new LinkedHashMap<>(Map.of("id", 1, "specificationId", 1, "value", "250g", "checked", false)));
+        specValueList.add(new LinkedHashMap<>(Map.of("id", 2, "specificationId", 1, "value", "500g", "checked", false)));
+
         List<Map<String, Object>> specificationList = List.of(
-                Map.of("specificationId", 1, "name", "规格",
-                        "valueList", List.of(
-                                Map.of("id", 1, "value", "250g", "checked", false),
-                                Map.of("id", 2, "value", "500g", "checked", false)
-                        ))
+                Map.of("specificationId", 1, "name", "规格", "valueList", specValueList)
         );
 
-        // SKU
         List<Map<String, Object>> productList = List.of(
                 Map.of("id", 101, "goodsSpecificationIds", "1", "goodsNumber", 99),
                 Map.of("id", 102, "goodsSpecificationIds", "2", "goodsNumber", 50)
         );
 
-        // 评价
         Map<String, Object> comment = Map.of(
                 "count", 12,
                 "data", Map.of(
@@ -192,22 +214,21 @@ public class AppMockController {
                 )
         );
 
-        return ok(Map.of(
-                "info", info,
-                "gallery", gallery,
-                "brand", brand,
-                "attribute", attribute,
-                "issue", issue,
-                "specificationList", specificationList,
-                "productList", productList,
-                "comment", comment,
-                "userHasCollect", 0
-        ));
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("info", info);
+        data.put("gallery", gallery);
+        data.put("brand", brand);
+        data.put("attribute", attribute);
+        data.put("issue", issue);
+        data.put("specificationList", specificationList);
+        data.put("productList", productList);
+        data.put("comment", comment);
+        data.put("userHasCollect", 0);
+        return ok(data);
     }
 
     @RequestMapping("/app-api/goods/related")
-    public Map<String, Object> goodsRelated(
-            @RequestParam(value = "id", defaultValue = "1") Long id) {
+    public Map<String, Object> goodsRelated(@RequestParam(value = "id", defaultValue = "1") Long id) {
         List<Map<String, Object>> goodsList = new ArrayList<>();
         for (int i = 1; i <= 4; i++) {
             long relatedId = (id + i) % 68 + 1;
@@ -222,7 +243,242 @@ public class AppMockController {
         return ok(Map.of("goodsList", goodsList));
     }
 
+    // =========== 购物车 ===========
+
+    @RequestMapping("/app-api/cart/goodscount")
+    public Map<String, Object> cartGoodsCount() {
+        return ok(Map.of("cartTotal", Map.of("goodsCount", 2)));
+    }
+
+    @RequestMapping("/app-api/cart/index")
+    public Map<String, Object> cartIndex() {
+        List<Map<String, Object>> cartList = new ArrayList<>();
+        cartList.add(makeCartItem(1, 101, "东阿阿胶糕 250g", "250g", 99.90, 1));
+        cartList.add(makeCartItem(2, 102, "同仁堂枸杞 500g", "500g", 49.90, 2));
+
+        Map<String, Object> cartTotal = Map.of(
+                "goodsCount", 3,
+                "goodsAmount", 199.70,
+                "checkedGoodsCount", 3,
+                "checkedGoodsAmount", 199.70
+        );
+        return ok(Map.of("cartList", cartList, "cartTotal", cartTotal));
+    }
+
+    @RequestMapping("/app-api/cart/add")
+    public Map<String, Object> cartAdd(@RequestParam(value = "goodsId", defaultValue = "1") Long goodsId,
+                                        @RequestParam(value = "number", defaultValue = "1") int number,
+                                        @RequestParam(value = "productId", defaultValue = "101") Long productId) {
+        return ok(Map.of("cartTotal", Map.of("goodsCount", number + 2)));
+    }
+
+    @RequestMapping("/app-api/buy/add")
+    public Map<String, Object> buyAdd(@RequestParam(value = "goodsId", defaultValue = "1") Long goodsId,
+                                       @RequestParam(value = "number", defaultValue = "1") int number,
+                                       @RequestParam(value = "productId", defaultValue = "101") Long productId) {
+        return ok(Map.of());
+    }
+
+    @RequestMapping("/app-api/cart/update")
+    public Map<String, Object> cartUpdate(@RequestParam(value = "id", defaultValue = "1") Long id,
+                                           @RequestParam(value = "number", defaultValue = "1") int number,
+                                           @RequestParam(value = "goodsId", defaultValue = "1") Long goodsId,
+                                           @RequestParam(value = "productId", defaultValue = "101") Long productId) {
+        return ok(Map.of());
+    }
+
+    @RequestMapping("/app-api/cart/delete")
+    public Map<String, Object> cartDelete() {
+        List<Map<String, Object>> cartList = new ArrayList<>();
+        cartList.add(makeCartItem(1, 101, "东阿阿胶糕 250g", "250g", 99.90, 1));
+        Map<String, Object> cartTotal = Map.of(
+                "goodsCount", 1,
+                "goodsAmount", 99.90,
+                "checkedGoodsCount", 0,
+                "checkedGoodsAmount", 0.00
+        );
+        return ok(Map.of("cartList", cartList, "cartTotal", cartTotal));
+    }
+
+    @RequestMapping("/app-api/cart/checked")
+    public Map<String, Object> cartChecked(@RequestParam(value = "productIds", defaultValue = "") String productIds,
+                                            @RequestParam(value = "isChecked", defaultValue = "1") int isChecked) {
+        List<Map<String, Object>> cartList = new ArrayList<>();
+        cartList.add(makeCartItem(1, 101, "东阿阿胶糕 250g", "250g", 99.90, 1));
+        cartList.add(makeCartItem(2, 102, "同仁堂枸杞 500g", "500g", 49.90, 2));
+
+        double checkedAmount = isChecked == 1 ? 199.70 : 0.00;
+        int checkedCount = isChecked == 1 ? 3 : 0;
+        Map<String, Object> cartTotal = Map.of(
+                "goodsCount", 3,
+                "goodsAmount", 199.70,
+                "checkedGoodsCount", checkedCount,
+                "checkedGoodsAmount", checkedAmount
+        );
+        return ok(Map.of("cartList", cartList, "cartTotal", cartTotal));
+    }
+
+    @RequestMapping("/app-api/cart/checkout")
+    public Map<String, Object> cartCheckout(@RequestParam(value = "addressId", defaultValue = "0") Long addressId,
+                                             @RequestParam(value = "couponId", defaultValue = "0") Long couponId,
+                                             @RequestParam(value = "type", defaultValue = "cart") String type) {
+        List<Map<String, Object>> checkedGoodsList = List.of(
+                Map.of("id", 1, "goodsId", 1, "goodsName", "东阿阿胶糕", "listPicUrl", "https://picsum.photos/seed/goods0/200/200",
+                        "retailPrice", 99.90, "number", 1, "goodsSpecifitionNameValue", "250g"),
+                Map.of("id", 2, "goodsId", 2, "goodsName", "同仁堂枸杞", "listPicUrl", "https://picsum.photos/seed/goods1/200/200",
+                        "retailPrice", 49.90, "number", 2, "goodsSpecifitionNameValue", "500g")
+        );
+
+        Map<String, Object> checkedAddress = new LinkedHashMap<>();
+        checkedAddress.put("id", 1);
+        checkedAddress.put("userName", "张三");
+        checkedAddress.put("telNumber", "13800138000");
+        checkedAddress.put("fullRegion", "北京市朝阳区");
+        checkedAddress.put("detailInfo", "望京SOHO T3 1201");
+        checkedAddress.put("isDefault", 1);
+
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("checkedGoodsList", checkedGoodsList);
+        data.put("checkedAddress", checkedAddress);
+        data.put("actualPrice", 189.70);
+        data.put("checkedCoupon", null);
+        data.put("couponList", List.of());
+        data.put("couponPrice", 0.00);
+        data.put("freightPrice", 0.00);
+        data.put("goodsTotalPrice", 199.70);
+        data.put("orderTotalPrice", 199.70);
+        return ok(data);
+    }
+
+    // =========== 收藏 ===========
+
+    @RequestMapping("/app-api/collect/addordelete")
+    public Map<String, Object> collectAddOrDelete(@RequestParam(value = "typeId", defaultValue = "0") int typeId,
+                                                   @RequestParam(value = "valueId", defaultValue = "1") Long valueId) {
+        return ok(Map.of("type", "add"));
+    }
+
+    @RequestMapping("/app-api/collect/list")
+    public Map<String, Object> collectList() {
+        return ok(Map.of("collectList", List.of(), "totalPages", 0));
+    }
+
+    // =========== 订单 ===========
+
+    @RequestMapping("/app-api/order/submit")
+    public Map<String, Object> orderSubmit() {
+        Map<String, Object> orderInfo = Map.of("id", 10001, "orderSn", "202607030001");
+        return ok(Map.of("orderInfo", orderInfo));
+    }
+
+    @RequestMapping("/app-api/order/list")
+    public Map<String, Object> orderList(@RequestParam(value = "page", defaultValue = "1") int page,
+                                          @RequestParam(value = "size", defaultValue = "10") int size) {
+        List<Map<String, Object>> list = List.of(
+                Map.of("id", 10001, "orderSn", "202607030001", "orderStatusText", "已完成",
+                        "actualPrice", "199.70",
+                        "handleOption", Map.of("pay", false, "cancel", false),
+                        "goodsList", List.of(
+                                Map.of("id", 1, "goodsName", "东阿阿胶糕", "number", 1,
+                                        "listPicUrl", "https://picsum.photos/seed/goods0/200/200")
+                        ))
+        );
+        return ok(Map.of("list", list, "page", page, "total", 1));
+    }
+
+    @RequestMapping("/app-api/order/detail")
+    public Map<String, Object> orderDetail(@RequestParam(value = "id", defaultValue = "10001") Long id) {
+        Map<String, Object> orderInfo = new LinkedHashMap<>();
+        orderInfo.put("id", id);
+        orderInfo.put("orderSn", "202607030001");
+        orderInfo.put("orderStatusText", "已完成");
+        orderInfo.put("actualPrice", "199.70");
+        orderInfo.put("goodsList", List.of(
+                Map.of("id", 1, "goodsName", "东阿阿胶糕", "number", 1, "retailPrice", "99.90",
+                        "listPicUrl", "https://picsum.photos/seed/goods0/200/200", "goodsSpecifitionNameValue", "250g")
+        ));
+        return ok(Map.of("orderInfo", orderInfo));
+    }
+
+    @RequestMapping("/app-api/pay/prepay")
+    public Map<String, Object> payPrepay(@RequestParam(value = "orderId", defaultValue = "10001") Long orderId) {
+        return ok(Map.of(
+                "timeStamp", String.valueOf(System.currentTimeMillis() / 1000),
+                "nonceStr", "mock_nonce",
+                "package", "prepay_id=mock_prepay",
+                "signType", "MD5",
+                "paySign", "mock_sign"
+        ));
+    }
+
+    @RequestMapping("/app-api/pay/query")
+    public Map<String, Object> payQuery(@RequestParam(value = "orderId", defaultValue = "10001") Long orderId) {
+        return ok(Map.of("orderStatus", "paid"));
+    }
+
+    // =========== 搜索 ===========
+
+    @RequestMapping("/app-api/search/index")
+    public Map<String, Object> searchIndex() {
+        List<String> historyKeywordList = List.of("阿胶", "枸杞", "人参");
+        List<Map<String, Object>> hotKeywordList = List.of(
+                Map.of("keyword", "阿胶糕", "isHot", 1),
+                Map.of("keyword", "枸杞", "isHot", 1),
+                Map.of("keyword", "黑芝麻丸", "isHot", 0),
+                Map.of("keyword", "人参", "isHot", 0),
+                Map.of("keyword", "蜂蜜", "isHot", 0),
+                Map.of("keyword", "花茶", "isHot", 0)
+        );
+        Map<String, Object> defaultKeyword = Map.of("keyword", "阿胶糕");
+        return ok(Map.of("historyKeywordList", historyKeywordList,
+                "hotKeywordList", hotKeywordList, "defaultKeyword", defaultKeyword));
+    }
+
+    @RequestMapping("/app-api/search/helper")
+    public Map<String, Object> searchHelper(@RequestParam(value = "keyword", defaultValue = "") String keyword) {
+        List<String> data = List.of(keyword + "糕", keyword + "茶", keyword + "丸", keyword + "片");
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("code", 0);
+        result.put("msg", "success");
+        result.put("data", data);
+        return result;
+    }
+
+    @RequestMapping("/app-api/search/clearhistory")
+    public Map<String, Object> searchClearHistory() {
+        return ok(Map.of());
+    }
+
+    // =========== 优惠券 ===========
+
+    @RequestMapping("/app-api/coupon/list")
+    public Map<String, Object> couponList() {
+        List<Map<String, Object>> data = List.of(
+                Map.of("id", 1, "name", "新人专享券", "typeMoney", 10, "minGoodsAmount", 99,
+                        "useEndDate", "2026-12-31", "couponStatus", 1),
+                Map.of("id", 2, "name", "满减优惠券", "typeMoney", 20, "minGoodsAmount", 199,
+                        "useEndDate", "2026-08-31", "couponStatus", 1),
+                Map.of("id", 3, "name", "会员折扣券", "typeMoney", 50, "minGoodsAmount", 399,
+                        "useEndDate", "2026-06-01", "couponStatus", 3)
+        );
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("code", 0);
+        result.put("msg", "success");
+        result.put("data", data);
+        return result;
+    }
+
     // =========== 品牌 ===========
+
+    @RequestMapping("/app-api/brand/list")
+    public Map<String, Object> brandList() {
+        List<Map<String, Object>> brandList = List.of(
+                Map.of("id", 1, "name", "东阿阿胶", "picUrl", "https://picsum.photos/seed/brand1/200/200", "floorPrice", "99.00"),
+                Map.of("id", 2, "name", "同仁堂", "picUrl", "https://picsum.photos/seed/brand2/200/200", "floorPrice", "59.00"),
+                Map.of("id", 3, "name", "江中", "picUrl", "https://picsum.photos/seed/brand3/200/200", "floorPrice", "39.00")
+        );
+        return ok(Map.of("brandList", brandList, "totalPages", 1));
+    }
 
     @RequestMapping("/app-api/brand/detail")
     public Map<String, Object> brandDetail(@RequestParam(value = "id", defaultValue = "1") Long id) {
@@ -300,14 +556,39 @@ public class AppMockController {
         return ok(Map.of("records", records, "total", 2));
     }
 
-    // =========== 购物车 ===========
+    // =========== 地址 ===========
 
-    @RequestMapping("/app-api/cart/goodscount")
-    public Map<String, Object> cartGoodsCount() {
-        return ok(Map.of("cartTotal", Map.of("goodsCount", 0)));
+    @RequestMapping("/app-api/address/list")
+    public Map<String, Object> addressList() {
+        List<Map<String, Object>> list = List.of(
+                Map.of("id", 1, "userName", "张三", "telNumber", "13800138000",
+                        "fullRegion", "北京市朝阳区", "detailInfo", "望京SOHO T3 1201", "isDefault", 1)
+        );
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("code", 0);
+        result.put("msg", "success");
+        result.put("data", list);
+        return result;
     }
 
-    // =========== 我的页面 ===========
+    @RequestMapping("/app-api/address/save")
+    public Map<String, Object> addressSave() {
+        return ok(Map.of());
+    }
+
+    @RequestMapping("/app-api/address/delete")
+    public Map<String, Object> addressDelete() {
+        return ok(Map.of());
+    }
+
+    // =========== 足迹 ===========
+
+    @RequestMapping("/app-api/footprint/list")
+    public Map<String, Object> footprintList() {
+        return ok(Map.of("list", List.of(), "totalPages", 0));
+    }
+
+    // =========== 用户 ===========
 
     @RequestMapping("/app-api/user/info")
     public Map<String, Object> userInfo() {
@@ -320,7 +601,40 @@ public class AppMockController {
         ));
     }
 
+    // =========== 帮助中心 ===========
+
+    @RequestMapping("/app-api/helpissue/typeList")
+    public Map<String, Object> helpTypeList() {
+        return ok(Map.of("list", List.of(
+                Map.of("id", 1, "name", "商品相关"),
+                Map.of("id", 2, "name", "订单相关"),
+                Map.of("id", 3, "name", "配送相关")
+        )));
+    }
+
+    @RequestMapping("/app-api/helpissue/issueList")
+    public Map<String, Object> helpIssueList() {
+        return ok(Map.of("list", List.of(
+                Map.of("id", 1, "question", "如何退货？", "answer", "在订单详情页点击申请退货即可"),
+                Map.of("id", 2, "question", "发货时间？", "answer", "一般下单后48小时内发货")
+        )));
+    }
+
     // --- helper ---
+
+    private Map<String, Object> makeCartItem(long id, long productId, String name, String spec, double price, int number) {
+        Map<String, Object> item = new LinkedHashMap<>();
+        item.put("id", id);
+        item.put("goodsId", id);
+        item.put("productId", productId);
+        item.put("goodsName", name);
+        item.put("goodsSpecifitionNameValue", spec);
+        item.put("listPicUrl", "https://picsum.photos/seed/goods" + id + "/200/200");
+        item.put("retailPrice", price);
+        item.put("number", number);
+        item.put("checked", true);
+        return item;
+    }
 
     private String getCategoryName(Long id) {
         return switch (id.intValue()) {

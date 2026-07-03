@@ -1,276 +1,231 @@
 <template>
-  <view class="comments">
-    <view class="h">
-      <view :class="'item ' + (showType == 0 ? 'active' : '')" @tap="switchTab">
-        <view class="txt">全部({{allCount}})</view>
-      </view>
-      <view :class="'item ' + (showType == 0 ? 'active' : '')" @tap="switchTab">
-        <view class="txt">有图({{hasPicCount}})</view>
-      </view>
-    </view>
-    <view class="b">
-      <view class="item" v-for="item in comments" :key="item.id">
-        <view class="info">
-          <view class="user">
-            <image :src="item.userInfo.avatar"></image>
-            <text>{{item.userInfo.nickname}}</text>
-          </view>
-          <view class="time">{{item.addTime}}</view>
-        </view>
-        <view class="comment">{{item.content}}</view>
-        <view class="imgs" v-if="item.picList.length > 0">
-          <image class="img" v-for="pitem in item.picList" :key="pitem.id" :src="pitem.picUrl"></image>
-        </view>
-        <view class="spec">
-          <!-- <text class="item">白色 2件</text> -->
-        </view>
-        <!--<view class="customer-service" v-if="item.commentReplyVO">
-          <text class="u">小选回复：</text>
-          <text class="c">{{item.commentReplyVO.replyContent}}</text>
-        </view>-->
-      </view>
-
-    </view>
-  </view>
-
+	<view class="container">
+		<view class="tab-bar">
+			<view :class="'tab-item ' + (showType == 0 ? 'active' : '')" @tap="switchTab(0)">
+				<text class="tab-text">全部({{allCount}})</text>
+			</view>
+			<view :class="'tab-item ' + (showType == 1 ? 'active' : '')" @tap="switchTab(1)">
+				<text class="tab-text">有图({{hasPicCount}})</text>
+			</view>
+		</view>
+		<view class="comment-list">
+			<view class="comment-item" v-for="item in comments" :key="item.id">
+				<view class="comment-header">
+					<view class="comment-user">
+						<image class="user-avatar" :src="item.userInfo.avatar"></image>
+						<text class="user-name">{{item.userInfo.nickname}}</text>
+					</view>
+					<text class="comment-time">{{item.addTime}}</text>
+				</view>
+				<view class="comment-content">{{item.content}}</view>
+				<view class="comment-imgs" v-if="item.picList && item.picList.length > 0">
+					<image class="comment-pic" v-for="pitem in item.picList" :key="pitem.id" :src="pitem.picUrl" mode="aspectFill"></image>
+				</view>
+			</view>
+			<view class="empty-view" v-if="comments.length === 0">
+				<text class="empty-text">暂无评论</text>
+			</view>
+		</view>
+	</view>
 </template>
 
 <script>
-  const api = require('@/utils/api.js');
-  const util = require("@/utils/util.js");
+	const api = require('@/utils/api.js');
+	const util = require("@/utils/util.js");
 	export default {
 		data() {
 			return {
-        comments: [],
-        allCommentList: [],
-        picCommentList: [],
-        typeId: 0,
-        valueId: 0,
-        showType: 0,
-        allCount: 0,
-        hasPicCount: 0,
-        allPage: 1,
-        picPage: 1,
-        size: 20
+				comments: [],
+				allCommentList: [],
+				picCommentList: [],
+				typeId: 0,
+				valueId: 0,
+				showType: 0,
+				allCount: 0,
+				hasPicCount: 0,
+				allPage: 1,
+				picPage: 1,
+				size: 20
 			}
 		},
 		methods: {
-      getCommentCount: function () {
-        let that = this;
-        util.request(api.CommentCount, { valueId: that.valueId, typeId: that.typeId}).then(function (res) {
-          if (res.code === 0) {
-            that.allCount = res.data.allCount
-            that.hasPicCount = res.data.hasPicCount
-          }
-        });
-      },
-      getCommentList: function(){
-        let that = this;
-        util.request(api.CommentList, {
-          valueId: that.valueId,
-          typeId: that.typeId,
-          size: that.size,
-          page: (that.showType == 0 ? that.allPage : that.picPage),
-          showType: that.showType
-        }).then(function (res) {
-          if (res.code === 0) {
-            if (that.showType == 0) {
-              that.allCommentList = that.allCommentList.concat(res.data.data)
-              that.allPage = res.data.currentPage
-              that.comments = that.allCommentList.concat(res.data.data)
-            } else {
-              that.picCommentList = that.picCommentList.concat(res.data.data)
-              that.picPage = res.data.currentPage
-              that.comments = that.picCommentList.concat(res.data.data)
-            }
-          }
-        });
-      },
-      switchTab: function () {
-        this.showType = this.showType == 1 ? 0 :1
-
-        this.getCommentList();
-      }
+			getCommentCount: function() {
+				let that = this;
+				util.request(api.CommentCount, { valueId: that.valueId, typeId: that.typeId }).then(function(res) {
+					if (res.code === 0) {
+						that.allCount = res.data.allCount || 0;
+						that.hasPicCount = res.data.hasPicCount || 0;
+					}
+				});
+			},
+			getCommentList: function() {
+				let that = this;
+				util.request(api.CommentList, {
+					valueId: that.valueId,
+					typeId: that.typeId,
+					size: that.size,
+					page: (that.showType == 0 ? that.allPage : that.picPage),
+					showType: that.showType
+				}).then(function(res) {
+					if (res.code === 0) {
+						let data = res.data.data || res.data.records || [];
+						if (that.showType == 0) {
+							that.allCommentList = that.allCommentList.concat(data);
+							that.comments = that.allCommentList;
+						} else {
+							that.picCommentList = that.picCommentList.concat(data);
+							that.comments = that.picCommentList;
+						}
+					}
+				});
+			},
+			switchTab: function(type) {
+				if (this.showType === type) return;
+				this.showType = type;
+				if (type === 0) {
+					this.comments = this.allCommentList;
+				} else {
+					this.comments = this.picCommentList;
+				}
+				if (this.comments.length === 0) {
+					this.getCommentList();
+				}
+			}
 		},
-    onLoad: function (options) {
-      // 页面初始化 options为页面跳转所带来的参数
-      this.typeId= options.typeId
-      this.valueId = options.valueId
-      this.getCommentCount();
-      this.getCommentList();
-    },
-    onReachBottom: function(){
-      if ( this.showType == 0) {
-        if (this.allCount / this.size < this.allPage) {
-          return false;
-        }
-        this.allPage ++;
-      } else {
-        if (this.hasPicCount / this.size < this.picPage) {
-          return false;
-        }
-        this.picPage ++
-      }
-      this.getCommentList();
-    }
+		onLoad: function(options) {
+			this.typeId = options.typeId;
+			this.valueId = options.valueId;
+			this.getCommentCount();
+			this.getCommentList();
+		},
+		onReachBottom: function() {
+			if (this.showType == 0) {
+				if (this.allCount / this.size < this.allPage) return;
+				this.allPage++;
+			} else {
+				if (this.hasPicCount / this.size < this.picPage) return;
+				this.picPage++;
+			}
+			this.getCommentList();
+		}
 	}
 </script>
 
-<style>
-.comments{
-  width: 100%;
-  height: auto;
-  padding-left:30rpx;
-  background: #fff;
-  margin: 20rpx 0;
-}
+<style lang="scss">
+	$green: #5B8C5A;
+	$green-light: #7BAF7A;
+	$green-bg: #F6F7F4;
 
-.comments .h{
-  position: fixed;
-  left:0;
-  top:0;
-  z-index: 1000;
-  width: 100%;
-  display: flex;
-  background: #fff;
-  height: 84rpx;
-  border-bottom: 1px solid rgba(0,0,0,.15);
-}
+	page {
+		background: $green-bg;
+	}
 
-.comments .h .item{
-  display: inline-block;
-  height: 82rpx;
-  width: 50%;
-  padding: 0 15rpx;
-  text-align: center;
-}
+	.container {
+		padding-top: 90rpx;
+	}
 
-.comments .h .item .txt{
-  display: inline-block;
-  height: 82rpx;
-  padding: 0 20rpx;
-  line-height: 82rpx;
-  color: #333;
-  font-size: 30rpx;
-  width: 170rpx;
-}
+	.tab-bar {
+		position: fixed;
+		top: 0;
+		left: 0;
+		z-index: 100;
+		width: 100%;
+		display: flex;
+		background: #fff;
+		height: 84rpx;
+		box-shadow: 0 2rpx 8rpx rgba(0,0,0,0.05);
+	}
 
-.comments .h .item.active .txt{
-  color: #ab2b2b;
-  border-bottom: 4rpx solid #ab2b2b;
-}
+	.tab-item {
+		flex: 1;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		height: 84rpx;
+	}
 
-.comments .b{
-  margin-top: 85rpx;
-  height: auto;
-  width: 720rpx;
-}
+	.tab-text {
+		font-size: 28rpx;
+		color: #666;
+		height: 80rpx;
+		line-height: 80rpx;
+		padding: 0 10rpx;
+	}
 
-.comments .b.no-h{
-  margin-top: 0;
-}
+	.tab-item.active .tab-text {
+		color: $green;
+		font-weight: 500;
+		border-bottom: 4rpx solid $green;
+	}
 
-.comments .item{
-  height: auto;
-  width: 720rpx;
-  overflow: hidden;
-  border-bottom: 1px solid #d9d9d9;
-  padding-bottom: 25rpx;
-}
+	.comment-list {
+		padding: 20rpx 24rpx;
+	}
 
-.comments .info{
-  height: 127rpx;
-  width: 100%;
-  padding: 33rpx 0 27rpx 0;
-}
+	.comment-item {
+		background: #fff;
+		border-radius: 16rpx;
+		padding: 28rpx;
+		margin-bottom: 16rpx;
+		box-shadow: 0 2rpx 8rpx rgba(91,140,90,0.06);
+	}
 
-.comments .user{
-  float: left;
-  width: auto;
-  height: 67rpx;
-  line-height: 67rpx;
-  font-size: 0;
-}
+	.comment-header {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		margin-bottom: 18rpx;
+	}
 
-.comments .user image{
-  float: left;
-  width: 67rpx;
-  height: 67rpx;
-  margin-right: 17rpx;
-  border-radius: 50%;
-}
+	.comment-user {
+		display: flex;
+		align-items: center;
+	}
 
-.comments .user text{
-  display: inline-block;
-  width: auto;
-  height: 66rpx;
-  overflow: hidden;
-  font-size: 29rpx;
-  line-height: 66rpx;
-}
+	.user-avatar {
+		width: 60rpx;
+		height: 60rpx;
+		border-radius: 50%;
+		margin-right: 14rpx;
+	}
 
-.comments .time{
-  display: block;
-  float: right;
-  width: auto;
-  height: 67rpx;
-  line-height: 67rpx;
-  color: #7f7f7f;
-  font-size: 25rpx;
-  margin-right: 30rpx;
-}
+	.user-name {
+		font-size: 26rpx;
+		color: #333;
+	}
 
-.comments .comment{
-  width: 720rpx;
-  padding-right: 30rpx;
-  line-height: 45.8rpx;
-  font-size: 29rpx;
-  margin-bottom: 16rpx;
-}
+	.comment-time {
+		font-size: 22rpx;
+		color: #999;
+	}
 
-.comments .imgs{
-  width: 720rpx;
-  height: 150rpx;
-  margin-bottom: 25rpx;
-}
+	.comment-content {
+		font-size: 28rpx;
+		color: #333;
+		line-height: 1.7;
+		margin-bottom: 16rpx;
+	}
 
-.comments .imgs .img{
-  height: 150rpx;
-  width: 150rpx;
-  margin-right: 28rpx;
-}
+	.comment-imgs {
+		display: flex;
+		flex-wrap: wrap;
+	}
 
-.comments .spec{
-  width: 720rpx;
-  height: 25rpx;
-  font-size: 24rpx;
-  color: #999;
-}
+	.comment-pic {
+		width: 150rpx;
+		height: 150rpx;
+		border-radius: 8rpx;
+		margin-right: 12rpx;
+		margin-bottom: 12rpx;
+	}
 
-.comments .spec .item{
-  color: #7f7f7f;
-  font-size: 25rpx;
-}
+	.empty-view {
+		padding: 100rpx 0;
+		text-align: center;
+	}
 
-.comments .customer-service{
-  width: 690rpx;
-  height: auto;
-  overflow: hidden;
-  margin-top: 23rpx;
-  background: rgba(0,0,0,.03);
-  padding: 21rpx;
-}
-
-
-.comments .customer-service .u{
-  font-size: 24rpx;
-  color: #333;
-  line-height: 37.5rpx;
-}
-
-.comments .customer-service .c{
-  font-size: 24rpx;
-  color: #999;
-  line-height: 37.5rpx;
-}
+	.empty-text {
+		font-size: 28rpx;
+		color: #999;
+	}
 </style>

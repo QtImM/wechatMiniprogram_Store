@@ -1,18 +1,19 @@
 <template>
 	<view class="container">
 		<view class="brand-list">
-			<navigator :url="'../brandDetail/brandDetail?id='+item.id" class="item" v-for="(item, index) in brandList" :key="index">
-				<view class="img-bg">
-					<image :src="item.appListPicUrl" background-size="cover"></image>
-				</view>
-				<view class="txt-box">
-					<view class="line">
-						<text class="name">{{item.name||''}}</text>
-						<text class="s">|</text>
-						<text class="price">{{item.floorPrice||0}}元起</text>
+			<navigator :url="'../brandDetail/brandDetail?id='+item.id" class="brand-card" v-for="(item, index) in brandList" :key="index">
+				<view class="brand-img">
+					<image :src="item.appListPicUrl || item.picUrl" mode="aspectFill"></image>
+					<view class="brand-overlay"></view>
+					<view class="brand-info">
+						<text class="brand-name">{{item.name||''}}</text>
+						<text class="brand-price">{{item.floorPrice||0}}元起</text>
 					</view>
 				</view>
 			</navigator>
+		</view>
+		<view class="empty-view" v-if="brandList.length === 0">
+			<text class="empty-text">暂无品牌数据</text>
 		</view>
 	</view>
 </template>
@@ -37,20 +38,23 @@
 					size: that.size
 				}).then(function(res) {
 					if (res.code === 0) {
-						that.brandList = that.brandList.concat(res.data.records)
-						that.totalPages = res.data.total
+						let data = res.data;
+						if (data.records) {
+							that.brandList = that.brandList.concat(data.records);
+							that.totalPages = data.pages || 1;
+						} else if (data.brandList) {
+							that.brandList = that.brandList.concat(data.brandList);
+							that.totalPages = data.totalPages || 1;
+						}
 					}
 				});
 			}
 		},
 		onReachBottom() {
 			if (this.totalPages > this.page) {
-				this.page = this.page + 1
-			} else {
-				return false;
+				this.page = this.page + 1;
+				this.getBrandList();
 			}
-
-			this.getBrandList();
 		},
 		onLoad: function() {
 			this.getBrandList();
@@ -59,56 +63,86 @@
 </script>
 
 <style lang="scss">
-	.brand-list .item {
+	$green: #5B8C5A;
+	$green-light: #7BAF7A;
+	$green-bg: #F6F7F4;
+	$gold: #B8860B;
+
+	page {
+		background: $green-bg;
+	}
+
+	.container {
+		padding: 24rpx;
+	}
+
+	.brand-list {
+		width: 100%;
+	}
+
+	.brand-card {
 		display: block;
-		width: 750rpx;
-		height: 416rpx;
-		position: relative;
-		margin-bottom: 4rpx;
-	}
-
-	.brand-list .item .img-bg {
-		position: absolute;
-		left: 0;
-		top: 0;
-		z-index: 0;
-		width: 750rpx;
-		height: 417rpx;
+		width: 100%;
+		height: 360rpx;
+		border-radius: 20rpx;
 		overflow: hidden;
+		margin-bottom: 24rpx;
+		box-shadow: 0 4rpx 20rpx rgba(91,140,90,0.12);
 	}
 
-	.brand-list .item .img-bg image {
-		width: 750rpx;
-		height: 416rpx;
+	.brand-img {
+		position: relative;
+		width: 100%;
+		height: 100%;
+
+		image {
+			width: 100%;
+			height: 100%;
+		}
 	}
 
-	.brand-list .item .txt-box {
+	.brand-overlay {
 		position: absolute;
 		left: 0;
-		top: 0;
-		display: table;
-		z-index: 0;
-		width: 750rpx;
-		height: 417rpx;
+		bottom: 0;
+		width: 100%;
+		height: 50%;
+		background: linear-gradient(to top, rgba(0,0,0,0.55), transparent);
 	}
 
-	.brand-list .item .line {
-		display: table-cell;
-		vertical-align: middle;
-		text-align: center;
-		height: 63rpx;
-		line-height: 63rpx;
+	.brand-info {
+		position: absolute;
+		left: 0;
+		bottom: 0;
+		width: 100%;
+		padding: 30rpx 32rpx;
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
 	}
 
-	.brand-list .item .line text {
-		font-size: 35rpx;
-		font-weight: 700;
-		text-shadow: 1rpx 1rpx rgba(0, 0, 0, .32);
+	.brand-name {
+		font-size: 34rpx;
+		font-weight: bold;
 		color: #fff;
+		letter-spacing: 2rpx;
 	}
 
-	.brand-list .item .line .s {
-		padding: 0 10rpx;
-		font-size: 40rpx;
+	.brand-price {
+		font-size: 26rpx;
+		color: $gold;
+		background: rgba(255,255,255,0.15);
+		padding: 6rpx 18rpx;
+		border-radius: 20rpx;
+	}
+
+	.empty-view {
+		padding-top: 200rpx;
+		text-align: center;
+	}
+
+	.empty-text {
+		font-size: 28rpx;
+		color: #999;
 	}
 </style>

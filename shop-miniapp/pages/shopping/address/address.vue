@@ -1,27 +1,25 @@
 <template>
 	<view class="container">
 		<view class="address-list" v-if="addressList.length > 0">
-			<view class="item" v-for="(item, index) in addressList" :key="item.id" @tap="selectAddress" :data-address-id="item.id">
-				<view class="l">
-					<view class="name">{{item.userName||''}}</view>
-					<view class="default" v-if="item.isDefault">默认</view>
+			<view class="address-card" v-for="(item, index) in addressList" :key="item.id" @tap="selectAddress(item.id)">
+				<view class="card-header">
+					<view class="user-name">{{item.userName||''}}</view>
+					<view class="default-tag" v-if="item.isDefault">默认</view>
+					<view class="user-tel">{{item.telNumber}}</view>
 				</view>
-				<view class="c">
-					<view class="mobile">{{item.telNumber}}</view>
-					<view class="address">{{item.fullRegion+item.detailInfo}}</view>
-				</view>
-				<view class="r">
-					<image @click.stop.prevent="addressAddOrUpdate" :data-address-id="item.id" class="del" src="http://yanxuan.nosdn.127.net/hxm/yanxuan-wap/p/20161201/style/img/icon-normal/address-edit-7fee7b0d63.png"></image>
+				<view class="card-address">{{item.fullRegion + item.detailInfo}}</view>
+				<view class="card-edit" @tap.stop="addressAddOrUpdate(item.id)">
+					<text>编辑</text>
 				</view>
 			</view>
 		</view>
 		<view class="empty-view" v-if="addressList.length <= 0">
-			<image class="icon" src="http://yanxuan.nosdn.127.net/hxm/yanxuan-wap/p/20161201/style/img/icon-normal/noAddress-26d570cefa.png"></image>
-			<text class="text">收货地址在哪里</text>
+			<text class="empty-text">还没有收货地址哦</text>
 		</view>
-		<view class="add-address" @tap="addressAddOrUpdate" :data-address-id="0">新建</view>
+		<view class="add-btn" @tap="addressAddOrUpdate(0)">
+			<text class="add-btn-text">+ 新建收货地址</text>
+		</view>
 	</view>
-
 </template>
 
 <script>
@@ -38,27 +36,20 @@
 				let that = this;
 				util.request(api.AddressList).then(function(res) {
 					if (res.code === 0) {
-						that.addressList = res.data
+						that.addressList = res.data || [];
 					}
 				});
 			},
-			addressAddOrUpdate(event) {
+			addressAddOrUpdate(id) {
 				uni.navigateTo({
-					url: '/pages/shopping/addressAdd/addressAdd?id=' + event.currentTarget.dataset.addressId
+					url: '/pages/shopping/addressAdd/addressAdd?id=' + id
 				});
 			},
-			selectAddress(event) {
-
+			selectAddress(id) {
 				try {
-					uni.setStorageSync('addressId', event.currentTarget.dataset.addressId);
-				} catch (e) {
-
-				}
-
-				//选择该收货地址
-				uni.navigateBack({
-					url: '/pages/shopping/checkout/checkout'
-				});
+					uni.setStorageSync('addressId', id);
+				} catch (e) {}
+				uni.navigateBack();
 			}
 		},
 		onShow: function() {
@@ -68,136 +59,104 @@
 </script>
 
 <style lang="scss">
+	$green: #5B8C5A;
+	$green-light: #7BAF7A;
+	$green-bg: #F6F7F4;
+
 	page {
 		height: 100%;
-		width: 100%;
-		background: #f4f4f4;
+		background: $green-bg;
 	}
 
 	.container {
-		height: 100%;
-		width: 100%;
+		padding: 24rpx;
+		padding-bottom: 140rpx;
 	}
 
 	.address-list {
-		padding-left: 31.25rpx;
-		background: #fff url(http://yanxuan.nosdn.127.net/hxm/yanxuan-wap/p/20161201/style/img/icon-normal/address-bg-bd30f2bfeb.png) 0 0 repeat-x;
-		background-size: auto 10.5rpx;
-		margin-bottom: 90rpx;
+		width: 100%;
 	}
 
-	.address-list .item {
-		height: 156.55rpx;
-		align-items: center;
+	.address-card {
+		background: #fff;
+		border-radius: 16rpx;
+		padding: 28rpx 30rpx;
+		margin-bottom: 20rpx;
+		position: relative;
+		box-shadow: 0 2rpx 12rpx rgba(91,140,90,0.08);
+	}
+
+	.card-header {
 		display: flex;
-		border-bottom: 1rpx solid #DCD9D9;
+		align-items: center;
+		margin-bottom: 12rpx;
 	}
 
-	.address-list .item:last-child {
-
-		border-bottom: none;
-	}
-
-	.address-list .l {
-		width: 155rpx;
-		height: 80rpx;
-		overflow: hidden;
-	}
-
-	.address-list .name {
-		width: 155rpx;
-		height: 43rpx;
-		font-size: 29rpx;
+	.user-name {
+		font-size: 30rpx;
+		font-weight: bold;
 		color: #333;
-		margin-bottom: 5.2rpx;
-		text-overflow: ellipsis;
-		white-space: nowrap;
-		overflow: hidden;
+		margin-right: 16rpx;
 	}
 
-	.address-list .default {
-		width: 62.5rpx;
-		height: 33rpx;
-		line-height: 28rpx;
-		text-align: center;
+	.default-tag {
 		font-size: 20rpx;
-		color: #b4282d;
-		border: 1rpx solid #b4282d;
-		visibility: visible;
+		color: $green;
+		border: 1rpx solid $green;
+		border-radius: 6rpx;
+		padding: 2rpx 10rpx;
+		margin-right: 16rpx;
 	}
 
-
-	.address-list .c {
-		flex: 1;
-		height: auto;
-		overflow: hidden;
-	}
-
-	.address-list .mobile {
-
-		height: 29rpx;
-		font-size: 29rpx;
-		line-height: 29rpx;
-		overflow: hidden;
-		color: #333;
-		margin-bottom: 6.25rpx;
-	}
-
-	.address-list .address {
-		height: 37rpx;
-		font-size: 25rpx;
-		line-height: 37rpx;
-		overflow: hidden;
+	.user-tel {
+		font-size: 26rpx;
 		color: #666;
 	}
 
-	.address-list .r {
-		width: 52rpx;
-		height: auto;
-		overflow: hidden;
-		margin-right: 16.5rpx;
+	.card-address {
+		font-size: 26rpx;
+		color: #666;
+		line-height: 1.5;
+		padding-right: 80rpx;
 	}
 
-	.address-list .del {
-		display: block;
-		width: 52rpx;
-		height: 52rpx;
-	}
-
-	.add-address {
-		background: #b4282d;
-		text-align: center;
-		width: 100%;
-		height: 99rpx;
-		line-height: 99rpx;
-		position: fixed;
-		border-radius: 0;
-		border: none;
-		color: #fff;
-		font-size: 29rpx;
-		bottom: 0;
-		left: 0;
+	.card-edit {
+		position: absolute;
+		right: 30rpx;
+		top: 50%;
+		transform: translateY(-50%);
+		font-size: 24rpx;
+		color: $green;
+		padding: 10rpx;
 	}
 
 	.empty-view {
-		height: 100%;
-		width: 100%;
+		padding-top: 200rpx;
+		text-align: center;
+	}
+
+	.empty-text {
+		font-size: 28rpx;
+		color: #999;
+	}
+
+	.add-btn {
+		position: fixed;
+		bottom: 30rpx;
+		left: 24rpx;
+		right: 24rpx;
+		height: 90rpx;
+		background: linear-gradient(135deg, $green 0%, $green-light 100%);
+		border-radius: 45rpx;
 		display: flex;
-		flex-direction: column;
 		align-items: center;
 		justify-content: center;
+		box-shadow: 0 6rpx 24rpx rgba(91,140,90,0.3);
 	}
 
-	.empty-view .icon {
-		height: 248rpx;
-		width: 258rpx;
-		margin-bottom: 10rpx;
-	}
-
-	.empty-view .text {
-		width: auto;
-		font-size: 28rpx;
-		line-height: 35rpx;
-		color: #999;
+	.add-btn-text {
+		font-size: 30rpx;
+		color: #fff;
+		font-weight: 500;
 	}
 </style>

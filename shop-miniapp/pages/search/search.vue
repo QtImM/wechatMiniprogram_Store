@@ -1,574 +1,511 @@
 <template>
-	<scroll-view class="container" style="height: 100%;">
+	<view class="page">
+		<!-- 搜索头部 -->
 		<view class="search-header">
-			<view class="input-box">
-				<image class="icon" src="http://nos.netease.com/mailpub/hxm/yanxuan-wap/p/20150730/style/img/icon-normal/search2-2fb94833aa.png"></image>
-				<input name="input" class="keywrod" :focus="true" v-model="keyword" confirm-type="search" @input="inputChange"
-				 @focus="inputFocus" @confirm="onKeywordConfirm" :placeholder="defaultKeyword.keyword" />
-				<image class="del" v-if="keyword" @tap="clearKeyword" src="http://nos.netease.com/mailpub/hxm/yanxuan-wap/p/20150730/style/img/icon-normal/clearIpt-f71b83e3c2.png"></image>
+			<view class="search-input-box">
+				<text class="search-icon-text">🔍</text>
+				<input class="search-input" :focus="true" v-model="keyword" confirm-type="search"
+					@input="inputChange" @focus="inputFocus" @confirm="onKeywordConfirm"
+					:placeholder="defaultKeyword.keyword || '搜索商品'" />
+				<view class="search-clear" v-if="keyword" @tap="clearKeyword">✕</view>
 			</view>
-			<view class="right" @tap="closeSearch">取消</view>
+			<view class="search-cancel" @tap="closeSearch">取消</view>
 		</view>
-		<view class="no-search" v-if="!searchStatus">
-			<view class="serach-keywords search-history" v-if="!keyword  && historyKeyword.length">
-				<view class="h">
-					<text class="title">历史记录</text>
-					<image class="icon" @tap="clearHistory" src="http://nos.netease.com/mailpub/hxm/yanxuan-wap/p/20150730/style/img/icon-normal/del1-93f0a4add4.png"></image>
+
+		<!-- 未搜索状态 -->
+		<view class="search-body" v-if="!searchStatus">
+			<!-- 历史搜索 -->
+			<view class="keyword-section" v-if="!keyword && historyKeyword.length">
+				<view class="keyword-header">
+					<text class="keyword-title">搜索历史</text>
+					<view class="keyword-clear" @tap="clearHistory">
+						<text>清空</text>
+					</view>
 				</view>
-				<view class="b">
-					<view class="item" @tap="onKeywordTap" :data-keyword="item" v-for="(item, index) in historyKeyword" :key="index"
-					 hover-class="navigator-hover">{{item}}</view>
-				</view>
-			</view>
-			<view class="serach-keywords search-hot" v-if="!keyword">
-				<view class="h">
-					<text class="title">热门搜索</text>
-				</view>
-				<view class="b">
-					<view :class="'item '+(item.isHot === 1 ? 'active' : '')" hover-class="navigator-hover" @tap="onKeywordTap"
-					 :data-keyword="item.keyword" v-for="(item, index) in hotKeyword" :key="index">{{item.keyword}}</view>
+				<view class="keyword-tags">
+					<view class="keyword-tag" v-for="(item, index) in historyKeyword" :key="index"
+						@tap="onKeywordTap" :data-keyword="item">{{item}}</view>
 				</view>
 			</view>
-			<view class="shelper-list" v-if="keyword">
-				<view class="item" hover-class="navigator-hover" v-for="(item, index) in helpKeyword" :key="index" @tap="onKeywordTap"
-				 :data-keyword="item">{{item}}</view>
+
+			<!-- 热门搜索 -->
+			<view class="keyword-section" v-if="!keyword">
+				<view class="keyword-header">
+					<text class="keyword-title">热门搜索</text>
+				</view>
+				<view class="keyword-tags">
+					<view :class="'keyword-tag' + (item.isHot === 1 ? ' hot' : '')"
+						v-for="(item, index) in hotKeyword" :key="index"
+						@tap="onKeywordTap" :data-keyword="item.keyword">{{item.keyword}}</view>
+				</view>
+			</view>
+
+			<!-- 搜索建议 -->
+			<view class="suggest-list" v-if="keyword">
+				<view class="suggest-item" v-for="(item, index) in helpKeyword" :key="index"
+					@tap="onKeywordTap" :data-keyword="item">{{item}}</view>
 			</view>
 		</view>
 
-		<view class="search-result" v-if="searchStatus && goodsList.length">
-			<view class="sort">
-				<view class="sort-box">
-					<view :class="'item ' + (currentSortType == 'default' ? 'active' : '')" @tap="openSortFilter" id="defaultSort">
-						<text class="txt">综合</text>
-					</view>
-					<view :class="'item by-price ' + (currentSortType == 'price' ? 'active' : '') + (currentSortOrder == 'asc'  ? ' asc' : ' desc')"
-					 @tap="openSortFilter" id="priceSort">
-						<text class="txt">价格</text>
-					</view>
-					<view :class="'item '+(currentSortType == 'category' ? 'active' : '')" @tap="openSortFilter" id="categoryFilter">
-						<text class="txt">分类</text>
-					</view>
+		<!-- 搜索结果 -->
+		<view class="result-body" v-if="searchStatus && goodsList.length">
+			<!-- 排序栏 -->
+			<view class="sort-bar">
+				<view :class="'sort-item' + (currentSortType == 'default' ? ' active' : '')" @tap="openSortFilter" id="defaultSort">
+					<text>综合</text>
 				</view>
-				<view class="sort-box-category" v-if="categoryFilter">
-					<view :class="'item '+(item.checked ? 'active' : '')" v-for="(item, index) in filterCategory" :key="item.id"
-					 :data-category-index="index" @tap="selectCategory">{{item.name}}</view>
+				<view :class="'sort-item' + (currentSortType == 'price' ? ' active' : '')" @tap="openSortFilter" id="priceSort">
+					<text>价格</text>
+					<text class="sort-arrow">{{currentSortOrder == 'asc' ? '↑' : '↓'}}</text>
+				</view>
+				<view :class="'sort-item' + (currentSortType == 'category' ? ' active' : '')" @tap="openSortFilter" id="categoryFilter">
+					<text>分类</text>
 				</view>
 			</view>
-			<view class="cate-item">
-				<view class="b">
-					<navigator :class="'item ' + ((iindex + 1) % 2 == 0 ? 'item-b' : '')" :url="'/pages/goods/goods?id='+iitem.id"
-					 v-for="(iitem, iindex) in goodsList" :key="iidex">
-						<image class="img" :src="iitem.listPicUrl" background-size="cover"></image>
-						<text class="name">{{iitem.name}}</text>
-						<text class="price">￥{{iitem.retailPrice}}</text>
-					</navigator>
-				</view>
+
+			<!-- 分类筛选 -->
+			<view class="filter-panel" v-if="categoryFilter">
+				<view :class="'filter-tag' + (item.checked ? ' active' : '')"
+					v-for="(item, index) in filterCategory" :key="item.id"
+					:data-category-index="index" @tap="selectCategory">{{item.name}}</view>
+			</view>
+
+			<!-- 商品网格 -->
+			<view class="goods-grid">
+				<navigator class="goods-card" v-for="(item, index) in goodsList" :key="index"
+					:url="'/pages/goods/goods?id='+item.id">
+					<image class="goods-img" :src="item.listPicUrl" mode="aspectFill"></image>
+					<view class="goods-info">
+						<text class="goods-name">{{item.name}}</text>
+						<text class="goods-price">¥{{item.retailPrice}}</text>
+					</view>
+				</navigator>
 			</view>
 		</view>
 
-		<view class="search-result-empty" v-if="!goodsList.length && searchStatus">
-			<image class="icon" src="http://yanxuan.nosdn.127.net/hxm/yanxuan-wap/p/20161201/style/img/icon-normal/noSearchResult-7572a94f32.png"></image>
-			<text class="text">您寻找的商品还未上架</text>
+		<!-- 空结果 -->
+		<view class="empty-result" v-if="!goodsList.length && searchStatus">
+			<text class="empty-icon">🔍</text>
+			<text class="empty-text">未找到相关商品</text>
+			<text class="empty-hint">换个关键词试试吧</text>
 		</view>
-	</scroll-view>
+	</view>
 </template>
 
 <script>
-	const util = require("@/utils/util.js");
-	const api = require('@/utils/api.js');
-	export default {
-		data() {
-			return {
-				keywrod: '',
-				searchStatus: false,
-				goodsList: [],
-				helpKeyword: [],
-				historyKeyword: [],
-				categoryFilter: false,
-				filterCategory: [],
-				defaultKeyword: {},
-				hotKeyword: [],
-				page: 1,
-				size: 20,
-				currentSortType: 'id',
-				currentSortOrder: 'desc',
-				categoryId: 0
-			}
-		},
-		methods: {
-			closeSearch: function() {
-				uni.navigateBack()
-			},
-			clearKeyword: function() {
-				this.keyword = ''
-				this.searchStatus = false
-			},
-			getSearchKeyword() {
-				let that = this;
-				util.request(api.SearchIndex).then(function(res) {
-					if (res.code === 0) {
-						that.historyKeyword = res.data.historyKeywordList
-						that.defaultKeyword = res.data.defaultKeyword
-						that.hotKeyword = res.data.hotKeywordList
-					}
-				});
-			},
+const util = require("@/utils/util.js");
+const api = require('@/utils/api.js');
 
-			inputChange: function(e) {
-				this.keyword = e.detail.value
-				this.searchStatus = false
-				this.getHelpKeyword();
-			},
-			getHelpKeyword: function() {
-				let that = this;
-				util.request(api.SearchHelper, {
-					keyword: that.keyword
-				}).then(function(res) {
-					if (res.code === 0) {
-						that.helpKeyword = res.data;
-					}
-				});
-			},
-			inputFocus: function() {
-				this.searchStatus = false
-				this.goodsList = []
-				if (this.keyword) {
-					this.getHelpKeyword();
-				}
-			},
-			clearHistory: function() {
-				this.historyKeyword = []
-
-				util.request(api.SearchClearHistory)
-			},
-			getGoodsList: function() {
-				let that = this;
-				util.request(api.GoodsList, {
-					keyword: that.keyword,
-					page: that.page,
-					size: that.size,
-					sort: that.currentSortType,
-					order: that.currentSortOrder,
-					categoryId: that.categoryId
-				}).then(function(res) {
-					if (res.code === 0) {
-						that.searchStatus = true
-						that.categoryFilter = false
-						that.goodsList = res.data.goodsList.records
-						that.filterCategory = res.data.filterCategory
-						that.page = res.data.goodsList.current
-						that.size = res.data.goodsList.size
-					}
-
-					//重新获取关键词
-					that.getSearchKeyword();
-				});
-			},
-			onKeywordTap: function(event) {
-
-				this.getSearchResult(event.target.dataset.keyword);
-
-			},
-			getSearchResult(keyword) {
-				this.keyword = keyword
-				this.page = 1
-				this.categoryId = 0
-				this.goodsList = []
-
-				this.getGoodsList();
-			},
-			openSortFilter: function(event) {
-				let that = this;
-				let currentId = event.currentTarget.id;
-				switch (currentId) {
-					case 'categoryFilter':
-						that.categoryFilter = !that.categoryFilter
-						that.currentSortOrder = 'asc'
-						break;
-					case 'priceSort':
-						let tmpSortOrder = 'asc';
-						if (that.currentSortOrder == 'asc') {
-							tmpSortOrder = 'desc';
-						}
-						that.currentSortType = 'price'
-						that.currentSortOrder = tmpSortOrder
-						that.categoryFilter = false
-
-						that.getGoodsList();
-						break;
-					default:
-						//综合排序
-						that.currentSortType = 'default'
-						that.currentSortOrder = 'desc'
-						that.categoryFilter = false
-						that.getGoodsList();
-				}
-			},
-			selectCategory: function(event) {
-				let currentIndex = event.target.dataset.categoryIndex;
-				let filterCategory = this.filterCategory;
-				let currentCategory = null;
-				for (let key in filterCategory) {
-					if (key == currentIndex) {
-						filterCategory[key].selected = true;
-						currentCategory = filterCategory[key];
-					} else {
-						filterCategory[key].selected = false;
-					}
-				}
-
-				this.filterCategory = filterCategory
-				this.categoryFilter = false
-				this.categoryId = currentCategory.id
-				this.page = 1
-				this.goodsList = []
-				this.getGoodsList();
-			},
-			onKeywordConfirm(event) {
-				this.getSearchResult(event.detail.value);
-			}
-		},
-		onLoad: function() {
-			this.getSearchKeyword();
+export default {
+	data() {
+		return {
+			keyword: '',
+			searchStatus: false,
+			goodsList: [],
+			helpKeyword: [],
+			historyKeyword: [],
+			categoryFilter: false,
+			filterCategory: [],
+			defaultKeyword: {},
+			hotKeyword: [],
+			page: 1,
+			size: 20,
+			currentSortType: 'id',
+			currentSortOrder: 'desc',
+			categoryId: 0
 		}
+	},
+	methods: {
+		closeSearch() {
+			uni.navigateBack();
+		},
+		clearKeyword() {
+			this.keyword = '';
+			this.searchStatus = false;
+		},
+		getSearchKeyword() {
+			util.request(api.SearchIndex).then(res => {
+				if (res.code === 0) {
+					this.historyKeyword = res.data.historyKeywordList;
+					this.defaultKeyword = res.data.defaultKeyword;
+					this.hotKeyword = res.data.hotKeywordList;
+				}
+			});
+		},
+		inputChange(e) {
+			this.keyword = e.detail.value;
+			this.searchStatus = false;
+			this.getHelpKeyword();
+		},
+		getHelpKeyword() {
+			util.request(api.SearchHelper, { keyword: this.keyword }).then(res => {
+				if (res.code === 0) this.helpKeyword = res.data;
+			});
+		},
+		inputFocus() {
+			this.searchStatus = false;
+			this.goodsList = [];
+			if (this.keyword) this.getHelpKeyword();
+		},
+		clearHistory() {
+			this.historyKeyword = [];
+			util.request(api.SearchClearHistory);
+		},
+		getGoodsList() {
+			util.request(api.GoodsList, {
+				keyword: this.keyword,
+				page: this.page,
+				size: this.size,
+				sort: this.currentSortType,
+				order: this.currentSortOrder,
+				categoryId: this.categoryId
+			}).then(res => {
+				if (res.code === 0) {
+					this.searchStatus = true;
+					this.categoryFilter = false;
+					this.goodsList = res.data.goodsList.records;
+					this.filterCategory = res.data.filterCategory;
+					this.page = res.data.goodsList.current;
+					this.size = res.data.goodsList.size;
+				}
+				this.getSearchKeyword();
+			});
+		},
+		onKeywordTap(event) {
+			this.getSearchResult(event.target.dataset.keyword);
+		},
+		getSearchResult(keyword) {
+			this.keyword = keyword;
+			this.page = 1;
+			this.categoryId = 0;
+			this.goodsList = [];
+			this.getGoodsList();
+		},
+		openSortFilter(event) {
+			let currentId = event.currentTarget.id;
+			switch (currentId) {
+				case 'categoryFilter':
+					this.categoryFilter = !this.categoryFilter;
+					this.currentSortOrder = 'asc';
+					break;
+				case 'priceSort':
+					this.currentSortType = 'price';
+					this.currentSortOrder = this.currentSortOrder == 'asc' ? 'desc' : 'asc';
+					this.categoryFilter = false;
+					this.getGoodsList();
+					break;
+				default:
+					this.currentSortType = 'default';
+					this.currentSortOrder = 'desc';
+					this.categoryFilter = false;
+					this.getGoodsList();
+			}
+		},
+		selectCategory(event) {
+			let currentIndex = event.target.dataset.categoryIndex;
+			let filterCategory = this.filterCategory;
+			for (let key in filterCategory) {
+				filterCategory[key].selected = (key == currentIndex);
+			}
+			this.filterCategory = filterCategory;
+			this.categoryFilter = false;
+			this.categoryId = filterCategory[currentIndex].id;
+			this.page = 1;
+			this.goodsList = [];
+			this.getGoodsList();
+		},
+		onKeywordConfirm(event) {
+			this.getSearchResult(event.detail.value);
+		}
+	},
+	onLoad() {
+		this.getSearchKeyword();
 	}
+}
 </script>
 
 <style lang="scss">
-	page {
-		min-height: 100%;
-		background-color: #f4f4f4;
-	}
+$green: #5B8C5A;
+$green-light: #E8F2E7;
+$green-bg: #F6F7F4;
+$green-dark: #3D6B3C;
+$text-primary: #2D3A2E;
+$text-secondary: #5C6B5D;
+$text-hint: #9CA89D;
+$red: #CF4A3E;
 
-	.container {
-		min-height: 100%;
-		background-color: #f4f4f4;
-	}
+page {
+	background: $green-bg;
+	height: 100%;
+}
 
-	.search-header {
-		position: fixed;
-		top: 0;
-		width: 750rpx;
-		height: 91rpx;
-		display: flex;
-		background: #fff;
-		border-bottom: 1px solid rgba(0, 0, 0, .15);
-		padding: 0 31.25rpx;
-		font-size: 29rpx;
-		color: #333;
-	}
+.page {
+	min-height: 100%;
+}
 
-	.search-header .input-box {
-		position: relative;
-		margin-top: 16rpx;
-		float: left;
-		width: 0;
-		flex: 1;
-		height: 59rpx;
-		line-height: 59rpx;
-		padding: 0 20rpx;
-		background: #f4f4f4;
-	}
+/* 搜索头部 */
+.search-header {
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	height: 100rpx;
+	background: #fff;
+	display: flex;
+	align-items: center;
+	padding: 0 24rpx;
+	z-index: 100;
+	box-shadow: 0 2rpx 8rpx rgba(91, 140, 90, 0.06);
+}
 
-	.search-header .icon {
-		position: absolute;
-		top: 14rpx;
-		left: 20rpx;
-		width: 31rpx;
-		height: 31rpx;
-	}
+.search-input-box {
+	flex: 1;
+	height: 68rpx;
+	background: $green-bg;
+	border-radius: 34rpx;
+	display: flex;
+	align-items: center;
+	padding: 0 24rpx;
+}
 
-	.search-header .del {
-		position: absolute;
-		top: 3rpx;
-		right: 10rpx;
-		width: 53rpx;
-		height: 53rpx;
-		z-index: 10;
-	}
+.search-icon-text {
+	font-size: 28rpx;
+	margin-right: 12rpx;
+}
 
-	.search-header .keywrod {
-		position: absolute;
-		top: 0;
-		left: 40rpx;
-		width: 506rpx;
-		height: 59rpx;
-		padding-left: 30rpx;
-	}
+.search-input {
+	flex: 1;
+	height: 68rpx;
+	font-size: 28rpx;
+	color: $text-primary;
+}
 
-	.search-header .right {
-		margin-top: 24rpx;
-		margin-left: 31rpx;
-		margin-right: 6rpx;
-		width: 58rpx;
-		height: 43rpx;
-		line-height: 43rpx;
-		float: right;
-	}
+.search-clear {
+	width: 40rpx;
+	height: 40rpx;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 24rpx;
+	color: $text-hint;
+	background: #ddd;
+	border-radius: 50%;
+}
 
-	.no-search {
-		height: auto;
-		overflow: hidden;
-		margin-top: 91rpx;
-	}
+.search-cancel {
+	margin-left: 20rpx;
+	font-size: 28rpx;
+	color: $text-secondary;
+	flex-shrink: 0;
+}
 
-	.serach-keywords {
-		background: #fff;
-		width: 750rpx;
-		height: auto;
-		overflow: hidden;
-		margin-bottom: 20rpx;
-	}
+/* 搜索主体 */
+.search-body {
+	padding-top: 116rpx;
+}
 
-	.serach-keywords .h {
-		padding: 0 31.25rpx;
-		height: 93rpx;
-		line-height: 93rpx;
-		width: 100%;
-		color: #999;
-		font-size: 29rpx;
-	}
+/* 关键词区 */
+.keyword-section {
+	background: #fff;
+	margin: 0 0 16rpx;
+	padding: 28rpx;
+}
 
-	.serach-keywords .title {
-		display: block;
-		width: 120rpx;
-		float: left;
-	}
+.keyword-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 20rpx;
+}
 
-	.serach-keywords .icon {
-		margin-top: 19rpx;
-		float: right;
-		display: block;
-		margin-left: 511rpx;
-		height: 55rpx;
-		width: 55rpx;
-	}
+.keyword-title {
+	font-size: 28rpx;
+	color: $text-primary;
+	font-weight: 600;
+}
 
-	.serach-keywords .b {
-		width: 750rpx;
-		height: auto;
-		overflow: hidden;
-		padding-left: 31.25rpx;
-	}
+.keyword-clear {
+	font-size: 24rpx;
+	color: $text-hint;
+}
 
-	.serach-keywords .item {
-		display: inline-block;
-		width: auto;
-		height: 48rpx;
-		line-height: 48rpx;
-		padding: 0 15rpx;
-		border: 1px solid #999;
-		margin: 0 31.25rpx 31.25rpx 0;
-		font-size: 24rpx;
-		color: #333;
-	}
+.keyword-tags {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 16rpx;
+}
 
-	.serach-keywords .item.active {
-		color: #b4282d;
-		border: 1px solid #b4282d;
-	}
+.keyword-tag {
+	height: 56rpx;
+	line-height: 56rpx;
+	padding: 0 24rpx;
+	background: $green-bg;
+	border-radius: 28rpx;
+	font-size: 24rpx;
+	color: $text-primary;
 
-	.shelper-list {
-		width: 750rpx;
-		height: auto;
-		overflow: hidden;
-		background: #fff;
-		padding: 0 31.25rpx;
+	&.hot {
+		color: $green;
+		background: $green-light;
+		font-weight: 600;
 	}
+}
 
-	.shelper-list .item {
-		height: 93rpx;
-		width: 687.5rpx;
-		line-height: 93rpx;
-		font-size: 24rpx;
-		color: #333;
-		border-bottom: 1px solid #f4f4f4;
+/* 搜索建议 */
+.suggest-list {
+	background: #fff;
+	margin-top: 0;
+	padding: 0 28rpx;
+}
+
+.suggest-item {
+	height: 88rpx;
+	line-height: 88rpx;
+	font-size: 28rpx;
+	color: $text-primary;
+	border-bottom: 1rpx solid $green-bg;
+}
+
+/* 搜索结果 */
+.result-body {
+	padding-top: 100rpx;
+}
+
+/* 排序栏 */
+.sort-bar {
+	position: fixed;
+	top: 100rpx;
+	left: 0;
+	right: 0;
+	height: 84rpx;
+	background: #fff;
+	display: flex;
+	align-items: center;
+	padding: 0 48rpx;
+	z-index: 99;
+	border-bottom: 1rpx solid $green-bg;
+}
+
+.sort-item {
+	flex: 1;
+	height: 84rpx;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 28rpx;
+	color: $text-secondary;
+
+	&.active {
+		color: $green;
+		font-weight: 600;
 	}
+}
 
+.sort-arrow {
+	margin-left: 4rpx;
+	font-size: 22rpx;
+}
 
-	.sort {
-		position: fixed;
-		top: 91rpx;
-		background: #fff;
-		width: 100%;
-		height: 78rpx;
+/* 筛选面板 */
+.filter-panel {
+	position: fixed;
+	top: 184rpx;
+	left: 0;
+	right: 0;
+	background: #fff;
+	padding: 24rpx;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 16rpx;
+	z-index: 98;
+	box-shadow: 0 8rpx 16rpx rgba(0,0,0,0.05);
+}
+
+.filter-tag {
+	height: 56rpx;
+	line-height: 52rpx;
+	padding: 0 24rpx;
+	border: 2rpx solid #e0e0e0;
+	border-radius: 28rpx;
+	font-size: 24rpx;
+	color: $text-primary;
+
+	&.active {
+		border-color: $green;
+		color: $green;
+		background: $green-light;
 	}
+}
 
-	.sort-box {
-		background: #fff;
-		width: 100%;
-		height: 78rpx;
-		overflow: hidden;
-		padding: 0 30rpx;
-		display: flex;
-		border-bottom: 1px solid #d9d9d9;
-	}
+/* 商品网格 */
+.goods-grid {
+	padding: 100rpx 16rpx 16rpx;
+	overflow: hidden;
+}
 
-	.sort-box .item {
-		height: 78rpx;
-		line-height: 78rpx;
-		text-align: center;
-		flex: 1;
-		color: #333;
-		font-size: 30rpx;
-	}
+.goods-card {
+	float: left;
+	width: 350rpx;
+	background: #fff;
+	border-radius: 16rpx;
+	overflow: hidden;
+	text-decoration: none;
+	margin-bottom: 16rpx;
 
-	.sort-box .item .txt {
-		display: block;
-		width: 100%;
-		height: 100%;
-		color: #333;
+	&:nth-child(odd) {
+		margin-right: 16rpx;
 	}
+}
 
-	.sort-box .item.active .txt {
-		color: #b4282d;
-	}
+.goods-img {
+	width: 350rpx;
+	height: 350rpx;
+}
 
-	.sort-box .item.by-price {
-		background: url(//yanxuan.nosdn.127.net/hxm/yanxuan-wap/p/20161201/style/img/icon-normal/no-3127092a69.png) 155rpx center no-repeat;
-		background-size: 15rpx 21rpx;
-	}
+.goods-info {
+	padding: 16rpx 20rpx 20rpx;
+}
 
-	.sort-box .item.by-price.active.asc {
-		background: url(http://yanxuan.nosdn.127.net/hxm/yanxuan-wap/p/20161201/style/img/icon-normal/up-636b92c0a5.png) 155rpx center no-repeat;
-		background-size: 15rpx 21rpx;
-	}
+.goods-name {
+	font-size: 26rpx;
+	color: $text-primary;
+	display: -webkit-box;
+	-webkit-box-orient: vertical;
+	-webkit-line-clamp: 2;
+	overflow: hidden;
+	line-height: 1.4;
+}
 
-	.sort-box .item.by-price.active.desc {
-		background: url(http://yanxuan.nosdn.127.net/hxm/yanxuan-wap/p/20161201/style/img/icon-normal/down-95e035f3e5.png) 155rpx center no-repeat;
-		background-size: 15rpx 21rpx;
-	}
+.goods-price {
+	display: block;
+	margin-top: 10rpx;
+	font-size: 30rpx;
+	color: $red;
+	font-weight: 700;
+}
 
-	.sort-box-category {
-		background: #fff;
-		width: 100%;
-		height: auto;
-		overflow: hidden;
-		padding: 40rpx 40rpx 0 0;
-		border-bottom: 1px solid #d9d9d9;
-	}
+/* 空结果 */
+.empty-result {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	padding-top: 300rpx;
+}
 
-	.sort-box-category .item {
-		height: 54rpx;
-		line-height: 54rpx;
-		text-align: center;
-		float: left;
-		padding: 0 16rpx;
-		margin: 0 0 40rpx 40rpx;
-		border: 1px solid #666;
-		color: #333;
-		font-size: 24rpx;
-	}
+.empty-icon {
+	font-size: 100rpx;
+	opacity: 0.4;
+}
 
-	.sort-box-category .item.active {
-		color: #b4282d;
-		border: 1px solid #b4282d;
-	}
+.empty-text {
+	font-size: 30rpx;
+	color: $text-primary;
+	margin-top: 24rpx;
+}
 
-	.cate-item {
-		margin-top: 175rpx;
-		height: auto;
-		overflow: hidden;
-	}
-
-	.cate-item .h {
-		height: 145rpx;
-		width: 750rpx;
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		justify-content: center;
-	}
-
-	.cate-item .h .name {
-		display: block;
-		height: 35rpx;
-		margin-bottom: 18rpx;
-		font-size: 30rpx;
-		color: #333;
-	}
-
-	.cate-item .h .desc {
-		display: block;
-		height: 24rpx;
-		font-size: 24rpx;
-		color: #999;
-	}
-
-	.cate-item .b {
-		width: 750rpx;
-		padding: 0 6.25rpx;
-		height: auto;
-		overflow: hidden;
-	}
-
-	.cate-item .list-filter {
-		height: 80rpx;
-		width: 100%;
-		background: #fff;
-		margin-bottom: 6.25rpx;
-	}
-
-	.cate-item .b .item {
-		float: left;
-		background: #fff;
-		width: 365rpx;
-		margin-bottom: 6.25rpx;
-		padding-bottom: 33.333rpx;
-		height: auto;
-		overflow: hidden;
-		text-align: center;
-	}
-
-	.cate-item .b .item-b {
-		margin-left: 6.25rpx;
-	}
-
-	.cate-item .item .img {
-		width: 302rpx;
-		height: 302rpx;
-	}
-
-	.cate-item .item .name {
-		display: block;
-		width: 365.625rpx;
-		height: 35rpx;
-		margin: 11.5rpx 0 22rpx 0;
-		text-align: center;
-		overflow: hidden;
-		padding: 0 20rpx;
-		font-size: 30rpx;
-		color: #333;
-	}
-
-	.cate-item .item .price {
-		display: block;
-		width: 365.625rpx;
-		height: 30rpx;
-		text-align: center;
-		font-size: 30rpx;
-		color: #b4282d;
-	}
-
-	.search-result-empty {
-		width: 100%;
-		height: 100%;
-		padding-top: 300rpx;
-	}
-
-	.search-result-empty .icon {
-		margin: 0 auto;
-		display: block;
-		width: 240rpx;
-		height: 240rpx;
-	}
-
-	.search-result-empty .text {
-		display: block;
-		width: 100%;
-		height: 40rpx;
-		font-size: 28rpx;
-		text-align: center;
-		color: #999;
-	}
+.empty-hint {
+	font-size: 26rpx;
+	color: $text-hint;
+	margin-top: 12rpx;
+}
 </style>

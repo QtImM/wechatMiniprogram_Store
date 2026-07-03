@@ -1,20 +1,26 @@
 <template>
 	<view class="container">
-		<scroll-view v-if="topicList.length >0" class="topic-list" :scroll-y="true" :scroll-top="scrollTop">
-			<navigator class="item" v-for="(item, index) in topicList" :key="index" :url="'../topicDetail/topicDetail?id='+item.id">
-				<image class="img" :src="item.scenePicUrl"></image>
-				<view class="info">
-					<text class="title">{{item.title}}</text>
-					<text class="desc">{{item.subtitle}}</text>
-					<text class="price">{{item.priceInfo}}元起</text>
+		<view class="topic-list" v-if="topicList.length > 0">
+			<navigator class="topic-card" v-for="(item, index) in topicList" :key="index" :url="'../topicDetail/topicDetail?id='+item.id">
+				<image class="topic-img" :src="item.scenePicUrl" mode="aspectFill"></image>
+				<view class="topic-info">
+					<text class="topic-title">{{item.title}}</text>
+					<text class="topic-desc">{{item.subtitle}}</text>
+					<view class="topic-bottom">
+						<text class="topic-price">¥{{item.priceInfo}}起</text>
+						<text class="topic-tag">查看详情</text>
+					</view>
 				</view>
 			</navigator>
-			<view class="page" v-if="showPage">
-				<view :class="'prev ' + (page <= 1 ? 'disabled' : '')" @tap="prevPage">上一页</view>
-				<view :class="'next ' + ((count / size) < page +1 ? 'disabled' : '')" @tap="nextPage">下一页</view>
-			</view>
-		</scroll-view>
-		<tui-show-empty v-else text="暂无专题"></tui-show-empty>
+		</view>
+		<view class="empty-view" v-else>
+			<text class="empty-text">暂无专题</text>
+		</view>
+		<view class="page-nav" v-if="showPage">
+			<view :class="'page-btn ' + (page <= 1 ? 'disabled' : '')" @tap="prevPage">上一页</view>
+			<view class="page-info">{{page}} / {{Math.ceil(count / size) || 1}}</view>
+			<view :class="'page-btn ' + ((count / size) < page + 1 ? 'disabled' : '')" @tap="nextPage">下一页</view>
+		</view>
 	</view>
 </template>
 
@@ -24,164 +30,159 @@
 	export default {
 		data() {
 			return {
-				// text:"这是一个页面"
 				topicList: [],
 				page: 1,
 				size: 10,
 				count: 0,
-				scrollTop: 0,
 				showPage: false
 			}
 		},
 		methods: {
-			nextPage: function(event) {
-				let that = this;
-				if (this.page + 1 > that.count / that.size) {
-					return true;
-				}
-				that.page = parseInt(that.page) + 1
+			nextPage: function() {
+				if (this.page + 1 > this.count / this.size) return;
+				this.page = parseInt(this.page) + 1;
+				this.getTopic();
+			},
+			prevPage: function() {
+				if (this.page <= 1) return;
+				this.page = parseInt(this.page) - 1;
 				this.getTopic();
 			},
 			getTopic: function() {
-
 				let that = this;
-				that.scrollTop = 0
-				that.showPage = false
-				that.topicList = []
-				// 页面渲染完成
-				uni.showToast({
-					title: '加载中...',
-					icon: 'loading',
-					duration: 2000
-				});
-
+				that.topicList = [];
+				that.showPage = false;
 				util.request(api.TopicList, {
 					page: that.page,
 					size: that.size
 				}).then(function(res) {
 					if (res.code === 0) {
-						that.scrollTop = 0
-						that.topicList = res.data.records
-						that.showPage = true
-						that.count = res.data.total
+						that.topicList = res.data.records || [];
+						that.showPage = true;
+						that.count = res.data.total || 0;
 					}
-					uni.hideToast();
 				});
-
-			},
-			prevPage: function(event) {
-				if (this.page <= 1) {
-					return false;
-				}
-
-				var that = this;
-				that.page = parseInt(that.page) - 1
-				this.getTopic();
 			}
 		},
-		onLoad: function(options) {
-			// 页面初始化 options为页面跳转所带来的参数
+		onLoad: function() {
 			this.getTopic();
-
 		}
 	}
 </script>
 
 <style lang="scss">
-	page,
+	$green: #5B8C5A;
+	$green-light: #7BAF7A;
+	$green-bg: #F6F7F4;
+	$red: #CF4A3E;
+	$gold: #B8860B;
+
+	page {
+		background: $green-bg;
+	}
+
 	.container {
-		width: 750rpx;
-		height: 100%;
-		overflow: hidden;
-		background: #f4f4f4;
+		padding: 24rpx;
+		padding-bottom: 130rpx;
 	}
 
 	.topic-list {
-		width: 750rpx;
-		height: 100%;
-		overflow: hidden;
-		background: #f4f4f4;
+		width: 100%;
 	}
 
-	.topic-list .item {
+	.topic-card {
+		display: block;
 		width: 100%;
-		height: 625rpx;
-		overflow: hidden;
 		background: #fff;
-		margin-bottom: 20rpx;
-	}
-
-	.topic-list .img {
-		width: 100%;
-		height: 415rpx;
-	}
-
-	.topic-list .info {
-		width: 100%;
-		height: 210rpx;
+		border-radius: 20rpx;
 		overflow: hidden;
+		margin-bottom: 24rpx;
+		box-shadow: 0 4rpx 16rpx rgba(91,140,90,0.1);
 	}
 
-	.topic-list .title {
-		display: block;
-		text-align: center;
+	.topic-img {
 		width: 100%;
-		height: 33rpx;
-		line-height: 35rpx;
+		height: 360rpx;
+	}
+
+	.topic-info {
+		padding: 24rpx 28rpx;
+	}
+
+	.topic-title {
+		display: block;
+		font-size: 32rpx;
+		font-weight: bold;
 		color: #333;
-		overflow: hidden;
-		font-size: 35rpx;
-		margin-top: 30rpx;
+		margin-bottom: 10rpx;
 	}
 
-	.topic-list .desc {
+	.topic-desc {
 		display: block;
-		text-align: center;
-		position: relative;
-		width: auto;
-		height: 24rpx;
-		line-height: 24rpx;
-		overflow: hidden;
-		color: #999;
 		font-size: 24rpx;
-		margin-top: 16rpx;
-		margin-bottom: 30rpx;
-	}
-
-	.topic-list .price {
-		display: block;
-		text-align: center;
-		width: 100%;
-		height: 27rpx;
-		line-height: 27rpx;
-		overflow: hidden;
-		color: #b4282d;
-		font-size: 27rpx;
-	}
-
-
-	.page {
-		width: 750rpx;
-		height: 108rpx;
-		background: #fff;
+		color: #999;
 		margin-bottom: 20rpx;
 	}
 
-	.page view {
-		height: 108rpx;
-		width: 50%;
-		float: left;
-		font-size: 29rpx;
-		color: #333;
+	.topic-bottom {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+	}
+
+	.topic-price {
+		font-size: 30rpx;
+		font-weight: bold;
+		color: $red;
+	}
+
+	.topic-tag {
+		font-size: 22rpx;
+		color: $green;
+		border: 1rpx solid $green;
+		padding: 6rpx 16rpx;
+		border-radius: 20rpx;
+	}
+
+	.page-nav {
+		position: fixed;
+		bottom: 0;
+		left: 0;
+		width: 100%;
+		height: 100rpx;
+		background: #fff;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		box-shadow: 0 -2rpx 10rpx rgba(0,0,0,0.05);
+	}
+
+	.page-btn {
+		padding: 14rpx 40rpx;
+		font-size: 26rpx;
+		color: #fff;
+		background: $green;
+		border-radius: 30rpx;
+
+		&.disabled {
+			background: #ddd;
+			color: #999;
+		}
+	}
+
+	.page-info {
+		font-size: 26rpx;
+		color: #666;
+		margin: 0 30rpx;
+	}
+
+	.empty-view {
+		padding-top: 200rpx;
 		text-align: center;
-		line-height: 108rpx;
 	}
 
-	.page .prev {
-		border-right: 1px solid #D9D9D9;
-	}
-
-	.page .disabled {
-		color: #ccc;
+	.empty-text {
+		font-size: 28rpx;
+		color: #999;
 	}
 </style>

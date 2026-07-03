@@ -1,22 +1,22 @@
 <template>
 	<view class="container">
 		<view class="footprint" v-if="footprintList.length>0">
-			<view class="day-item" v-for="(item, index) in footprintList" :key="index">
-				<view class="day-hd">{{item[0].addTime}}</view>
+			<view class="day-section" v-for="(item, index) in footprintList" :key="index">
+				<view class="day-title">{{item[0].addTime}}</view>
 				<view class="day-list">
-					<view class="item" :data-footprint="iitem" @touchstart="touchStart" @touchend="touchEnd" @tap="deleteItem" v-for="(iitem, iindex) in item"
-					 :key="iitem.id">
-						<image class="img" :src="iitem.listPicUrl"></image>
-						<view class="info">
-							<view class="name">{{iitem.name||''}}</view>
-							<view class="subtitle">{{iitem.goodsBrief||''}}</view>
-							<view class="price">￥{{iitem.retailPrice||''}}</view>
+					<view class="footprint-item" :data-footprint="iitem" @touchstart="touchStart" @touchend="touchEnd"
+					 @tap="deleteItem" v-for="(iitem, iindex) in item" :key="iitem.id">
+						<image class="item-img" :src="iitem.listPicUrl" mode="aspectFill"></image>
+						<view class="item-info">
+							<text class="item-name">{{iitem.name||''}}</text>
+							<text class="item-brief">{{iitem.goodsBrief||''}}</text>
+							<text class="item-price">¥{{iitem.retailPrice||''}}</text>
 						</view>
 					</view>
 				</view>
 			</view>
 		</view>
-		<show-empty v-else text="暂无收藏"></show-empty>
+		<show-empty v-else text="暂无浏览记录"></show-empty>
 	</view>
 </template>
 
@@ -32,15 +32,9 @@
 		methods: {
 			getFootprintList() {
 				let that = this;
-				var tmpFootPrint;
 				util.request(api.FootprintList).then(function(res) {
 					if (res.code === 0) {
-						if (res.data.data != undefined) {
-							tmpFootPrint = res.data.data;
-						} else {
-							tmpFootPrint = [];
-						}
-						that.footprintList = tmpFootPrint;
+						that.footprintList = (res.data && res.data.data) ? res.data.data : [];
 					}
 				});
 			},
@@ -48,51 +42,30 @@
 				let that = this;
 				let footprint = event.currentTarget.dataset.footprint;
 				var touchTime = that.touch_end - that.touch_start;
-				//如果按下时间大于350为长按
 				if (touchTime > 350) {
 					uni.showModal({
-						title: '',
+						title: '提示',
 						content: '要删除所选足迹？',
+						confirmColor: '#5B8C5A',
 						success: function(res) {
 							if (res.confirm) {
-								util.request(api.FootprintDelete, {
-									footprintId: footprint.id
-								}).then(function(res) {
+								util.request(api.FootprintDelete, { footprintId: footprint.id }).then(function(res) {
 									if (res.code === 0) {
-										uni.showToast({
-											title: res.msg,
-											icon: 'success',
-											duration: 2000,
-											complete: function() {
-												that.getFootprintList();
-											}
-										});
-									} else {
-										util.showErrorToast(res.msg);
+										uni.showToast({ title: '删除成功', icon: 'success' });
+										that.getFootprintList();
 									}
 								});
 							}
 						}
 					});
 				} else {
-					uni.navigateTo({
-						url: '/pages/goods/goods?id=' + footprint.goodsId,
-					});
+					uni.navigateTo({ url: '/pages/goods/goods?id=' + footprint.goodsId });
 				}
-
 			},
-			//按下事件开始
-			touchStart: function(e) {
-				this.touch_start = e.timeStamp
-			},
-			//按下事件结束
-			touchEnd: function(e) {
-				this.touch_end = e.timeStamp
-			}
+			touchStart: function(e) { this.touch_start = e.timeStamp; },
+			touchEnd: function(e) { this.touch_end = e.timeStamp; }
 		},
 		onPullDownRefresh() {
-			// 增加下拉刷新数据的功能
-			var self = this;
 			this.getFootprintList();
 		},
 		onShow: function() {
@@ -102,95 +75,81 @@
 </script>
 
 <style lang="scss">
+	$green: #5B8C5A;
+	$green-bg: #F6F7F4;
+	$red: #CF4A3E;
+
 	page {
-		background: #f4f4f4;
+		background: $green-bg;
 		min-height: 100%;
 	}
 
 	.container {
-		background: #f4f4f4;
-		min-height: 100%;
+		padding: 24rpx;
 	}
 
-	.footprint {
-		height: auto;
-		overflow: hidden;
-		width: 100%;
-		border-top: 1px solid #e1e1e1;
+	.day-section {
+		margin-bottom: 24rpx;
 	}
 
-	.day-item {
-		height: auto;
-		overflow: hidden;
-		width: 100%;
-		margin-bottom: 20rpx;
-	}
-
-	.day-hd {
-		height: 94rpx;
-		width: 100%;
-		line-height: 94rpx;
-		background: #fff;
-		padding-left: 30rpx;
-		color: #333;
-		font-size: 28rpx;
+	.day-title {
+		font-size: 26rpx;
+		color: #999;
+		margin-bottom: 12rpx;
+		padding-left: 8rpx;
 	}
 
 	.day-list {
-		width: 100%;
-		height: auto;
+		background: #fff;
+		border-radius: 16rpx;
 		overflow: hidden;
-		background: #fff;
-		padding-left: 30rpx;
-		border-top: 1px solid #e1e1e1;
+		box-shadow: 0 2rpx 10rpx rgba(91,140,90,0.08);
 	}
 
-	.item {
-		height: 212rpx;
-		width: 720rpx;
-		background: #fff;
-		padding: 30rpx 30rpx 30rpx 0;
-		border-bottom: 1px solid #e1e1e1;
+	.footprint-item {
+		display: flex;
+		align-items: center;
+		padding: 24rpx;
+		border-bottom: 1rpx solid #f5f5f5;
+
+		&:last-child {
+			border-bottom: none;
+		}
 	}
 
-	.item:last-child {
-		border-bottom: 1px solid #fff;
+	.item-img {
+		width: 140rpx;
+		height: 140rpx;
+		border-radius: 12rpx;
+		margin-right: 20rpx;
 	}
 
-	.item .img {
-		float: left;
-		width: 150rpx;
-		height: 150rpx;
-	}
-
-	.item .info {
-		float: right;
-		width: 540rpx;
-		height: 150rpx;
+	.item-info {
+		flex: 1;
 		display: flex;
 		flex-direction: column;
 		justify-content: center;
-		padding-left: 20rpx;
 	}
 
-	.item .info .name {
+	.item-name {
 		font-size: 28rpx;
 		color: #333;
-		line-height: 40rpx;
+		line-height: 1.4;
+		margin-bottom: 8rpx;
 	}
 
-
-	.item .info .subtitle {
-		margin-top: 8rpx;
+	.item-brief {
 		font-size: 24rpx;
-		color: #888;
-		line-height: 40rpx;
+		color: #999;
+		margin-bottom: 12rpx;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
 	}
 
-	.item .info .price {
-		margin-top: 8rpx;
-		font-size: 28rpx;
-		color: #333;
-		line-height: 40rpx;
+	.item-price {
+		font-size: 30rpx;
+		font-weight: bold;
+		color: $red;
 	}
 </style>

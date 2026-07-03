@@ -1,44 +1,56 @@
 <template>
-	<view class="add-address">
-		<view class="add-form">
+	<view class="page">
+		<view class="form-card">
 			<view class="form-item">
-				<input class="input" placeholder="姓名" v-model="address.userName" auto-focus />
-			</view>
-			<view class="form-item">
-				<input class="input" v-model="address.telNumber" maxlength="15" type="number" placeholder="手机号码" />
+				<text class="form-label">姓名</text>
+				<input class="form-input" placeholder="请输入收货人姓名" v-model="address.userName" />
 			</view>
 			<view class="form-item">
-				<input class="input" v-model="address.fullRegion" disabled="true" @tap="chooseRegion" placeholder="省份、城市、区县" />
+				<text class="form-label">电话</text>
+				<input class="form-input" v-model="address.telNumber" maxlength="15" type="number" placeholder="请输入手机号码" />
+			</view>
+			<view class="form-item" @tap="chooseRegion">
+				<text class="form-label">地区</text>
+				<input class="form-input" v-model="address.fullRegion" disabled placeholder="请选择省份、城市、区县" />
+				<text class="form-arrow">›</text>
 			</view>
 			<view class="form-item">
-				<input class="input" v-model="address.detailInfo" placeholder="详细地址, 如街道、楼盘号等" />
+				<text class="form-label">详细地址</text>
+				<input class="form-input" v-model="address.detailInfo" placeholder="街道、楼盘号等" />
 			</view>
-			<view class="form-default">
-				<text @tap="bindIsDefault" :class="'default-input '+(address.isDefault == 1 ? 'selected' : '')">设为默认地址</text>
-			</view>
-		</view>
-
-		<view class="btns">
-			<button class="cannel" @tap="cancelAddress">取消</button>
-			<button class="save" @tap="saveAddress">保存</button>
-		</view>
-
-		<view class="region-select" v-if="openSelectRegion">
-			<view class="hd">
-				<view class="region-selected">
-					<view :class="'item '+(item.id == 0 ? 'disabled ' : ' ') + ((regionType -1) === index ? 'selected' : '')" @tap="selectRegionType"
-					 :data-region-type-index="index" v-for="(item, index) in selectRegionList" :key="item.id">{{item.name}}</view>
+			<view class="form-item form-item--switch">
+				<text class="form-label">设为默认地址</text>
+				<view :class="'custom-switch ' + (address.isDefault ? 'active' : '')" @tap="bindIsDefault">
+					<view class="switch-dot"></view>
 				</view>
-				<view :class="'done '+(selectRegionDone ? '' : 'disabled')" @tap="doneSelectRegion">确定</view>
-			</view>
-			<view class="bd">
-				<scroll-view scroll-y="true" class="region-list">
-					<view :class="'item ' + (item.selected ? 'selected' : '')" @tap="selectRegion" :data-region-index="index" v-for="(item, index) in regionList"
-					 :key="item.id">{{item.name}}</view>
-				</scroll-view>
 			</view>
 		</view>
-		<view class="bg-mask" @tap="cancelSelectRegion" v-if="openSelectRegion"></view>
+
+		<view class="btn-group">
+			<view class="btn-cancel" @tap="cancelAddress">取消</view>
+			<view class="btn-save" @tap="saveAddress">保存地址</view>
+		</view>
+
+		<!-- 区域选择弹层 -->
+		<view class="region-mask" v-if="openSelectRegion" @tap="cancelSelectRegion"></view>
+		<view class="region-panel" v-if="openSelectRegion">
+			<view class="region-header">
+				<view class="region-tabs">
+					<view :class="'tab-item ' + ((regionType - 1) === index ? 'active' : '') + (item.id == 0 ? ' placeholder' : '')"
+					 @tap="selectRegionType(index)" v-for="(item, index) in selectRegionList" :key="index">
+						{{item.name}}
+					</view>
+				</view>
+				<view :class="'region-done ' + (selectRegionDone ? 'active' : '')" @tap="doneSelectRegion">确定</view>
+			</view>
+			<scroll-view scroll-y class="region-body">
+				<view :class="'region-item ' + (item.selected ? 'selected' : '')" @tap="selectRegion(index)"
+				 v-for="(item, index) in regionList" :key="item.id">
+					{{item.name}}
+					<text class="check-mark" v-if="item.selected">✓</text>
+				</view>
+			</scroll-view>
+		</view>
 	</view>
 </template>
 
@@ -53,32 +65,17 @@
 					provinceId: 0,
 					cityId: 0,
 					districtId: 0,
-					address: '',
-          fullRegion: '',
+					fullRegion: '',
 					userName: '',
 					telNumber: '',
-          isDefault: 0
+					isDefault: 0
 				},
 				addressId: 0,
 				openSelectRegion: false,
-				selectRegionList: [{
-						id: 0,
-						name: '省份',
-						parentId: 1,
-						type: 1
-					},
-					{
-						id: 0,
-						name: '城市',
-						parentId: 1,
-						type: 2
-					},
-					{
-						id: 0,
-						name: '区县',
-						parentId: 1,
-						type: 3
-					}
+				selectRegionList: [
+					{ id: 0, name: '省份', parentId: 1, type: 1 },
+					{ id: 0, name: '城市', parentId: 1, type: 2 },
+					{ id: 0, name: '区县', parentId: 1, type: 3 }
 				],
 				regionType: 1,
 				regionList: [],
@@ -87,115 +84,68 @@
 		},
 		methods: {
 			bindIsDefault() {
-				let address = this.address;
-				address.isDefault = !address.isDefault;
-				this.address = address;
+				this.address.isDefault = this.address.isDefault ? 0 : 1;
 			},
 			getAddressDetail() {
 				let that = this;
-				util.request(api.AddressDetail, {
-					id: that.addressId
-				}).then(function(res) {
-					if (res.code === 0) {
-						if (res.data) {
-							that.address = res.data
-						}
+				util.request(api.AddressDetail, { id: that.addressId }).then(function(res) {
+					if (res.code === 0 && res.data) {
+						that.address = res.data;
 					}
 				});
 			},
 			setRegionDoneStatus() {
-				let that = this;
-				let doneStatus = that.selectRegionList.every(item => {
-					return item.id != 0;
-				});
-
-				that.selectRegionDone = doneStatus
-
+				this.selectRegionDone = this.selectRegionList.every(item => item.id != 0);
 			},
 			chooseRegion() {
 				let that = this;
-				that.openSelectRegion = !that.openSelectRegion;
-
-				//设置区域选择数据
+				that.openSelectRegion = true;
 				let address = that.address;
 				if (address.provinceId > 0 && address.cityId > 0 && address.districtId > 0) {
 					let selectRegionList = that.selectRegionList;
 					selectRegionList[0].id = address.provinceId;
 					selectRegionList[0].name = address.province_name;
 					selectRegionList[0].parentId = 1;
-
 					selectRegionList[1].id = address.cityId;
 					selectRegionList[1].name = address.city_name;
 					selectRegionList[1].parentId = address.provinceId;
-
 					selectRegionList[2].id = address.districtId;
 					selectRegionList[2].name = address.district_name;
 					selectRegionList[2].parentId = address.cityId;
-
-					that.selectRegionList = selectRegionList
-					that.regionType = 3
-
+					that.selectRegionList = selectRegionList;
+					that.regionType = 3;
 					that.getRegionList(address.cityId);
 				} else {
-					that.selectRegionList = [{
-						id: 0,
-						name: '省份',
-						parentId: 1,
-						type: 1
-					}, {
-						id: 0,
-						name: '城市',
-						parentId: 1,
-						type: 2
-					}, {
-						id: 0,
-						name: '区县',
-						parentId: 1,
-						type: 3
-					}]
-					that.regionType = 1
+					that.selectRegionList = [
+						{ id: 0, name: '省份', parentId: 1, type: 1 },
+						{ id: 0, name: '城市', parentId: 1, type: 2 },
+						{ id: 0, name: '区县', parentId: 1, type: 3 }
+					];
+					that.regionType = 1;
 					that.getRegionList(1);
 				}
-
 				that.setRegionDoneStatus();
-
 			},
-			selectRegionType(event) {
+			selectRegionType(index) {
 				let that = this;
-				let regionTypeIndex = event.target.dataset.regionTypeIndex;
 				let selectRegionList = that.selectRegionList;
-
-				//判断是否可点击
-				if (regionTypeIndex + 1 == that.regionType || (regionTypeIndex - 1 >= 0 && selectRegionList[regionTypeIndex - 1].id <=
-						0)) {
-					return false;
-				}
-
-				that.regionType = regionTypeIndex + 1
-
-				let selectRegionItem = selectRegionList[regionTypeIndex];
-
+				if (index + 1 == that.regionType || (index - 1 >= 0 && selectRegionList[index - 1].id <= 0)) return;
+				that.regionType = index + 1;
+				let selectRegionItem = selectRegionList[index];
 				this.getRegionList(selectRegionItem.parentId);
-
 				this.setRegionDoneStatus();
-
 			},
-			selectRegion(event) {
+			selectRegion(regionIndex) {
 				let that = this;
-				let regionIndex = event.target.dataset.regionIndex;
 				let regionItem = that.regionList[regionIndex];
 				let regionType = regionItem.type;
 				let selectRegionList = that.selectRegionList;
 				selectRegionList[regionType - 1] = regionItem;
-
-
-				that.selectRegionList = selectRegionList
+				that.selectRegionList = selectRegionList;
 				if (regionType != 3) {
-					that.regionType = regionType + 1
+					that.regionType = regionType + 1;
 					that.getRegionList(regionItem.id);
 				}
-
-				//重置下级区域为空
 				selectRegionList.map((item, index) => {
 					if (index > regionType - 1) {
 						item.id = 0;
@@ -204,29 +154,15 @@
 					}
 					return item;
 				});
-
-				that.selectRegionList = selectRegionList
-
-
+				that.selectRegionList = selectRegionList;
 				that.regionList = that.regionList.map(item => {
-
-					//标记已选择的
-					if (that.regionType == item.type && that.selectRegionList[that.regionType - 1].id == item.id) {
-						item.selected = true;
-					} else {
-						item.selected = false;
-					}
+					item.selected = (that.regionType == item.type && that.selectRegionList[that.regionType - 1].id == item.id);
 					return item;
-				})
-
+				});
 				this.setRegionDoneStatus();
-
 			},
 			doneSelectRegion() {
-				if (this.selectRegionDone === false) {
-					return false;
-				}
-
+				if (!this.selectRegionDone) return;
 				let address = this.address;
 				let selectRegionList = this.selectRegionList;
 				address.provinceId = selectRegionList[0].id;
@@ -235,71 +171,35 @@
 				address.province_name = selectRegionList[0].name;
 				address.city_name = selectRegionList[1].name;
 				address.district_name = selectRegionList[2].name;
-				address.fullRegion = selectRegionList.map(item => {
-					return item.name;
-				}).join('');
-
-				this.address = address
-				this.openSelectRegion = false
-
+				address.fullRegion = selectRegionList.map(item => item.name).join('');
+				this.address = address;
+				this.openSelectRegion = false;
 			},
 			cancelSelectRegion() {
-				this.regionType = this.regionDoneStatus ? 3 : 1
-				this.openSelectRegion = false
-
+				this.openSelectRegion = false;
 			},
 			getRegionList(regionId) {
 				let that = this;
 				let regionType = that.regionType;
-				util.request(api.RegionList, {
-					parentId: regionId
-				}).then(function(res) {
+				util.request(api.RegionList, { parentId: regionId }).then(function(res) {
 					if (res.code === 0) {
-						that.regionList = res.data.map(item => {
-							//标记已选择的
-							if (regionType == item.type && that.selectRegionList[regionType - 1].id == item.id) {
-								item.selected = true;
-							} else {
-								item.selected = false;
-							}
-
+						that.regionList = (res.data || []).map(item => {
+							item.selected = (regionType == item.type && that.selectRegionList[regionType - 1].id == item.id);
 							return item;
-						})
+						});
 					}
 				});
 			},
 			cancelAddress() {
-				uni.navigateBack({
-					url: '/pages/shopping/address/address',
-				})
+				uni.navigateBack();
 			},
 			saveAddress() {
 				let address = this.address;
+				if (address.userName == '') { util.toast('请输入姓名'); return; }
+				if (address.telNumber == '') { util.toast('请输入手机号码'); return; }
+				if (address.districtId == 0) { util.toast('请选择省市区'); return; }
+				if (address.detailInfo == '') { util.toast('请输入详细地址'); return; }
 
-				if (address.userName == '') {
-					util.toast('请输入姓名');
-
-					return false;
-				}
-
-				if (address.telNumber == '') {
-					util.toast('请输入手机号码');
-					return false;
-				}
-
-
-				if (address.districtId == 0) {
-					util.toast('请输入省市区');
-					return false;
-				}
-
-				if (address.detailInfo == '') {
-					util.toast('请输入详细地址');
-					return false;
-				}
-
-
-				let that = this;
 				util.request(api.AddressSave, {
 					id: address.id,
 					userName: address.userName,
@@ -307,223 +207,233 @@
 					provinceId: address.provinceId,
 					cityId: address.cityId,
 					districtId: address.districtId,
-          isDefault: address.isDefault,
+					isDefault: address.isDefault,
 					provinceName: address.province_name,
 					cityName: address.city_name,
 					countyName: address.district_name,
 					detailInfo: address.detailInfo,
 				}, 'POST', 'application/json').then(function(res) {
 					if (res.code === 0) {
-						uni.navigateBack({
-							url: '/pages/shopping/address/address',
-						})
+						uni.navigateBack();
 					}
 				});
-
 			}
 		},
 		onLoad: function(options) {
-			// 页面初始化 options为页面跳转所带来的参数
-			if (options.id != '' && options.id != 0) {
+			if (options.id && options.id != 0) {
 				this.addressId = options.id;
 				this.getAddressDetail();
 			}
-
 			this.getRegionList(1);
-
 		}
 	}
 </script>
 
 <style lang="scss">
+	$green: #5B8C5A;
+	$green-light: #7BAF7A;
+	$green-bg: #F6F7F4;
+
 	page {
 		height: 100%;
-		background: #f4f4f4;
+		background: $green-bg;
 	}
 
-	.add-address .add-form {
+	.page {
+		padding: 24rpx;
+		padding-bottom: 140rpx;
+	}
+
+	.form-card {
 		background: #fff;
-		width: 100%;
-		height: auto;
+		border-radius: 20rpx;
 		overflow: hidden;
+		box-shadow: 0 2rpx 12rpx rgba(91,140,90,0.08);
 	}
 
-	.add-address .form-item {
-		height: 116rpx;
-		padding-left: 31.25rpx;
-		border-bottom: 1px solid #d9d9d9;
+	.form-item {
 		display: flex;
 		align-items: center;
-		padding-right: 31.25rpx;
+		padding: 28rpx 30rpx;
+		border-bottom: 1rpx solid #f5f5f5;
+
+		&:last-child {
+			border-bottom: none;
+		}
+
+		&--switch {
+			justify-content: space-between;
+		}
 	}
 
-	.add-address .input {
+	.form-label {
+		width: 140rpx;
+		font-size: 28rpx;
+		color: #333;
+		font-weight: 500;
+	}
+
+	.form-input {
 		flex: 1;
+		font-size: 28rpx;
+		color: #333;
 		height: 44rpx;
 		line-height: 44rpx;
-		overflow: hidden;
 	}
 
-	.add-address .form-default {
-		border-bottom: 1px solid #d9d9d9;
-		height: 96rpx;
-		background: #fafafa;
-		padding-top: 28rpx;
-		font-size: 28rpx;
+	.form-arrow {
+		font-size: 36rpx;
+		color: #ccc;
+		margin-left: 10rpx;
 	}
 
-	.default-input {
-		margin: 0 auto;
-		display: block;
-		width: 240rpx;
+	.custom-switch {
+		width: 88rpx;
+		height: 48rpx;
+		border-radius: 24rpx;
+		background: #ddd;
+		position: relative;
+		transition: background 0.3s;
+
+		&.active {
+			background: $green;
+		}
+	}
+
+	.switch-dot {
+		position: absolute;
+		top: 4rpx;
+		left: 4rpx;
+		width: 40rpx;
 		height: 40rpx;
-		padding-left: 50rpx;
-		line-height: 40rpx;
-		background: url(http://yanxuan.nosdn.127.net/hxm/yanxuan-wap/p/20161201/style/img/sprites/checkbox-sed825af9d3-a6b8540d42.png) 1rpx -448rpx no-repeat;
-		background-size: 38rpx 486rpx;
-		font-size: 28rpx;
+		border-radius: 50%;
+		background: #fff;
+		box-shadow: 0 2rpx 4rpx rgba(0,0,0,0.15);
+		transition: transform 0.3s;
 	}
 
-	.default-input.selected {
-		background: url(http://yanxuan.nosdn.127.net/hxm/yanxuan-wap/p/20161201/style/img/sprites/checkbox-sed825af9d3-a6b8540d42.png) 0 -192rpx no-repeat;
-		background-size: 38rpx 486rpx;
+	.custom-switch.active .switch-dot {
+		transform: translateX(40rpx);
 	}
 
-	.add-address .btns {
+	.btn-group {
+		display: flex;
 		position: fixed;
 		bottom: 0;
 		left: 0;
-		overflow: hidden;
-		display: flex;
-		height: 100rpx;
 		width: 100%;
+		height: 100rpx;
 	}
 
-	.add-address .cannel,
-	.add-address .save {
+	.btn-cancel {
 		flex: 1;
 		height: 100rpx;
-		text-align: center;
 		line-height: 100rpx;
-		font-size: 28rpx;
-		color: #fff;
-		border: none;
-		border-radius: 0;
-	}
-
-	.add-address .cannel {
-		background: #333;
-	}
-
-	.add-address .save {
-		background: #b4282d;
-	}
-
-
-	.region-select {
-		width: 100%;
-		height: 600rpx;
-		background: #fff;
-		position: fixed;
-		z-index: 10;
-		left: 0;
-		bottom: 0;
-	}
-
-	.region-select .hd {
-		height: 108rpx;
-		width: 100%;
-		border-bottom: 1px solid #f4f4f4;
-		padding: 46rpx 30rpx 0 30rpx;
-	}
-
-	.region-select .region-selected {
-		float: left;
-		height: 60rpx;
-		display: flex;
-	}
-
-	.region-select .region-selected .item {
-		max-width: 140rpx;
-		margin-right: 30rpx;
-		text-align: left;
-		line-height: 60rpx;
-		height: 100%;
-		color: #333;
-		font-size: 28rpx;
-		overflow: hidden;
-		text-overflow: ellipsis;
-		white-space: nowrap;
-	}
-
-	.region-select .region-selected .item.disabled {
-		color: #999;
-	}
-
-	.region-select .region-selected .item.selected {
-		color: #b4282d;
-	}
-
-	.region-select .done {
-		float: right;
-		height: 60rpx;
-		width: 60rpx;
-		border: none;
-		background: #fff;
-		line-height: 60rpx;
 		text-align: center;
-		color: #333;
-		font-size: 28rpx;
+		font-size: 30rpx;
+		color: #666;
+		background: #fff;
 	}
 
-	.region-select .done.disabled {
-		color: #999;
+	.btn-save {
+		flex: 2;
+		height: 100rpx;
+		line-height: 100rpx;
+		text-align: center;
+		font-size: 30rpx;
+		color: #fff;
+		font-weight: 500;
+		background: linear-gradient(135deg, $green 0%, $green-light 100%);
 	}
 
-
-
-	.region-select .bd {
-		height: 492rpx;
-		width: 100%;
-		padding: 0 30rpx;
-	}
-
-	.region-select {
-		height: auto;
-		overflow: scroll;
-
-	}
-
-	.region-list {
-		width: 100%;
-		height: 100%;
-		line-height: 104rpx;
-		text-align: left;
-		color: #333;
-		font-size: 28rpx;
-	}
-
-	.region-select .item {
-		width: 100%;
-		height: 104rpx;
-		line-height: 104rpx;
-		text-align: left;
-		color: #333;
-		font-size: 28rpx;
-	}
-
-	.region-select .region-list .item.selected {
-		color: #b4282d;
-	}
-
-
-	.bg-mask {
-		height: 100%;
-		width: 100%;
-		background: rgba(0, 0, 0, 0.4);
+	.region-mask {
 		position: fixed;
 		top: 0;
 		left: 0;
-		z-index: 8;
+		width: 100%;
+		height: 100%;
+		background: rgba(0,0,0,0.4);
+		z-index: 99;
+	}
+
+	.region-panel {
+		position: fixed;
+		bottom: 0;
+		left: 0;
+		width: 100%;
+		background: #fff;
+		border-radius: 24rpx 24rpx 0 0;
+		z-index: 100;
+		overflow: hidden;
+	}
+
+	.region-header {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		padding: 30rpx;
+		border-bottom: 1rpx solid #f0f0f0;
+	}
+
+	.region-tabs {
+		display: flex;
+	}
+
+	.tab-item {
+		font-size: 26rpx;
+		color: #333;
+		margin-right: 30rpx;
+		padding-bottom: 10rpx;
+		max-width: 140rpx;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+
+		&.active {
+			color: $green;
+			border-bottom: 3rpx solid $green;
+			font-weight: 500;
+		}
+
+		&.placeholder {
+			color: #999;
+		}
+	}
+
+	.region-done {
+		font-size: 28rpx;
+		color: #999;
+		padding: 8rpx 20rpx;
+
+		&.active {
+			color: $green;
+			font-weight: 500;
+		}
+	}
+
+	.region-body {
+		height: 500rpx;
+		padding: 0 30rpx;
+	}
+
+	.region-item {
+		height: 90rpx;
+		line-height: 90rpx;
+		font-size: 28rpx;
+		color: #333;
+		border-bottom: 1rpx solid #f8f8f8;
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+
+		&.selected {
+			color: $green;
+			font-weight: 500;
+		}
+	}
+
+	.check-mark {
+		font-size: 28rpx;
+		color: $green;
 	}
 </style>

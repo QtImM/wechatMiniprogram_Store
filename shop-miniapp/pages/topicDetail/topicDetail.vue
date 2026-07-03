@@ -1,54 +1,49 @@
 <template>
-	<view>
-		<scroll-view class="container">
-			<scroll-view class="content">
-				<uParse :content="topic.content" noData="" />
-			</scroll-view>
-			<view class="topic-goods">
-			</view>
-			<scroll-view class="comments">
-				<view class="h">
-					<text class="t">精选留言</text>
-					<image @tap="postComment" class="i" src="http://nos.netease.com/mailpub/hxm/yanxuan-wap/p/20150730/style/img/icon-normal/comment-add-2aca147c3f.png"></image>
+	<view class="container">
+		<view class="content-area">
+			<uParse :content="topic.content" noData="" />
+		</view>
+
+		<view class="comment-section">
+			<view class="section-header">
+				<text class="section-title">精选留言</text>
+				<view class="comment-add" @tap="postComment">
+					<text>写留言</text>
 				</view>
-				<view class="has-comments" v-if="commentList.length > 0">
-					<view class="b">
-						<view class="item" v-for="(item, index) in commentList" :key="item.id">
-							<view class="info">
-								<view class="user">
-									<image class="avatar" :src="item.userInfo.avatar"></image>
-									<text class="nickname">{{item.userInfo.nickname}}</text>
-								</view>
-								<view class="time">{{item.addTime}}</view>
-							</view>
-							<view class="comment">
-								{{item.content}}
-							</view>
+			</view>
+			<view class="comment-list" v-if="commentList.length > 0">
+				<view class="comment-item" v-for="(item, index) in commentList" :key="item.id">
+					<view class="comment-user">
+						<image class="user-avatar" :src="item.userInfo.avatar"></image>
+						<view class="user-info">
+							<text class="user-name">{{item.userInfo.nickname}}</text>
+							<text class="comment-time">{{item.addTime}}</text>
 						</view>
 					</view>
-					<view class="load" v-if="commentCount > 5">
-						<navigator :url="'/pages/topicComment/topicComment?valueId='+topic.id+'&typeId=1'">查看更多</navigator>
-					</view>
+					<view class="comment-content">{{item.content}}</view>
 				</view>
-				<view class="no-comments" v-if="commentList.length <= 0">
-					<view class="b">
-						<image class="icon" src="http://yanxuan.nosdn.127.net/hxm/yanxuan-wap/p/20161201/style/img/icon-normal/no-comment-560f87660a.png"></image>
-						<text class="txt">等你来留言</text>
-					</view>
-				</view>
-			</scroll-view>
-			<scroll-view class="rec-box">
-				<view class="h">
-					<text class="txt">专题推荐</text>
-				</view>
-				<view class="b">
-					<navigator class="item" v-for="(item, index) in topicList" :key="index" :url="'../topicDetail/topicDetail?id='+item.id">
-						<image class="img" :src="item.scenePicUrl"></image>
-						<text class="title">{{item.title}}</text>
-					</navigator>
-				</view>
-			</scroll-view>
-		</scroll-view>
+				<navigator class="load-more" v-if="commentCount > 5"
+				 :url="'/pages/topicComment/topicComment?valueId='+topic.id+'&typeId=1'">
+					查看更多留言 ›
+				</navigator>
+			</view>
+			<view class="no-comment" v-else>
+				<text class="no-comment-text">暂无留言，快来抢沙发~</text>
+			</view>
+		</view>
+
+		<view class="recommend-section" v-if="topicList.length > 0">
+			<view class="section-header">
+				<text class="section-title">专题推荐</text>
+			</view>
+			<view class="recommend-list">
+				<navigator class="recommend-item" v-for="(item, index) in topicList" :key="index"
+				 :url="'../topicDetail/topicDetail?id='+item.id">
+					<image class="recommend-img" :src="item.scenePicUrl" mode="aspectFill"></image>
+					<text class="recommend-title">{{item.title}}</text>
+				</navigator>
+			</view>
+		</view>
 	</view>
 </template>
 
@@ -57,9 +52,7 @@
 	const api = require('@/utils/api.js');
 	import uParse from '@/components/uParse/src/wxParse'
 	export default {
-		components: {
-			uParse
-		},
+		components: { uParse },
 		data() {
 			return {
 				id: 0,
@@ -78,39 +71,31 @@
 					size: 5
 				}).then(function(res) {
 					if (res.code === 0) {
-						that.commentList = res.data.records
-						that.commentCount = res.data.total
+						that.commentList = res.data.records || [];
+						that.commentCount = res.data.total || 0;
 					}
 				});
 			},
 			postComment() {
-				wx.navigateTo({
-					url: '/pages/commentPost/commentPost?valueId=' + this.id + '&typeId=1',
-				})
-			},
+				uni.navigateTo({
+					url: '/pages/commentPost/commentPost?valueId=' + this.id + '&typeId=1'
+				});
+			}
 		},
 		onShow: function() {
-			// 页面显示
 			this.getCommentList();
 		},
 		onLoad: function(options) {
-			// 页面初始化 options为页面跳转所带来的参数
-			var that = this;
-			that.id = parseInt(options.id)
-
-			util.request(api.TopicDetail, {
-				id: that.id
-			}).then(function(res) {
+			let that = this;
+			that.id = parseInt(options.id);
+			util.request(api.TopicDetail, { id: that.id }).then(function(res) {
 				if (res.code === 0) {
 					that.topic = res.data;
 				}
 			});
-
-			util.request(api.TopicRelated, {
-				id: that.id
-			}).then(function(res) {
+			util.request(api.TopicRelated, { id: that.id }).then(function(res) {
 				if (res.code === 0) {
-					that.topicList = res.data
+					that.topicList = res.data || [];
 				}
 			});
 		}
@@ -118,190 +103,156 @@
 </script>
 
 <style lang="scss">
-	.content {
-		width: 100%;
-		height: auto;
-		font-size: 0;
+	$green: #5B8C5A;
+	$green-light: #7BAF7A;
+	$green-bg: #F6F7F4;
+
+	page {
+		background: $green-bg;
 	}
 
-	.content image {
-		display: inline-block;
-		width: 100%;
+	.container {
+		padding-bottom: 30rpx;
 	}
 
-	.comments {
+	.content-area {
 		width: 100%;
-		height: auto;
-		padding-left: 30rpx;
 		background: #fff;
-		margin-top: 20rpx;
-	}
-
-	.comments .h {
-		height: 93rpx;
-		line-height: 93rpx;
-		width: 720rpx;
-		padding-right: 30rpx;
-		border-bottom: 1px solid #d9d9d9;
-	}
-
-	.comments .h .t {
-		display: block;
-		float: left;
-		width: 50%;
-		font-size: 29rpx;
-		color: #333;
-	}
-
-	.comments .h .i {
-		display: block;
-		float: right;
-		margin-top: 30rpx;
-		width: 33rpx;
-		height: 33rpx;
-	}
-
-	.comments .b {
-		height: auto;
-		width: 720rpx;
-	}
-
-	.comments .item {
-		height: auto;
-		width: 720rpx;
-		overflow: hidden;
-		border-bottom: 1px solid #d9d9d9;
-	}
-
-	.comments .info {
-		height: 127rpx;
-		width: 100%;
-		padding: 33rpx 0 27rpx 0;
-	}
-
-	.comments .user {
-		float: left;
-		width: auto;
-		height: 67rpx;
-		line-height: 67rpx;
 		font-size: 0;
+
+		image {
+			display: inline-block;
+			width: 100%;
+		}
 	}
 
-	.comments .user .avatar {
-		display: block;
-		float: left;
-		width: 67rpx;
-		height: 67rpx;
-		margin-right: 17rpx;
-		border-radius: 50%;
+	.comment-section {
+		margin: 20rpx 24rpx;
+		background: #fff;
+		border-radius: 16rpx;
+		padding: 0 28rpx;
+		box-shadow: 0 2rpx 10rpx rgba(91,140,90,0.08);
 	}
 
-	.comments .user .nickname {
-		display: block;
-		width: auto;
-		float: left;
-		height: 66rpx;
-		overflow: hidden;
-		font-size: 29rpx;
-		line-height: 66rpx;
+	.section-header {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		height: 90rpx;
+		border-bottom: 1rpx solid #f0f0f0;
 	}
 
-	.comments .time {
-		display: block;
-		float: right;
-		width: auto;
-		height: 67rpx;
-		line-height: 67rpx;
-		color: #7f7f7f;
-		font-size: 25rpx;
-		margin-right: 30rpx;
-	}
-
-	.comments .comment {
-		width: 720rpx;
-		padding-right: 30rpx;
-		line-height: 45.8rpx;
-		margin-bottom: 30rpx;
-		font-size: 29rpx;
-		color: #333;
-	}
-
-	.comments .load {
-		width: 720rpx;
-		height: 108rpx;
-		line-height: 108rpx;
-		text-align: center;
-		font-size: 38.5rpx;
-	}
-
-	.no-comments {
-		height: 297rpx;
-	}
-
-	.no-comments .txt {
-		height: 43rpx;
-		line-height: 43rpx;
-		display: block;
-		width: 100%;
-		text-align: center;
-		font-size: 29rpx;
-		color: #7f7f7f;
-	}
-
-	.no-comments .icon {
-		margin: 48rpx auto 18rpx auto;
-		height: 130rpx;
-		display: block;
-		width: 115rpx;
-	}
-
-
-	.rec-box {
-		width: 690rpx;
-		height: auto;
-		margin: 0 30rpx;
-	}
-
-	.rec-box .h {
-		position: relative;
-		width: 690rpx;
-		height: 96rpx;
-		/*border-bottom: 1px solid #d0d0d0;*/
-		margin-bottom: 32rpx;
-	}
-
-	.rec-box .h .txt {
-		display: inline-block;
-		position: absolute;
-		background: #f4f4f4;
-		top: 59rpx;
-		left: 200rpx;
-		width: 290rpx;
-		height: 45rpx;
-		line-height: 45rpx;
+	.section-title {
 		font-size: 30rpx;
+		font-weight: bold;
+		color: #333;
+	}
+
+	.comment-add {
+		font-size: 24rpx;
+		color: $green;
+		border: 1rpx solid $green;
+		padding: 6rpx 18rpx;
+		border-radius: 20rpx;
+	}
+
+	.comment-list {
+		padding: 10rpx 0;
+	}
+
+	.comment-item {
+		padding: 24rpx 0;
+		border-bottom: 1rpx solid #f5f5f5;
+
+		&:last-child {
+			border-bottom: none;
+		}
+	}
+
+	.comment-user {
+		display: flex;
+		align-items: center;
+		margin-bottom: 16rpx;
+	}
+
+	.user-avatar {
+		width: 60rpx;
+		height: 60rpx;
+		border-radius: 50%;
+		margin-right: 16rpx;
+	}
+
+	.user-info {
+		flex: 1;
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+	}
+
+	.user-name {
+		font-size: 26rpx;
+		color: #333;
+	}
+
+	.comment-time {
+		font-size: 22rpx;
 		color: #999;
+	}
+
+	.comment-content {
+		font-size: 28rpx;
+		color: #333;
+		line-height: 1.6;
+	}
+
+	.load-more {
+		text-align: center;
+		font-size: 26rpx;
+		color: $green;
+		padding: 24rpx 0;
+	}
+
+	.no-comment {
+		padding: 50rpx 0;
 		text-align: center;
 	}
 
-	.rec-box .b .item {
-		width: 690rpx;
-		height: 397rpx;
-		padding: 24rpx 24rpx 30rpx 24rpx;
+	.no-comment-text {
+		font-size: 26rpx;
+		color: #999;
+	}
+
+	.recommend-section {
+		margin: 0 24rpx;
 		background: #fff;
-		margin-bottom: 30rpx;
+		border-radius: 16rpx;
+		padding: 0 28rpx 24rpx;
+		box-shadow: 0 2rpx 10rpx rgba(91,140,90,0.08);
 	}
 
-	.rec-box .b .item .img {
-		height: 278rpx;
-		width: 642rpx;
+	.recommend-list {
+		padding-top: 16rpx;
 	}
 
-	.rec-box .b .item .title {
+	.recommend-item {
 		display: block;
-		margin-top: 30rpx;
-		height: 30rpx;
-		width: 642rpx;
-		font-size: 28rpx;
+		width: 100%;
+		margin-bottom: 20rpx;
+		border-radius: 12rpx;
+		overflow: hidden;
+		box-shadow: 0 2rpx 8rpx rgba(0,0,0,0.05);
+	}
+
+	.recommend-img {
+		width: 100%;
+		height: 280rpx;
+	}
+
+	.recommend-title {
+		display: block;
+		padding: 16rpx 20rpx;
+		font-size: 26rpx;
+		color: #333;
+		background: #fff;
 	}
 </style>

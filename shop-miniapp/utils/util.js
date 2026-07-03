@@ -1,6 +1,10 @@
+const mock = require('./mock.js');
+
 const utils = {
+	// 是否使用本地Mock数据（true=纯前端演示，false=连接后端）
+	useMock: true,
 	// 域名
-	domain: 'http://127.0.0.1/',
+	domain: 'http://127.0.0.1:8085/',
 	//接口地址
 	interfaceUrl: function () {
 		return utils.domain + 'app-api/'
@@ -18,7 +22,7 @@ const utils = {
 			content: content,
 			showCancel: showCancel,
 			cancelColor: cancelColor || "#555",
-			confirmColor: confirmColor || "#e41f19",
+			confirmColor: confirmColor || "#5B8C5A",
 			confirmText: confirmText || "确定",
 			cancelText: cancelText || "取消",
 			success(res) {
@@ -67,6 +71,21 @@ const utils = {
 	 *  false:显示
 	 */
 	request: function (url, postData = {}, method = "POST", contentType = "application/x-www-form-urlencoded", isDelay, hideLoading) {
+		// Mock模式：直接返回本地数据
+		if (utils.useMock) {
+			return new Promise((resolve) => {
+				setTimeout(() => {
+					const result = mock.handleMock(url, postData);
+					if (result) {
+						resolve(result);
+					} else {
+						console.warn('[Mock] 未匹配接口:', url);
+						resolve({ code: 0, msg: 'success', data: {} });
+					}
+				}, 100);
+			});
+		}
+
 		//接口请求
 		let loadding = false;
 		utils.delayed && uni.hideLoading();
