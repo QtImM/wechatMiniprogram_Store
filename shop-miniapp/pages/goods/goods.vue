@@ -62,6 +62,32 @@
 					</view>
 				</view>
 
+				<!-- 药食百科科普看板 -->
+				<view class="science-board-card" v-if="scienceData">
+					<view class="science-header">
+						<text class="science-icon">🍃</text>
+						<text class="science-title">药食同源 · 养生百科</text>
+					</view>
+					<view class="science-grid">
+						<view class="science-item">
+							<text class="sci-label">四气五味</text>
+							<text class="sci-val">{{scienceData.nature}}</text>
+						</view>
+						<view class="science-item">
+							<text class="sci-label">归经</text>
+							<text class="sci-val">{{scienceData.meridian}}</text>
+						</view>
+						<view class="science-item">
+							<text class="sci-label">主要活性成分</text>
+							<text class="sci-val highlight">{{scienceData.components}}</text>
+						</view>
+						<view class="science-item">
+							<text class="sci-label">每日推荐剂量</text>
+							<text class="sci-val">{{scienceData.dosage}}</text>
+						</view>
+					</view>
+				</view>
+
 				<!-- 选择规格 -->
 				<view class="spec-entry" @tap="switchAttrPop">
 					<text class="spec-label">选择</text>
@@ -95,6 +121,35 @@
 						<view class="attr-item" v-for="(item, index) in attribute" :key="item.name">
 							<text class="attr-key">{{item.name}}</text>
 							<text class="attr-val">{{item.value}}</text>
+						</view>
+					</view>
+				</view>
+
+				<!-- 经典膳食推荐搭配 -->
+				<view class="combo-recommend-card" v-if="comboData">
+					<view class="combo-header">
+						<text class="combo-title">🌟 膳食养生黄金搭档推荐</text>
+					</view>
+					<view class="combo-body">
+						<view class="combo-goods">
+							<view class="combo-goods-item curr">
+								<image class="combo-img" :src="goods.listPicUrl" mode="aspectFill"></image>
+								<text class="combo-name">{{goods.name}}</text>
+							</view>
+							<text class="combo-plus">+</text>
+							<view class="combo-goods-item partner">
+								<image class="combo-img" :src="comboData.partnerPic" mode="aspectFill"></image>
+								<text class="combo-name">{{comboData.partnerName}}</text>
+							</view>
+						</view>
+						<view class="combo-action-area">
+							<view class="combo-benefit">
+								<text class="combo-tip">【双效温补，气血调和】</text>
+								<text class="combo-price-tip">搭配购买更省心</text>
+							</view>
+							<button class="combo-add-btn" @tap="addComboToCart">
+								<text>🛒 一键搭配加购</text>
+							</button>
 						</view>
 					</view>
 				</view>
@@ -226,7 +281,16 @@ export default {
 			openAttr: false,
 			noCollectImage: '/static/images/icon_collect.png',
 			hasCollectImage: '/static/images/icon_collect_checked.png',
-			collectBackImage: '/static/images/icon_collect.png'
+			collectBackImage: '/static/images/icon_collect.png',
+			scienceData: null,
+			comboData: null,
+			scienceDb: {
+				1: { nature: '性温，味甘', meridian: '归肺、肝、肾经', components: '明胶原蛋白、18种氨基酸、微量元素', dosage: '建议每日 3-9 克', partnerId: 2, partnerName: '同仁堂枸杞', partnerPic: 'https://images.unsplash.com/photo-1509358271058-acd22cc93898?w=150' },
+				2: { nature: '性平，味甘', meridian: '归肝、肾、肺经', components: '枸杞多糖、甜菜碱、胡萝卜素、维C', dosage: '建议每日 10-15 克', partnerId: 7, partnerName: '西洋参切片', partnerPic: 'https://images.unsplash.com/photo-1514733670139-4d87a19b179d?w=150' },
+				3: { nature: '性微温，味甘、微苦', meridian: '归脾、肺、心、肾经', components: '人参皂苷、人参多糖、挥发油、氨基酸', dosage: '建议每日 3-6 克', partnerId: 2, partnerName: '同仁堂枸杞', partnerPic: 'https://images.unsplash.com/photo-1509358271058-acd22cc93898?w=150' },
+				5: { nature: '性平，味甘', meridian: '归脾、胃、肺、大肠经', components: '天然果糖、葡萄糖、活性淀粉酶', dosage: '建议每日 10-20 克', partnerId: 19, partnerName: '薄壳手剥碧根果', partnerPic: 'https://images.unsplash.com/photo-1585238342024-78d387f4a707?w=150' },
+				6: { nature: '性温，味甘、微苦', meridian: '归肝、胃经', components: '三七总皂苷、三七素、槲皮素', dosage: '建议每日 3-6 克', partnerId: 1, partnerName: '东阿阿胶糕', partnerPic: 'https://images.unsplash.com/photo-1505252585461-04db1eb84625?w=150' }
+			}
 		}
 	},
 	methods: {
@@ -245,6 +309,52 @@ export default {
 					this.setDefSpecInfo(this.specificationList);
 					this.collectBackImage = this.userHasCollect == 1 ? this.hasCollectImage : this.noCollectImage;
 					this.getGoodsRelated();
+					this.initScienceInfo(this.id);
+				}
+			});
+		},
+		initScienceInfo(goodsId) {
+			const data = this.scienceDb[goodsId];
+			if (data) {
+				this.scienceData = {
+					nature: data.nature,
+					meridian: data.meridian,
+					components: data.components,
+					dosage: data.dosage
+				};
+				this.comboData = {
+					partnerId: data.partnerId,
+					partnerName: data.partnerName,
+					partnerPic: data.partnerPic
+				};
+			} else {
+				this.scienceData = {
+					nature: '性平，味甘',
+					meridian: '归脾、胃、肺经',
+					components: '活性多糖、膳食纤维、微量矿物质',
+					dosage: '建议日常随膳食适量食用'
+				};
+				this.comboData = null;
+			}
+		},
+		addComboToCart() {
+			if (!this.comboData) return;
+			let that = this;
+			let currentProductId = 1;
+			if (this.productList && this.productList.length > 0) {
+				currentProductId = this.productList[0].id;
+			}
+			util.request(api.CartAdd, { goodsId: this.goods.id, number: 1, productId: currentProductId }, 'POST', 'application/json').then(res => {
+				if (res.code === 0) {
+					util.request(api.CartAdd, { goodsId: this.comboData.partnerId, number: 1, productId: 1 }, 'POST', 'application/json').then(resPartner => {
+						if (resPartner.code === 0) {
+							uni.showToast({
+								title: '黄金搭档搭配加购成功',
+								icon: 'success'
+							});
+							that.cartGoodsCount = resPartner.data.cartTotal.goodsCount;
+						}
+					});
 				}
 			});
 		},
@@ -1080,5 +1190,176 @@ export default {
 .action-buy {
 	background: linear-gradient(135deg, $green, $green-dark);
 	color: #fff;
+}
+
+/* 药食百科看板样式 */
+.science-board-card {
+	background: linear-gradient(135deg, #fdfdfd 0%, #f6fdf5 100%);
+	border: 1rpx solid rgba(91, 140, 90, 0.15);
+	border-radius: 20rpx;
+	margin: 20rpx 30rpx;
+	padding: 24rpx 28rpx;
+	box-shadow: 0 4rpx 16rpx rgba(91, 140, 90, 0.03);
+}
+
+.science-header {
+	display: flex;
+	align-items: center;
+	margin-bottom: 20rpx;
+}
+
+.science-icon {
+	font-size: 32rpx;
+	margin-right: 12rpx;
+}
+
+.science-title {
+	font-size: 26rpx;
+	font-weight: 700;
+	color: $green;
+}
+
+.science-grid {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 16rpx 0;
+}
+
+.science-item {
+	width: 50%;
+	display: flex;
+	flex-direction: column;
+	padding-right: 10rpx;
+	box-sizing: border-box;
+
+	&:nth-child(2n) {
+		padding-left: 20rpx;
+		padding-right: 0;
+		border-left: 1rpx dashed rgba(91, 140, 90, 0.15);
+	}
+}
+
+.sci-label {
+	font-size: 20rpx;
+	color: $text-hint;
+	margin-bottom: 6rpx;
+}
+
+.sci-val {
+	font-size: 24rpx;
+	color: $text-primary;
+	font-weight: 500;
+	line-height: 1.4;
+
+	&.highlight {
+		color: $green;
+		font-weight: 700;
+	}
+}
+
+/* 经典推荐搭配样式 */
+.combo-recommend-card {
+	background: #fff;
+	border-radius: 20rpx;
+	margin: 24rpx 30rpx;
+	padding: 28rpx;
+	border: 1rpx dashed rgba(91, 140, 90, 0.25);
+}
+
+.combo-header {
+	margin-bottom: 24rpx;
+}
+
+.combo-title {
+	font-size: 26rpx;
+	font-weight: 700;
+	color: $text-primary;
+}
+
+.combo-body {
+	display: flex;
+	flex-direction: column;
+	gap: 24rpx;
+}
+
+.combo-goods {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 20rpx;
+}
+
+.combo-goods-item {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	width: 180rpx;
+}
+
+.combo-img {
+	width: 110rpx;
+	height: 110rpx;
+	border-radius: 12rpx;
+	background: $green-bg;
+}
+
+.combo-name {
+	font-size: 22rpx;
+	color: $text-secondary;
+	margin-top: 10rpx;
+	text-align: center;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	width: 100%;
+}
+
+.combo-plus {
+	font-size: 36rpx;
+	color: $text-hint;
+	font-weight: 300;
+}
+
+.combo-action-area {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	background: $green-bg;
+	padding: 16rpx 20rpx;
+	border-radius: 12rpx;
+}
+
+.combo-benefit {
+	display: flex;
+	flex-direction: column;
+}
+
+.combo-tip {
+	font-size: 22rpx;
+	font-weight: 700;
+	color: $green;
+}
+
+.combo-price-tip {
+	font-size: 18rpx;
+	color: $text-hint;
+	margin-top: 4rpx;
+}
+
+.combo-add-btn {
+	background: $green;
+	color: #fff;
+	font-size: 24rpx;
+	font-weight: 700;
+	height: 64rpx;
+	line-height: 64rpx;
+	padding: 0 24rpx;
+	border-radius: 32rpx;
+	border: none;
+	margin: 0;
+
+	&:active {
+		filter: brightness(0.9);
+	}
 }
 </style>

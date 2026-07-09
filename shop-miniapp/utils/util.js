@@ -406,6 +406,18 @@ const utils = {
 	 */
 	payOrder: function (orderId) {
 		return new Promise(function (resolve, reject) {
+			// Mock模式：跳转到仿微信支付页面，由用户点击确认后 resolve
+			if (utils.useMock) {
+				const app = getApp();
+				app.globalData._payResolve = resolve;
+				app.globalData._payReject = reject;
+				// 从购物车总金额或传入参数获取金额
+				const amount = app.globalData._payAmount || '0.00';
+				uni.navigateTo({
+					url: '/pages/payMock/payMock?orderId=' + orderId + '&amount=' + amount
+				});
+				return;
+			}
 			utils.request('pay/prepay', {
 				orderId: orderId
 			}, 'POST').then((res) => {

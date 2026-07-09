@@ -35,16 +35,19 @@
 
 				<!-- 商品网格 -->
 				<view class="goods-grid">
-					<navigator class="goods-card" v-for="(item, index) in goodsList" :key="index"
-					 :url="'/pages/goods/goods?id='+item.id">
+					<view class="goods-card" v-for="(item, index) in goodsList" :key="index"
+					 @tap="goToGoods(item.id)">
 						<image class="goods-img" :src="item.listPicUrl" mode="aspectFill"></image>
 						<view class="goods-info">
 							<text class="goods-name">{{item.name||''}}</text>
 							<view class="goods-bottom">
 								<text class="goods-price">¥{{item.retailPrice}}</text>
+								<view class="goods-cart-btn" @tap.stop="quickAddToCart(item, $event)">
+									<text class="goods-cart-btn-icon">+</text>
+								</view>
 							</view>
 						</view>
-					</navigator>
+					</view>
 				</view>
 
 				<view class="load-tip" v-if="goodsList.length > 0">
@@ -54,6 +57,17 @@
 					<text>该分类暂无商品</text>
 				</view>
 			</scroll-view>
+		</view>
+
+		<!-- 抛物线飞球插槽 -->
+		<view 
+			class="cart-ball" 
+			v-for="ball in cartBalls" 
+			:key="ball.id" 
+			:style="ball.style" 
+			v-if="ball.show"
+		>
+			<view class="inner-ball"></view>
 		</view>
 	</view>
 </template>
@@ -75,7 +89,8 @@ export default {
 			size: 10,
 			totalPages: 1,
 			noMore: false,
-			loading: false
+			loading: false,
+			cartBalls: []
 		}
 	},
 	methods: {
@@ -133,6 +148,63 @@ export default {
 		calcHeight() {
 			const sysInfo = uni.getSystemInfoSync();
 			this.scrollHeight = sysInfo.windowHeight - 100;
+		},
+		goToGoods(id) {
+			uni.navigateTo({ url: '/pages/goods/goods?id=' + id });
+		},
+		quickAddToCart(goods, e) {
+			let that = this;
+			let currentProductId = 1;
+			util.request(api.CartAdd, { goodsId: goods.id, number: 1, productId: currentProductId }, 'POST', 'application/json').then(res => {
+				if (res.code === 0) {
+					uni.showToast({
+						title: '已加入购物车',
+						icon: 'none',
+						duration: 1000
+					});
+					
+					let clientX = 100;
+					let clientY = 100;
+					if (e.touches && e.touches.length > 0) {
+						clientX = e.touches[0].clientX;
+						clientY = e.touches[0].clientY;
+					} else if (e.detail) {
+						clientX = e.detail.x || 100;
+						clientY = e.detail.y || 100;
+					}
+
+					const ballId = Date.now();
+					const ball = {
+						id: ballId,
+						show: true,
+						style: `left: ${clientX}px; top: ${clientY}px;`
+					};
+					this.cartBalls.push(ball);
+
+					this.$nextTick(() => {
+						const sysInfo = uni.getSystemInfoSync();
+						const targetX = sysInfo.windowWidth * 0.62;
+						const targetY = sysInfo.windowHeight - 30;
+
+						const index = this.cartBalls.findIndex(b => b.id === ballId);
+						if (index > -1) {
+							this.$set(this.cartBalls, index, {
+								...ball,
+								style: `left: ${targetX}px; top: ${targetY}px;`
+							});
+						}
+					});
+
+					setTimeout(() => {
+						const index = this.cartBalls.findIndex(b => b.id === ballId);
+						if (index > -1) {
+							this.cartBalls[index].show = false;
+						}
+					}, 600);
+				} else {
+					uni.showToast({ image: '/static/images/icon_error.png', title: res.msg, mask: true });
+				}
+			});
 		}
 	},
 	onLoad() {
@@ -307,6 +379,9 @@ page {
 
 .goods-bottom {
 	margin-top: 8rpx;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
 }
 
 .goods-price {
@@ -331,5 +406,45 @@ page {
 	text-align: center;
 	font-size: 26rpx;
 	color: $text-hint;
+}
+
+/* 一键加购绿色小圆钮 */
+.goods-cart-btn {
+	width: 44rpx;
+	height: 44rpx;
+	background: $green;
+	border-radius: 50%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	box-shadow: 0 4rpx 10rpx rgba(91, 140, 90, 0.2);
+	transition: transform 0.1s ease;
+
+	&:active {
+		transform: scale(0.85);
+	}
+}
+
+.goods-cart-btn-icon {
+	color: #fff;
+	font-size: 26rpx;
+	font-weight: 700;
+	line-height: 1;
+}
+
+/* 抛物线飞球样式 */
+.cart-ball {
+	position: fixed;
+	z-index: 9999;
+	transition: left 0.6s linear, top 0.6s cubic-bezier(0.3, -0.2, 1, 0.2);
+	pointer-events: none;
+}
+
+.inner-ball {
+	width: 32rpx;
+	height: 32rpx;
+	border-radius: 50%;
+	background: #CF4A3E;
+	box-shadow: 0 4rpx 10rpx rgba(207, 74, 62, 0.4);
 }
 </style>

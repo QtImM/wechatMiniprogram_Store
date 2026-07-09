@@ -154,6 +154,12 @@
 			}
 		},
 		{
+			"path": "pages/payMock/payMock",
+			"style": {
+				"navigationStyle": "custom"
+			}
+		},
+		{
 			"path": "pages/payResult/payResult",
 			"style": {
 				"navigationBarTitleText": "付款结果",

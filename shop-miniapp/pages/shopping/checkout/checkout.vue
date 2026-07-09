@@ -158,6 +158,7 @@ export default {
 			}, 'POST', 'application/json').then(res => {
 				if (res.code === 0) {
 					const orderId = res.data.orderInfo.id;
+					getApp().globalData._payAmount = this.actualPrice;
 					util.payOrder(parseInt(orderId)).then(() => {
 						uni.redirectTo({ url: '/pages/payResult/payResult?status=1&orderId=' + orderId });
 					}).catch(() => {

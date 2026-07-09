@@ -10,20 +10,23 @@ import java.util.*;
 @RestController
 public class AppMockController {
 
-    private static final String IMG = "https://picsum.photos/seed/a1/400/400";
+    private static final String IMG = MockData.CATEGORY_BANNERS.get(1L);
 
-    // =========== 分类页 ===========
+    private Map<String, Object> getGoodsFromList(long id) {
+        return MockData.getGoodsById(id);
+    }
 
     private Map<String, Object> buildCategory(Long id) {
         String name = getCategoryName(id);
+        String bannerUrl = MockData.CATEGORY_BANNERS.getOrDefault(id, "https://images.unsplash.com/photo-1596701062351-8c2c14d1fdd0?w=600");
         List<Map<String, Object>> subList = List.of(
-                Map.of("id", id * 10 + 1, "name", name + "-A", "wapBannerUrl", "https://picsum.photos/seed/cat" + id + "a/200/200"),
-                Map.of("id", id * 10 + 2, "name", name + "-B", "wapBannerUrl", "https://picsum.photos/seed/cat" + id + "b/200/200"),
-                Map.of("id", id * 10 + 3, "name", name + "-C", "wapBannerUrl", "https://picsum.photos/seed/cat" + id + "c/200/200")
+                Map.of("id", id * 10 + 1, "name", name + "-精选", "wapBannerUrl", bannerUrl),
+                Map.of("id", id * 10 + 2, "name", name + "-经典", "wapBannerUrl", bannerUrl),
+                Map.of("id", id * 10 + 3, "name", name + "-新品", "wapBannerUrl", bannerUrl)
         );
         return Map.of("id", id, "name", name,
                 "frontName", name + "精选好物",
-                "wapBannerUrl", "https://picsum.photos/seed/cat" + id + "/600/300",
+                "wapBannerUrl", bannerUrl,
                 "subCategoryList", subList);
     }
 
@@ -79,45 +82,37 @@ public class AppMockController {
             @RequestParam(value = "size", defaultValue = "10") int size,
             @RequestParam(value = "sort", defaultValue = "default") String sort,
             @RequestParam(value = "order", defaultValue = "desc") String order) {
-        List<String> goodsNames = List.of(
-                "东阿阿胶糕", "同仁堂枸杞", "江中健胃消食片", "云南白药三七粉",
-                "百花蜂蜜", "宁夏枸杞王", "长白山人参", "铁皮石斛",
-                "西洋参切片", "桃胶雪燕羹", "红枣枸杞茶", "玫瑰花茶",
-                "菊花枸杞茶", "金银花茶", "陈皮普洱", "红枣桂圆茶",
-                "碧根果", "腰果原味", "夏威夷果", "巴日木",
-                "维生素C片", "钙片", "益生菌粉", "蛋白粉",
-                "当归补血汤", "四物汤料包", "六味地黄丸", "逍遥丸",
-                "茯苓饼", "薏米粉", "黑芝麻丸", "阿胶枣",
-                "桂花糕", "龟苓膏", "红糖姜茶", "姜糖片",
-                "莲子百合汤", "银耳羹", "燕窝", "雪蛤膏",
-                "虫草花", "天麻片", "黄芪片", "党参",
-                "麦冬", "玉竹", "沙参", "百合干",
-                "决明子", "荷叶茶", "绞股蓝", "苦荞茶",
-                "红枣", "桂圆干", "桑葚干", "山楂片",
-                "罗汉果", "胖大海", "甘草片", "黄芪",
-                "党参片", "白术", "苍术", "防风",
-                "柴胡", "黄芩", "黄连", "板蓝根",
-                "金银花", "连翘", "蒲公英"
-        );
-        int total = goodsNames.size();
+        
+        List<Map<String, Object>> filtered = new ArrayList<>();
+        for (Map<String, Object> g : MockData.GOODS_LIST) {
+            boolean matches = true;
+            if (categoryId != 0 && Long.valueOf(g.get("categoryId").toString()) != categoryId) {
+                matches = false;
+            }
+            if (isNew == 1 && Integer.valueOf(g.get("isNew").toString()) != 1) {
+                matches = false;
+            }
+            if (isHot == 1 && Integer.valueOf(g.get("isHot").toString()) != 1) {
+                matches = false;
+            }
+            if (matches) {
+                filtered.add(g);
+            }
+        }
+
+        int total = filtered.size();
         int pages = (total + size - 1) / size;
         int fromIndex = Math.min((page - 1) * size, total);
         int toIndex = Math.min(fromIndex + size, total);
-        List<Map<String, Object>> records = new ArrayList<>();
-        for (int i = fromIndex; i < toIndex; i++) {
-            double price = 9.9 + (i * 7.3) % 290;
-            records.add(Map.of(
-                    "id", i + 1,
-                    "name", goodsNames.get(i),
-                    "listPicUrl", "https://picsum.photos/seed/goods" + (i % 20) + "/200/200",
-                    "retailPrice", String.format("%.2f", price)
-            ));
-        }
+        
+        List<Map<String, Object>> records = filtered.subList(fromIndex, toIndex);
 
         List<Map<String, Object>> filterCategory = List.of(
-                Map.of("id", 1, "name", "滋补养生", "checked", false),
-                Map.of("id", 2, "name", "茶饮花茶", "checked", false),
-                Map.of("id", 3, "name", "零食坚果", "checked", false)
+                Map.of("id", 1, "name", "滋补养生", "checked", categoryId == 1),
+                Map.of("id", 2, "name", "茶饮花茶", "checked", categoryId == 2),
+                Map.of("id", 3, "name", "零食坚果", "checked", categoryId == 3),
+                Map.of("id", 4, "name", "保健食品", "checked", categoryId == 4),
+                Map.of("id", 5, "name", "药膳食材", "checked", categoryId == 5)
         );
 
         Map<String, Object> goodsListMap = Map.of(
@@ -135,7 +130,7 @@ public class AppMockController {
     @RequestMapping("/app-api/goods/hot")
     public Map<String, Object> goodsHot() {
         Map<String, Object> bannerInfo = Map.of(
-                "imgUrl", "https://picsum.photos/seed/hot/750/300",
+                "imgUrl", "https://images.unsplash.com/photo-1596701062351-8c2c14d1fdd0?w=750&auto=format&fit=crop",
                 "name", "热销爆款"
         );
         return ok(Map.of("bannerInfo", bannerInfo));
@@ -144,7 +139,7 @@ public class AppMockController {
     @RequestMapping("/app-api/goods/new")
     public Map<String, Object> goodsNew() {
         Map<String, Object> bannerInfo = Map.of(
-                "imgUrl", "https://picsum.photos/seed/new/750/300",
+                "imgUrl", "https://images.unsplash.com/photo-1597481499750-3e6b22637e12?w=750&auto=format&fit=crop",
                 "name", "新品推荐"
         );
         return ok(Map.of("bannerInfo", bannerInfo));
@@ -629,7 +624,7 @@ public class AppMockController {
         item.put("productId", productId);
         item.put("goodsName", name);
         item.put("goodsSpecifitionNameValue", spec);
-        item.put("listPicUrl", "https://picsum.photos/seed/goods" + id + "/200/200");
+        item.put("listPicUrl", getGoodsFromList(id).get("listPicUrl"));
         item.put("retailPrice", price);
         item.put("number", number);
         item.put("checked", true);

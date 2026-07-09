@@ -47,23 +47,23 @@
 			</view>
 			<view class="order-tabs">
 				<navigator :url="'/pages/ucenter/order/order?status=1'" class="order-tab">
-					<view class="order-icon">📋</view>
+					<image class="order-icon-img" src="/static/images/service/order_pay.svg"></image>
 					<text class="order-label">待付款</text>
 				</navigator>
 				<navigator :url="'/pages/ucenter/order/order?status=2'" class="order-tab">
-					<view class="order-icon">📦</view>
+					<image class="order-icon-img" src="/static/images/service/order_shipping.svg"></image>
 					<text class="order-label">待发货</text>
 				</navigator>
 				<navigator :url="'/pages/ucenter/order/order?status=3'" class="order-tab">
-					<view class="order-icon">🚚</view>
+					<image class="order-icon-img" src="/static/images/service/order_delivery.svg"></image>
 					<text class="order-label">待收货</text>
 				</navigator>
 				<navigator :url="'/pages/ucenter/order/order?status=4'" class="order-tab">
-					<view class="order-icon">⭐</view>
+					<image class="order-icon-img" src="/static/images/service/order_rate.svg"></image>
 					<text class="order-label">待评价</text>
 				</navigator>
 				<navigator :url="'/pages/ucenter/order/order?status=5'" class="order-tab">
-					<view class="order-icon">🔄</view>
+					<image class="order-icon-img" src="/static/images/service/order_refund.svg"></image>
 					<text class="order-label">退款/售后</text>
 				</navigator>
 			</view>
@@ -76,35 +76,51 @@
 			</view>
 			<view class="service-grid">
 				<navigator url="/pages/ucenter/address/address" class="service-item">
-					<view class="service-icon" style="background-color: #E8F2E7;">📍</view>
+					<view class="service-icon" style="background-color: #E8F2E7;">
+						<image class="service-icon-img" src="/static/images/service/service_address.svg"></image>
+					</view>
 					<text class="service-label">地址管理</text>
 				</navigator>
 				<view class="service-item" @tap="goMember">
-					<view class="service-icon" style="background-color: #FBF4E4;">👑</view>
+					<view class="service-icon" style="background-color: #FBF4E4;">
+						<image class="service-icon-img" src="/static/images/service/service_vip.svg"></image>
+					</view>
 					<text class="service-label">会员中心</text>
 				</view>
 				<view class="service-item" @tap="goDistribution">
-					<view class="service-icon" style="background-color: #EAF0F9;">💰</view>
+					<view class="service-icon" style="background-color: #EAF0F9;">
+						<image class="service-icon-img" src="/static/images/service/service_distribution.svg"></image>
+					</view>
 					<text class="service-label">分销中心</text>
 				</view>
 				<button class="service-item service-btn" open-type="contact">
-					<view class="service-icon" style="background-color: #E8F2E7;">💬</view>
+					<view class="service-icon" style="background-color: #E8F2E7;">
+						<image class="service-icon-img" src="/static/images/service/service_kefu.svg"></image>
+					</view>
 					<text class="service-label">在线客服</text>
 				</button>
 				<navigator url="/pages/ucenter/coupon/coupon" class="service-item">
-					<view class="service-icon" style="background-color: #FEF0E5;">🎫</view>
+					<view class="service-icon" style="background-color: #FEF0E5;">
+						<image class="service-icon-img" src="/static/images/service/service_coupon.svg"></image>
+					</view>
 					<text class="service-label">优惠券</text>
 				</navigator>
 				<view class="service-item" @tap="goWallet">
-					<view class="service-icon" style="background-color: #F3EFF8;">💳</view>
+					<view class="service-icon" style="background-color: #F3EFF8;">
+						<image class="service-icon-img" src="/static/images/service/service_wallet.svg"></image>
+					</view>
 					<text class="service-label">余额钱包</text>
 				</view>
 				<navigator url="/pages/ucenter/feedback/feedback" class="service-item">
-					<view class="service-icon" style="background-color: #E8F2E7;">📝</view>
+					<view class="service-icon" style="background-color: #E8F2E7;">
+						<image class="service-icon-img" src="/static/images/service/service_feedback.svg"></image>
+					</view>
 					<text class="service-label">意见反馈</text>
 				</navigator>
 				<navigator url="/pages/ucenter/help/help" class="service-item">
-					<view class="service-icon" style="background-color: #F6F7F4;">❓</view>
+					<view class="service-icon" style="background-color: #F6F7F4;">
+						<image class="service-icon-img" src="/static/images/service/service_help.svg"></image>
+					</view>
 					<text class="service-label">帮助中心</text>
 				</navigator>
 			</view>
@@ -362,8 +378,9 @@ page {
 	text-decoration: none;
 }
 
-.order-icon {
-	font-size: 44rpx;
+.order-icon-img {
+	width: 48rpx;
+	height: 48rpx;
 	margin-bottom: 10rpx;
 }
 
@@ -408,8 +425,12 @@ page {
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	font-size: 36rpx;
 	margin-bottom: 12rpx;
+}
+
+.service-icon-img {
+	width: 42rpx;
+	height: 42rpx;
 }
 
 .service-label {

@@ -1,17 +1,31 @@
 <template>
 	<view class="page">
+		<!-- 状态Tab -->
+		<scroll-view scroll-x class="status-tabs" :show-scrollbar="false">
+			<view
+				class="tab-item"
+				:class="{active: showType === index}"
+				v-for="(tab, index) in statusTabs"
+				:key="index"
+				@tap="switchType(index)"
+			>
+				<text>{{tab}}</text>
+				<view class="tab-line" v-if="showType === index"></view>
+			</view>
+		</scroll-view>
+
 		<!-- 订单列表 -->
 		<view class="order-list" v-if="orderList.length > 0">
-			<navigator class="order-card" v-for="(item, index) in orderList" :key="item.id"
-				:url="'../orderDetail/orderDetail?id='+item.id">
+			<view class="order-card" v-for="(item, index) in orderList" :key="item.id"
+				@tap="goDetail(item.id)">
 				<!-- 订单头部 -->
 				<view class="order-header">
 					<text class="order-sn">订单号：{{item.orderSn||''}}</text>
 					<text class="order-status">{{item.orderStatusText||''}}</text>
 				</view>
 
-				<!-- 商品信息 -->
-				<view class="order-goods" v-for="(gitem, gindex) in item.goodsList" :key="gitem.id">
+				<!-- 商品列表 -->
+				<view class="order-goods" v-for="(gitem, gi) in item.goodsList" :key="gi">
 					<image class="order-goods-img" :src="gitem.listPicUrl" mode="aspectFill"></image>
 					<view class="order-goods-info">
 						<text class="order-goods-name">{{gitem.goodsName||''}}</text>
@@ -19,20 +33,43 @@
 					</view>
 				</view>
 
-				<!-- 订单底部 -->
+				<!-- 底部：金额 + 操作按钮 -->
 				<view class="order-footer">
 					<text class="order-total">实付：<text class="order-price">¥{{item.actualPrice||'0'}}</text></text>
 					<view class="order-actions">
-						<view class="pay-btn" :data-order-index="index" @click.stop.prevent="payOrder" v-if="item.handleOption.pay">立即支付</view>
+						<!-- 取消 -->
+						<view class="action-btn ghost" v-if="item.handleOption && item.handleOption.cancel"
+							@tap.stop="cancelOrder(item, index)">取消订单</view>
+						<!-- 立即支付 -->
+						<view class="action-btn primary" v-if="item.handleOption && item.handleOption.pay"
+							@tap.stop="payOrder(item, index)">立即支付</view>
+						<!-- 催发货 -->
+						<view class="action-btn ghost" v-if="item.orderStatusText === '待发货'"
+							@tap.stop="urgeShip">催发货</view>
+						<!-- 申请退款 -->
+						<view class="action-btn ghost" v-if="item.orderStatusText === '待发货'"
+							@tap.stop="applyRefund">申请退款</view>
+						<!-- 确认收货 -->
+						<view class="action-btn primary" v-if="item.handleOption && item.handleOption.confirm"
+							@tap.stop="confirmOrder(item, index)">确认收货</view>
+						<!-- 查看物流（待收货时） -->
+						<view class="action-btn ghost" v-if="item.orderStatusText === '待收货'"
+							@tap.stop="viewLogistics">查看物流</view>
+						<!-- 去评价 -->
+						<view class="action-btn primary" v-if="item.orderStatusText === '已完成'"
+							@tap.stop="goReview">去评价</view>
+						<!-- 再次购买 -->
+						<view class="action-btn ghost" v-if="item.orderStatusText === '已完成'"
+							@tap.stop="buyAgain">再次购买</view>
 					</view>
 				</view>
-			</navigator>
+			</view>
 		</view>
 
 		<!-- 空状态 -->
 		<view class="empty-state" v-else>
 			<text class="empty-icon">📋</text>
-			<text class="empty-text">暂无订单</text>
+			<text class="empty-text">暂无{{statusTabs[showType]}}订单</text>
 			<navigator class="empty-btn" url="/pages/index/index" open-type="switchTab">去逛逛</navigator>
 		</view>
 	</view>
@@ -45,44 +82,100 @@ const api = require('@/utils/api.js');
 export default {
 	data() {
 		return {
+			showType: 0,
+			statusTabs: ['全部', '待付款', '待发货', '待收货', '待评价', '退款/售后'],
 			orderList: [],
 			page: 1,
 			size: 10,
-			totalPages: 1
+			loading: false
 		}
 	},
 	methods: {
+		switchType(index) {
+			if (this.showType === index) return;
+			this.showType = index;
+			this.reload();
+		},
+		reload() {
+			this.orderList = [];
+			this.page = 1;
+			this.getOrderList();
+		},
 		getOrderList() {
+			if (this.loading) return;
+			this.loading = true;
 			util.request(api.OrderList, {
+				showType: this.showType,
 				page: this.page,
 				size: this.size
 			}).then(res => {
+				this.loading = false;
 				if (res.code === 0) {
-					this.orderList = this.orderList.concat(res.data.list);
-					this.page = res.data.page + 1;
-					this.totalPages = res.data.total;
+					this.orderList = this.orderList.concat(res.data.list || []);
+					this.page++;
 				}
 			});
 		},
-		payOrder(event) {
-			let orderIndex = event.currentTarget.dataset.orderIndex;
-			let order = this.orderList[orderIndex];
-			util.payOrder(parseInt(order.id)).then(() => {
-				this.orderList = [];
-				this.page = 1;
-				this.getOrderList();
+		goDetail(id) {
+			uni.navigateTo({ url: '../orderDetail/orderDetail?id=' + id });
+		},
+		payOrder(item, index) {
+			getApp().globalData._payAmount = item.actualPrice;
+			util.payOrder(parseInt(item.id)).then(() => {
+				uni.showToast({ title: '支付成功', icon: 'success' });
+				this.reload();
 			}).catch(() => {
-				util.toast('支付失败');
+				util.toast('支付失败，请重试');
 			});
+		},
+		cancelOrder(item, index) {
+			util.modal('取消订单', '确定要取消该订单吗？', true, (confirm) => {
+				if (!confirm) return;
+				util.request(api.OrderCancel, { orderId: item.id }, 'POST', 'application/json').then(res => {
+					if (res.code === 0) {
+						uni.showToast({ title: '订单已取消', icon: 'success' });
+						this.reload();
+					}
+				});
+			});
+		},
+		confirmOrder(item, index) {
+			util.modal('确认收货', '确认已收到商品？', true, (confirm) => {
+				if (!confirm) return;
+				util.request(api.OrderConfirm, { orderId: item.id }, 'POST', 'application/json').then(res => {
+					if (res.code === 0) {
+						uni.showToast({ title: '确认收货成功', icon: 'success' });
+						this.reload();
+					}
+				});
+			});
+		},
+		urgeShip() {
+			uni.showToast({ title: '已催促商家发货', icon: 'success' });
+		},
+		applyRefund() {
+			uni.showToast({ title: '退款申请功能开发中', icon: 'none' });
+		},
+		viewLogistics() {
+			uni.showToast({ title: '物流查询功能开发中', icon: 'none' });
+		},
+		goReview() {
+			uni.showToast({ title: '评价功能开发中', icon: 'none' });
+		},
+		buyAgain() {
+			uni.switchTab({ url: '/pages/index/index' });
 		}
 	},
 	onReachBottom() {
 		this.getOrderList();
 	},
 	onShow() {
-		this.orderList = [];
-		this.page = 1;
-		this.getOrderList();
+		this.reload();
+	},
+	onLoad(options) {
+		if (options.status) {
+			this.showType = parseInt(options.status) || 0;
+		}
 	}
 }
 </script>
@@ -103,19 +196,55 @@ page {
 }
 
 .page {
-	padding: 16rpx 24rpx;
 	min-height: 100vh;
+	padding-bottom: 40rpx;
 }
 
-/* 订单卡片 */
+/* 状态Tab */
+.status-tabs {
+	white-space: nowrap;
+	background: #fff;
+	box-shadow: 0 2rpx 8rpx rgba(0,0,0,0.04);
+	position: sticky;
+	top: 0;
+	z-index: 10;
+}
+
+.tab-item {
+	display: inline-flex;
+	flex-direction: column;
+	align-items: center;
+	padding: 24rpx 28rpx 0;
+	font-size: 26rpx;
+	color: $text-hint;
+	position: relative;
+
+	&.active {
+		color: $green;
+		font-weight: 600;
+	}
+}
+
+.tab-line {
+	width: 32rpx;
+	height: 6rpx;
+	background: $green;
+	border-radius: 3rpx;
+	margin-top: 14rpx;
+	margin-bottom: 0;
+}
+
+/* 订单列表 */
+.order-list {
+	padding: 16rpx 24rpx;
+}
+
 .order-card {
-	display: block;
 	background: #fff;
 	border-radius: 20rpx;
 	margin-bottom: 16rpx;
 	padding: 24rpx;
-	text-decoration: none;
-	box-shadow: 0 2rpx 12rpx rgba(91, 140, 90, 0.05);
+	box-shadow: 0 2rpx 12rpx rgba(91,140,90,0.05);
 }
 
 .order-header {
@@ -137,11 +266,12 @@ page {
 	font-weight: 600;
 }
 
-/* 商品 */
+/* 商品行 */
 .order-goods {
 	display: flex;
 	align-items: center;
 	padding: 20rpx 0;
+	border-bottom: 1rpx solid $green-bg;
 }
 
 .order-goods-img {
@@ -181,34 +311,43 @@ page {
 	justify-content: space-between;
 	align-items: center;
 	padding-top: 20rpx;
-	border-top: 1rpx solid $green-bg;
 }
 
 .order-total {
-	font-size: 26rpx;
+	font-size: 24rpx;
 	color: $text-secondary;
 }
 
 .order-price {
 	color: $red;
 	font-weight: 700;
-	font-size: 30rpx;
+	font-size: 28rpx;
 }
 
 .order-actions {
 	display: flex;
-	gap: 12rpx;
+	align-items: center;
 }
 
-.pay-btn {
-	height: 60rpx;
-	line-height: 60rpx;
-	padding: 0 28rpx;
-	background: linear-gradient(135deg, $green, $green-dark);
-	color: #fff;
-	border-radius: 30rpx;
+.action-btn {
+	height: 56rpx;
+	line-height: 56rpx;
+	padding: 0 24rpx;
+	border-radius: 28rpx;
 	font-size: 24rpx;
-	font-weight: 600;
+	margin-left: 12rpx;
+
+	&.primary {
+		background: linear-gradient(135deg, $green, $green-dark);
+		color: #fff;
+		font-weight: 600;
+	}
+
+	&.ghost {
+		border: 1rpx solid #ddd;
+		color: $text-secondary;
+		background: #fff;
+	}
 }
 
 /* 空状态 */
@@ -216,7 +355,7 @@ page {
 	display: flex;
 	flex-direction: column;
 	align-items: center;
-	padding-top: 240rpx;
+	padding-top: 200rpx;
 }
 
 .empty-icon {
@@ -225,7 +364,7 @@ page {
 }
 
 .empty-text {
-	font-size: 30rpx;
+	font-size: 28rpx;
 	color: $text-hint;
 	margin-top: 24rpx;
 }

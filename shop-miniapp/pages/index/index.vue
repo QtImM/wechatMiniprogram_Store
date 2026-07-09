@@ -34,7 +34,7 @@
 		</scroll-view>
 
 		<!-- 轮播Banner -->
-		<view class="banner-wrap">
+		<view class="banner-wrap" v-if="currentTab === 0">
 			<swiper class="banner-swiper" indicator-dots circular autoplay :interval="4000" :duration="500"
 				indicator-color="rgba(91,140,90,0.3)" indicator-active-color="#5B8C5A">
 				<swiper-item v-for="(item, index) in banner" :key="index">
@@ -47,7 +47,7 @@
 		</view>
 
 		<!-- 金刚区 -->
-		<view class="grid-menu">
+		<view class="grid-menu" v-if="currentTab === 0">
 			<view class="menu-item" v-for="(item, index) in menuItems" :key="index" @tap="onMenuTap(item)">
 				<view class="menu-icon" :style="{backgroundColor: item.bgColor}">
 					<text class="menu-icon-text">{{item.icon}}</text>
@@ -57,7 +57,7 @@
 		</view>
 
 		<!-- 公告栏 -->
-		<view class="notice-bar" v-if="notice">
+		<view class="notice-bar" v-if="notice && currentTab === 0">
 			<text class="notice-tag">公告</text>
 			<swiper class="notice-swiper" vertical autoplay :interval="3000" circular :show-indicator="false">
 				<swiper-item v-for="(item, index) in notices" :key="index">
@@ -67,7 +67,7 @@
 		</view>
 
 		<!-- 限时特惠 + 热卖双栏 -->
-		<view class="dual-section">
+		<view class="dual-section" v-if="currentTab === 0">
 			<view class="dual-left" @tap="goToHot">
 				<view class="dual-header">
 					<text class="dual-title">限时特惠</text>
@@ -98,8 +98,17 @@
 			</view>
 		</view>
 
+		<!-- 二级分类专区 Banner -->
+		<view class="category-banner-wrap" v-if="currentTab > 0">
+			<image class="category-banner-img" :src="categoryBanners[currentTab]" mode="aspectFill"></image>
+			<view class="category-banner-text">
+				<text class="cat-title">{{categoryTabs[currentTab].name}}专区</text>
+				<text class="cat-sub">甄选地道原料，科学合理配比</text>
+			</view>
+		</view>
+
 		<!-- 活动Tab区 -->
-		<view class="section-tabs">
+		<view class="section-tabs" v-if="currentTab === 0">
 			<view
 				class="section-tab"
 				:class="{active: activeSection === index}"
@@ -120,7 +129,9 @@
 						<text class="goods-name">{{item.name}}</text>
 						<view class="goods-price-row">
 							<text class="goods-price">¥{{item.retailPrice}}</text>
-							<text class="goods-sales" v-if="item.salesCount">已售{{item.salesCount}}</text>
+							<view class="goods-cart-btn" @tap.stop="quickAddToCart(item, $event)">
+								<text class="goods-cart-btn-icon">+</text>
+							</view>
 						</view>
 					</view>
 				</view>
@@ -132,16 +143,131 @@
 						<text class="goods-name">{{item.name}}</text>
 						<view class="goods-price-row">
 							<text class="goods-price">¥{{item.retailPrice}}</text>
-							<text class="goods-sales" v-if="item.salesCount">已售{{item.salesCount}}</text>
+							<view class="goods-cart-btn" @tap.stop="quickAddToCart(item, $event)">
+								<text class="goods-cart-btn-icon">+</text>
+							</view>
 						</view>
 					</view>
 				</view>
 			</view>
 		</view>
 
+		<!-- 抛物线飞球插槽 -->
+		<view 
+			class="cart-ball" 
+			v-for="ball in cartBalls" 
+			:key="ball.id" 
+			:style="ball.style" 
+			v-if="ball.show"
+		>
+			<view class="inner-ball"></view>
+		</view>
+
 		<!-- 加载更多 -->
 		<view class="load-more" v-if="goodsList.length > 0">
 			<text class="load-more-text">— 更多好物探索中 —</text>
+		</view>
+
+		<!-- 新人礼礼包弹窗 -->
+		<view class="modal-mask" v-if="showNewUserModal" @tap="showNewUserModal = false">
+			<view class="modal-content new-user-modal" @tap.stop>
+				<view class="modal-header new-user-header">
+					<text class="modal-title">🎁 新人专属百元大礼包</text>
+					<text class="modal-sub">已为您准备好以下特惠优惠券</text>
+				</view>
+				<view class="coupon-list-wrap">
+					<view class="coupon-card">
+						<view class="coupon-left">
+							<text class="coupon-symbol">¥</text>
+							<text class="coupon-val">10</text>
+						</view>
+						<view class="coupon-right">
+							<text class="cp-name">新人专享立减券</text>
+							<text class="cp-limit">满 ¥99 可用</text>
+						</view>
+					</view>
+					<view class="coupon-card">
+						<view class="coupon-left">
+							<text class="coupon-symbol">¥</text>
+							<text class="coupon-val">20</text>
+						</view>
+						<view class="coupon-right">
+							<text class="cp-name">满减优惠特惠券</text>
+							<text class="cp-limit">满 ¥199 可用</text>
+						</view>
+					</view>
+					<view class="coupon-card">
+						<view class="coupon-left">
+							<text class="coupon-symbol">¥</text>
+							<text class="coupon-val">50</text>
+						</view>
+						<view class="coupon-right">
+							<text class="cp-name">会员专享年终特惠</text>
+							<text class="cp-limit">满 ¥399 可用</text>
+						</view>
+					</view>
+				</view>
+				<button class="modal-btn new-user-btn" @tap="receiveNewUserGift">一键领取大礼包</button>
+				<view class="modal-close" @tap="showNewUserModal = false">×</view>
+			</view>
+		</view>
+
+		<!-- 尊享会员年卡弹窗 -->
+		<view class="modal-mask" v-if="showVipModal" @tap="showVipModal = false">
+			<view class="modal-content vip-modal" @tap.stop>
+				<view class="modal-header vip-header">
+					<text class="modal-title">👑 药食同源黄金会员年卡</text>
+					<text class="modal-sub">尊享4大终身特权，让健康更实惠</text>
+				</view>
+				<view class="vip-privileges">
+					<view class="vip-privilege">
+						<text class="vip-p-icon">⚡</text>
+						<view class="vip-p-info">
+							<text class="vip-p-title">全场商品9折</text>
+							<text class="vip-p-desc">金卡专属，下单立享折上折</text>
+						</view>
+					</view>
+					<view class="vip-privilege">
+						<text class="vip-p-icon">🚚</text>
+						<view class="vip-p-info">
+							<text class="vip-p-title">每月免邮券 2 张</text>
+							<text class="vip-p-desc">全年送 24 张免邮券，包邮到家</text>
+						</view>
+					</view>
+					<view class="vip-privilege">
+						<text class="vip-p-icon">🎁</text>
+						<view class="vip-p-info">
+							<text class="vip-p-title">新品抢先试吃</text>
+							<text class="vip-p-desc">每月抽取 100 名会员免费试用新品</text>
+						</view>
+					</view>
+				</view>
+				<view class="vip-price-row">
+					<text class="vip-old-price">原价 ¥199/年</text>
+					<text class="vip-now-price">限时特惠 ¥99/年</text>
+				</view>
+				<button class="modal-btn vip-btn" @tap="activateVipCard">立即开通会员年卡</button>
+				<view class="modal-close" @tap="showVipModal = false">×</view>
+			</view>
+		</view>
+
+		<!-- 分销赚钱弹窗 -->
+		<view class="modal-mask" v-if="showShareModal" @tap="showShareModal = false">
+			<view class="modal-content share-modal" @tap.stop>
+				<view class="modal-header share-header">
+					<text class="modal-title">🤝 分享好友，轻松获利</text>
+					<text class="modal-sub">让健康传播，让关爱分享</text>
+				</view>
+				<view class="share-benefit-wrap">
+					<text class="share-title">我的佣金比例：10%</text>
+					<text class="share-rules">分享您的专属推广海报或二维码给好友，好友通过您的分享购买，您将获得其实际付款金额 10% 的现金奖励！</text>
+				</view>
+				<view class="share-actions">
+					<button class="share-btn-action sec" @tap="copyShareLink">📋 复制分享链接</button>
+					<button class="share-btn-action pri" @tap="saveSharePoster">🖼️ 生成海报保存</button>
+				</view>
+				<view class="modal-close" @tap="showShareModal = false">×</view>
+			</view>
 		</view>
 	</view>
 </template>
@@ -169,12 +295,19 @@ export default {
 			],
 			categoryTabs: [
 				{ name: '精选', id: 0 },
-				{ name: '食品保健', id: 1 },
-				{ name: '美妆护肤', id: 2 },
-				{ name: '农特产品', id: 3 },
-				{ name: '课程研学', id: 4 },
-				{ name: '礼盒套装', id: 5 }
+				{ name: '滋补养生', id: 1 },
+				{ name: '茶饮花茶', id: 2 },
+				{ name: '零食坚果', id: 3 },
+				{ name: '保健食品', id: 4 },
+				{ name: '药膳食材', id: 5 }
 			],
+			categoryBanners: {
+				1: 'https://images.unsplash.com/photo-1596701062351-8c2c14d1fdd0?w=750',
+				2: 'https://images.unsplash.com/photo-1597481499750-3e6b22637e12?w=750',
+				3: 'https://images.unsplash.com/photo-1534149711956-f9b7d528f64d?w=750',
+				4: 'https://images.unsplash.com/photo-1616679911721-eff6eec18fcd?w=750',
+				5: 'https://images.unsplash.com/photo-1514733670139-4d87a19b179d?w=750'
+			},
 			menuItems: [
 				{ name: '新人礼', icon: '🎁', bgColor: '#FEF0E5', url: '' },
 				{ name: '会员', icon: '👑', bgColor: '#FBF4E4', url: '' },
@@ -182,11 +315,18 @@ export default {
 				{ name: '分销', icon: '🤝', bgColor: '#EAF0F9', url: '' },
 				{ name: '全部分类', icon: '📋', bgColor: '#F3EFF8', url: '/pages/catalog/catalog' }
 			],
-			sectionTabs: ['今日主推', '热销爆款', '新品上架']
+			sectionTabs: ['今日主推', '热销爆款', '新品上架'],
+			showNewUserModal: false,
+			showVipModal: false,
+			showShareModal: false,
+			cartBalls: []
 		}
 	},
 	computed: {
 		displayGoods() {
+			if (this.currentTab > 0) {
+				return this.goodsList;
+			}
 			if (this.activeSection === 0) return this.goodsList;
 			if (this.activeSection === 1) return this.hotGoods;
 			return this.newGoods;
@@ -227,15 +367,80 @@ export default {
 		},
 		switchTab(index) {
 			this.currentTab = index;
+			const tab = this.categoryTabs[index];
+			this.loadTabGoods(tab.id);
+		},
+		loadTabGoods(categoryId) {
+			if (categoryId === 0) {
+				// 精选：加载首页混合商品
+				util.request(api.IndexUrlCategory).then(res => {
+					if (res.code === 0) {
+						let all = [];
+						res.data.categoryList.forEach(cat => {
+							if (cat.goodsList) all = all.concat(cat.goodsList);
+						});
+						this.goodsList = all;
+					}
+				});
+			} else {
+				util.request(api.GoodsList, { categoryId, page: 1, size: 40 }).then(res => {
+					if (res.code === 0 && res.data.goodsList) {
+						this.goodsList = res.data.goodsList.records || [];
+					}
+				});
+			}
 		},
 		onMenuTap(item) {
-			if (item.url) {
+			if (item.name === '新人礼') {
+				this.showNewUserModal = true;
+			} else if (item.name === '会员') {
+				this.showVipModal = true;
+			} else if (item.name === '优惠券') {
+				uni.navigateTo({ url: '/pages/ucenter/coupon/coupon' });
+			} else if (item.name === '分销') {
+				this.showShareModal = true;
+			} else if (item.url) {
 				if (item.url.indexOf('/pages/catalog') > -1) {
 					uni.switchTab({ url: item.url });
 				} else {
 					uni.navigateTo({ url: item.url });
 				}
 			}
+		},
+		receiveNewUserGift() {
+			this.showNewUserModal = false;
+			uni.showToast({
+				title: '大礼包领取成功！',
+				icon: 'success',
+				duration: 2000
+			});
+		},
+		activateVipCard() {
+			this.showVipModal = false;
+			uni.showToast({
+				title: '激活成功，已成为黄金会员！',
+				icon: 'success',
+				duration: 2000
+			});
+		},
+		copyShareLink() {
+			this.showShareModal = false;
+			uni.setClipboardData({
+				data: 'https://shop-miniapp.wechat/invite?userId=10001',
+				success: () => {
+					uni.showToast({
+						title: '专属链接已复制！',
+						icon: 'success'
+					});
+				}
+			});
+		},
+		saveSharePoster() {
+			this.showShareModal = false;
+			uni.showToast({
+				title: '海报已成功保存！',
+				icon: 'success'
+			});
 		},
 		goToGoods(id) {
 			uni.navigateTo({ url: '/pages/goods/goods?id=' + id });
@@ -248,6 +453,60 @@ export default {
 		},
 		goToBrand() {
 			uni.navigateTo({ url: '/pages/brand/brand' });
+		},
+		quickAddToCart(goods, e) {
+			let that = this;
+			let currentProductId = 1;
+			util.request(api.CartAdd, { goodsId: goods.id, number: 1, productId: currentProductId }, 'POST', 'application/json').then(res => {
+				if (res.code === 0) {
+					uni.showToast({
+						title: '已加入购物车',
+						icon: 'none',
+						duration: 1000
+					});
+					
+					let clientX = 100;
+					let clientY = 100;
+					if (e.touches && e.touches.length > 0) {
+						clientX = e.touches[0].clientX;
+						clientY = e.touches[0].clientY;
+					} else if (e.detail) {
+						clientX = e.detail.x || 100;
+						clientY = e.detail.y || 100;
+					}
+
+					const ballId = Date.now();
+					const ball = {
+						id: ballId,
+						show: true,
+						style: `left: ${clientX}px; top: ${clientY}px;`
+					};
+					this.cartBalls.push(ball);
+
+					this.$nextTick(() => {
+						const sysInfo = uni.getSystemInfoSync();
+						const targetX = sysInfo.windowWidth * 0.62;
+						const targetY = sysInfo.windowHeight - 30;
+
+						const index = this.cartBalls.findIndex(b => b.id === ballId);
+						if (index > -1) {
+							this.$set(this.cartBalls, index, {
+								...ball,
+								style: `left: ${targetX}px; top: ${targetY}px;`
+							});
+						}
+					});
+
+					setTimeout(() => {
+						const index = this.cartBalls.findIndex(b => b.id === ballId);
+						if (index > -1) {
+							this.cartBalls[index].show = false;
+						}
+					}, 600);
+				} else {
+					uni.showToast({ image: '/static/images/icon_error.png', title: res.msg, mask: true });
+				}
+			});
 		}
 	},
 	onPullDownRefresh() {
@@ -686,5 +945,349 @@ $text-hint: #9CA89D;
 .load-more-text {
 	font-size: 24rpx;
 	color: $text-hint;
+}
+
+/* 模态框通用遮罩层 */
+.modal-mask {
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	background: rgba(0, 0, 0, 0.6);
+	z-index: 999;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 40rpx;
+	backdrop-filter: blur(10px);
+}
+
+.modal-content {
+	background: #fff;
+	border-radius: 36rpx;
+	width: 100%;
+	max-width: 600rpx;
+	padding: 48rpx;
+	position: relative;
+	box-shadow: 0 20rpx 60rpx rgba(0, 0, 0, 0.15);
+	animation: modalShow 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes modalShow {
+	from { transform: scale(0.9); opacity: 0; }
+	to { transform: scale(1); opacity: 1; }
+}
+
+.modal-header {
+	text-align: center;
+	margin-bottom: 36rpx;
+}
+
+.modal-title {
+	font-size: 36rpx;
+	font-weight: 700;
+	color: #2D3A2E;
+	display: block;
+}
+
+.modal-sub {
+	font-size: 24rpx;
+	color: #9CA89D;
+	margin-top: 10rpx;
+	display: block;
+}
+
+/* 新人礼特别样式 */
+.new-user-modal {
+	background: linear-gradient(135deg, #FFF9F6 0%, #FFFFFF 100%);
+	border-top: 10rpx solid #CF4A3E;
+}
+
+.coupon-list-wrap {
+	display: flex;
+	flex-direction: column;
+	gap: 20rpx;
+	margin-bottom: 40rpx;
+}
+
+.coupon-card {
+	display: flex;
+	background: linear-gradient(90deg, #FEF0E5 0%, #FFF9F6 100%);
+	border: 2rpx dashed #E07C4F;
+	border-radius: 16rpx;
+	overflow: hidden;
+}
+
+.coupon-left {
+	width: 160rpx;
+	background: #E07C4F;
+	color: #fff;
+	display: flex;
+	align-items: baseline;
+	justify-content: center;
+	padding: 20rpx 0;
+}
+
+.coupon-symbol {
+	font-size: 24rpx;
+	font-weight: 700;
+}
+
+.coupon-val {
+	font-size: 54rpx;
+	font-weight: 700;
+}
+
+.coupon-right {
+	flex: 1;
+	padding: 20rpx 28rpx;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+}
+
+.cp-name {
+	font-size: 26rpx;
+	font-weight: 700;
+	color: #2D3A2E;
+}
+
+.cp-limit {
+	font-size: 20rpx;
+	color: #5C6B5D;
+	margin-top: 6rpx;
+}
+
+.modal-btn {
+	height: 88rpx;
+	line-height: 88rpx;
+	border-radius: 44rpx;
+	font-size: 30rpx;
+	font-weight: 700;
+	color: #fff;
+	text-align: center;
+	border: none;
+}
+
+.new-user-btn {
+	background: linear-gradient(135deg, #CF4A3E 0%, #E07C4F 100%);
+	box-shadow: 0 10rpx 30rpx rgba(224, 124, 79, 0.3);
+}
+
+/* 会员卡特别样式 */
+.vip-modal {
+	background: linear-gradient(135deg, #FDFBF7 0%, #FFFFFF 100%);
+	border-top: 10rpx solid #B8860B;
+}
+
+.vip-privileges {
+	display: flex;
+	flex-direction: column;
+	gap: 28rpx;
+	margin-bottom: 40rpx;
+}
+
+.vip-privilege {
+	display: flex;
+	align-items: center;
+}
+
+.vip-p-icon {
+	font-size: 48rpx;
+	margin-right: 24rpx;
+	width: 64rpx;
+	height: 64rpx;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: #FBF4E4;
+	border-radius: 50%;
+}
+
+.vip-p-info {
+	display: flex;
+	flex-direction: column;
+}
+
+.vip-p-title {
+	font-size: 28rpx;
+	font-weight: 700;
+	color: #B8860B;
+}
+
+.vip-p-desc {
+	font-size: 22rpx;
+	color: #9CA89D;
+	margin-top: 4rpx;
+}
+
+.vip-price-row {
+	text-align: center;
+	margin-bottom: 30rpx;
+}
+
+.vip-old-price {
+	font-size: 24rpx;
+	color: #9CA89D;
+	text-decoration: line-through;
+	margin-right: 16rpx;
+}
+
+.vip-now-price {
+	font-size: 32rpx;
+	color: #B8860B;
+	font-weight: 700;
+}
+
+.vip-btn {
+	background: linear-gradient(135deg, #B8860B 0%, #DAA520 100%);
+	box-shadow: 0 10rpx 30rpx rgba(184, 134, 11, 0.3);
+}
+
+/* 分销特别样式 */
+.share-modal {
+	background: linear-gradient(135deg, #F6F7F4 0%, #FFFFFF 100%);
+	border-top: 10rpx solid #5B8C5A;
+}
+
+.share-benefit-wrap {
+	background: #E8F2E7;
+	border-radius: 20rpx;
+	padding: 30rpx 36rpx;
+	margin-bottom: 40rpx;
+	text-align: center;
+}
+
+.share-title {
+	font-size: 30rpx;
+	font-weight: 700;
+	color: #5B8C5A;
+	display: block;
+	margin-bottom: 12rpx;
+}
+
+.share-rules {
+	font-size: 24rpx;
+	color: #5C6B5D;
+	line-height: 1.6;
+	display: block;
+}
+
+.share-actions {
+	display: flex;
+	gap: 20rpx;
+}
+
+.share-btn-action {
+	flex: 1;
+	height: 88rpx;
+	line-height: 88rpx;
+	font-size: 26rpx;
+	font-weight: 700;
+	border-radius: 44rpx;
+	text-align: center;
+	border: none;
+}
+
+.share-btn-action.sec {
+	background: #E8F2E7;
+	color: #5B8C5A;
+}
+
+.share-btn-action.pri {
+	background: #5B8C5A;
+	color: #fff;
+	box-shadow: 0 10rpx 30rpx rgba(91, 140, 90, 0.3);
+}
+
+/* 关闭按钮 */
+.modal-close {
+	position: absolute;
+	top: 24rpx;
+	right: 28rpx;
+	font-size: 48rpx;
+	color: #9CA89D;
+	line-height: 1;
+	padding: 10rpx;
+	cursor: pointer;
+}
+
+/* 二级分类 Banner */
+.category-banner-wrap {
+	margin: 20rpx 24rpx;
+	height: 240rpx;
+	border-radius: 20rpx;
+	overflow: hidden;
+	position: relative;
+}
+
+.category-banner-img {
+	width: 100%;
+	height: 100%;
+}
+
+.category-banner-text {
+	position: absolute;
+	left: 40rpx;
+	top: 50%;
+	transform: translateY(-50%);
+	z-index: 10;
+	display: flex;
+	flex-direction: column;
+}
+
+.cat-title {
+	font-size: 36rpx;
+	font-weight: 700;
+	color: #fff;
+	text-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.4);
+}
+
+.cat-sub {
+	font-size: 22rpx;
+	color: rgba(255, 255, 255, 0.85);
+	margin-top: 8rpx;
+	text-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.4);
+}
+
+/* 一键加购绿色小圆钮 */
+.goods-cart-btn {
+	width: 48rpx;
+	height: 48rpx;
+	background: $green;
+	border-radius: 50%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	box-shadow: 0 4rpx 10rpx rgba(91, 140, 90, 0.2);
+	transition: transform 0.1s ease;
+
+	&:active {
+		transform: scale(0.85);
+	}
+}
+
+.goods-cart-btn-icon {
+	color: #fff;
+	font-size: 28rpx;
+	font-weight: 700;
+	line-height: 1;
+}
+
+/* 抛物线飞球样式 */
+.cart-ball {
+	position: fixed;
+	z-index: 9999;
+	transition: left 0.6s linear, top 0.6s cubic-bezier(0.3, -0.2, 1, 0.2);
+	pointer-events: none;
+}
+
+.inner-ball {
+	width: 32rpx;
+	height: 32rpx;
+	border-radius: 50%;
+	background: #CF4A3E;
+	box-shadow: 0 4rpx 10rpx rgba(207, 74, 62, 0.4);
 }
 </style>
