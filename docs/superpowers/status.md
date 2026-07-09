@@ -27,7 +27,9 @@
 
 ## 阻塞项
 
-（无）
+- 需安装 **HBuilderX**（https://www.dcloud.io/hbuilderx.html）才能编译小程序
+- 需安装 **微信开发者工具**（https://developers.weixin.qq.com/miniprogram/dev/devtools/download.html）
+- Node.js 24 与 uni-app Vue2 CLI 构建模式不兼容，须使用 HBuilderX 内置编译器
 
 ## 2026-06-28 迁移记录
 
