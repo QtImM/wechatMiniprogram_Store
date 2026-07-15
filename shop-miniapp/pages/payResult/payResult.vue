@@ -79,7 +79,7 @@ page {
 
 .result-card {
 	width: 100%;
-	background: #fff;
+	background: #FEFEFC;
 	border-radius: 24rpx;
 	padding: 80rpx 48rpx 60rpx;
 	display: flex;
@@ -97,7 +97,7 @@ page {
 	justify-content: center;
 	font-size: 56rpx;
 	font-weight: 700;
-	color: #fff;
+	color: #FEFEFC;
 	margin-bottom: 32rpx;
 }
 
@@ -145,7 +145,7 @@ page {
 	line-height: 88rpx;
 	text-align: center;
 	background: linear-gradient(135deg, $green, $green-dark);
-	color: #fff;
+	color: #FEFEFC;
 	border-radius: 44rpx;
 	font-size: 30rpx;
 	font-weight: 600;

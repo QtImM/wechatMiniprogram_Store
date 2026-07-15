@@ -76,49 +76,49 @@
 			</view>
 			<view class="service-grid">
 				<navigator url="/pages/ucenter/address/address" class="service-item">
-					<view class="service-icon" style="background-color: #E8F2E7;">
+					<view class="service-icon" style="background-color: #E8ECE8;">
 						<image class="service-icon-img" src="/static/images/service/service_address.svg"></image>
 					</view>
 					<text class="service-label">地址管理</text>
 				</navigator>
 				<view class="service-item" @tap="goMember">
-					<view class="service-icon" style="background-color: #FBF4E4;">
+					<view class="service-icon" style="background-color: #F5F5E0;">
 						<image class="service-icon-img" src="/static/images/service/service_vip.svg"></image>
 					</view>
 					<text class="service-label">会员中心</text>
 				</view>
 				<view class="service-item" @tap="goDistribution">
-					<view class="service-icon" style="background-color: #EAF0F9;">
+					<view class="service-icon" style="background-color: #E8ECE8;">
 						<image class="service-icon-img" src="/static/images/service/service_distribution.svg"></image>
 					</view>
 					<text class="service-label">分销中心</text>
 				</view>
 				<button class="service-item service-btn" open-type="contact">
-					<view class="service-icon" style="background-color: #E8F2E7;">
+					<view class="service-icon" style="background-color: #E8ECE8;">
 						<image class="service-icon-img" src="/static/images/service/service_kefu.svg"></image>
 					</view>
 					<text class="service-label">在线客服</text>
 				</button>
 				<navigator url="/pages/ucenter/coupon/coupon" class="service-item">
-					<view class="service-icon" style="background-color: #FEF0E5;">
+					<view class="service-icon" style="background-color: #F5F5E0;">
 						<image class="service-icon-img" src="/static/images/service/service_coupon.svg"></image>
 					</view>
 					<text class="service-label">优惠券</text>
 				</navigator>
 				<view class="service-item" @tap="goWallet">
-					<view class="service-icon" style="background-color: #F3EFF8;">
+					<view class="service-icon" style="background-color: #FDFDF8;">
 						<image class="service-icon-img" src="/static/images/service/service_wallet.svg"></image>
 					</view>
 					<text class="service-label">余额钱包</text>
 				</view>
 				<navigator url="/pages/ucenter/feedback/feedback" class="service-item">
-					<view class="service-icon" style="background-color: #E8F2E7;">
+					<view class="service-icon" style="background-color: #E8ECE8;">
 						<image class="service-icon-img" src="/static/images/service/service_feedback.svg"></image>
 					</view>
 					<text class="service-label">意见反馈</text>
 				</navigator>
 				<navigator url="/pages/ucenter/help/help" class="service-item">
-					<view class="service-icon" style="background-color: #F6F7F4;">
+					<view class="service-icon" style="background-color: #FDFDF8;">
 						<image class="service-icon-img" src="/static/images/service/service_help.svg"></image>
 					</view>
 					<text class="service-label">帮助中心</text>
@@ -212,16 +212,16 @@ export default {
 </script>
 
 <style lang="scss">
-$green: #5B8C5A;
-$green-light: #E8F2E7;
-$green-bg: #F6F7F4;
-$green-dark: #3D6B3C;
-$gold: #B8860B;
-$gold-light: #FBF4E4;
-$text-primary: #2D3A2E;
-$text-secondary: #5C6B5D;
-$text-hint: #9CA89D;
-$red: #CF4A3E;
+$green: #4D704D;
+$green-light: #E8ECE8;
+$green-bg: #FDFDF8;
+$green-dark: #667166;
+$gold: #FAFAD2;
+$gold-light: #F5F5E0;
+$text-primary: #36454F;
+$text-secondary: #667166;
+$text-hint: #9A9A9A;
+$red: #36454F;
 
 page {
 	background: $green-bg;
@@ -234,7 +234,7 @@ page {
 
 /* 顶部区域 */
 .header {
-	background: linear-gradient(160deg, $green 0%, #4A7D49 60%, #3D6B3C 100%);
+	background: linear-gradient(160deg, #879F8C 0%, #7A9482 60%, #6E8E76 100%);
 	padding: 80rpx 30rpx 60rpx;
 	border-radius: 0 0 40rpx 40rpx;
 }
@@ -261,7 +261,7 @@ page {
 .nickname {
 	font-size: 34rpx;
 	font-weight: 700;
-	color: #fff;
+	color: #FEFEFC;
 	display: block;
 }
 
@@ -274,7 +274,7 @@ page {
 
 .vip-card {
 	flex-shrink: 0;
-	background: linear-gradient(135deg, #D4A843, $gold);
+	background: linear-gradient(135deg, #8B7355, $gold);
 	border-radius: 16rpx;
 	padding: 16rpx 20rpx;
 	display: flex;
@@ -284,7 +284,7 @@ page {
 
 .vip-title {
 	font-size: 22rpx;
-	color: #fff;
+	color: #FEFEFC;
 	font-weight: 700;
 }
 
@@ -297,13 +297,13 @@ page {
 /* 数据统计行 */
 .stats-row {
 	display: flex;
-	background: #fff;
+	background: #FEFEFC;
 	margin: -30rpx 24rpx 0;
 	border-radius: 20rpx;
 	padding: 28rpx 0;
 	position: relative;
 	z-index: 10;
-	box-shadow: 0 8rpx 24rpx rgba(91, 140, 90, 0.08);
+	box-shadow: 0 8rpx 24rpx rgba(77, 112, 77, 0.08);
 }
 
 .stat-item {
@@ -332,7 +332,7 @@ page {
 
 /* 区块卡片 */
 .section-card {
-	background: #fff;
+	background: #FEFEFC;
 	margin: 20rpx 24rpx 0;
 	border-radius: 20rpx;
 	padding: 28rpx 28rpx 8rpx;
@@ -456,7 +456,7 @@ page {
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	background: #fff;
+	background: #FEFEFC;
 	border-radius: 20rpx;
 	font-size: 28rpx;
 	color: $red;

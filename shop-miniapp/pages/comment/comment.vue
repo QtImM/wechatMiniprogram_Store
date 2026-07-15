@@ -131,7 +131,7 @@
 		z-index: 100;
 		width: 100%;
 		display: flex;
-		background: #fff;
+		background: #FEFEFC;
 		height: 84rpx;
 		box-shadow: 0 2rpx 8rpx rgba(0,0,0,0.05);
 	}
@@ -163,7 +163,7 @@
 	}
 
 	.comment-item {
-		background: #fff;
+		background: #FEFEFC;
 		border-radius: 16rpx;
 		padding: 28rpx;
 		margin-bottom: 16rpx;

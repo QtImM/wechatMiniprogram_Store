@@ -172,7 +172,7 @@
 		width: 180rpx;
 		height: 180rpx;
 		border-radius: 50%;
-		background: #fff;
+		background: #FEFEFC;
 		box-shadow: 0 8rpx 40rpx rgba(0,0,0,0.1);
 		margin-bottom: 30rpx;
 	}
@@ -180,7 +180,7 @@
 	.brand-name {
 		font-size: 48rpx;
 		font-weight: bold;
-		color: #fff;
+		color: #FEFEFC;
 		letter-spacing: 4rpx;
 	}
 
@@ -193,7 +193,7 @@
 
 	.auth-card {
 		width: 100%;
-		background: #fff;
+		background: #FEFEFC;
 		border-radius: 24rpx;
 		padding: 60rpx 40rpx;
 		box-shadow: 0 8rpx 60rpx rgba(91,140,90,0.2);
@@ -234,7 +234,7 @@
 
 	.btn-text {
 		font-size: 32rpx;
-		color: #fff;
+		color: #FEFEFC;
 		font-weight: 500;
 		letter-spacing: 2rpx;
 	}

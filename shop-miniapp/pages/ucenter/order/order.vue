@@ -203,7 +203,7 @@ page {
 /* 状态Tab */
 .status-tabs {
 	white-space: nowrap;
-	background: #fff;
+	background: #FEFEFC;
 	box-shadow: 0 2rpx 8rpx rgba(0,0,0,0.04);
 	position: sticky;
 	top: 0;
@@ -240,7 +240,7 @@ page {
 }
 
 .order-card {
-	background: #fff;
+	background: #FEFEFC;
 	border-radius: 20rpx;
 	margin-bottom: 16rpx;
 	padding: 24rpx;
@@ -339,14 +339,14 @@ page {
 
 	&.primary {
 		background: linear-gradient(135deg, $green, $green-dark);
-		color: #fff;
+		color: #FEFEFC;
 		font-weight: 600;
 	}
 
 	&.ghost {
 		border: 1rpx solid #ddd;
 		color: $text-secondary;
-		background: #fff;
+		background: #FEFEFC;
 	}
 }
 
@@ -375,7 +375,7 @@ page {
 	line-height: 72rpx;
 	padding: 0 48rpx;
 	background: $green;
-	color: #fff;
+	color: #FEFEFC;
 	border-radius: 36rpx;
 	font-size: 28rpx;
 	text-decoration: none;

@@ -113,7 +113,7 @@
 		display: block;
 		font-size: 40rpx;
 		font-weight: bold;
-		color: #fff;
+		color: #FEFEFC;
 		letter-spacing: 4rpx;
 	}
 
@@ -125,7 +125,7 @@
 	}
 
 	.brand-desc {
-		background: #fff;
+		background: #FEFEFC;
 		padding: 30rpx;
 		font-size: 26rpx;
 		color: #666;
@@ -152,7 +152,7 @@
 	.goods-item {
 		float: left;
 		width: 335rpx;
-		background: #fff;
+		background: #FEFEFC;
 		border-radius: 16rpx;
 		overflow: hidden;
 		margin-bottom: 20rpx;

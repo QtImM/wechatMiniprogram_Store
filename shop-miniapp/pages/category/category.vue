@@ -144,7 +144,7 @@ page {
 	top: 0;
 	left: 0;
 	right: 0;
-	background: #fff;
+	background: #FEFEFC;
 	z-index: 100;
 	box-shadow: 0 2rpx 8rpx rgba(91, 140, 90, 0.06);
 }
@@ -205,7 +205,7 @@ page {
 .goods-card {
 	float: left;
 	width: 350rpx;
-	background: #fff;
+	background: #FEFEFC;
 	border-radius: 16rpx;
 	overflow: hidden;
 	text-decoration: none;

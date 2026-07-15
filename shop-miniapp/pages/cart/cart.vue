@@ -287,14 +287,14 @@ export default {
 </script>
 
 <style lang="scss">
-$green: #5B8C5A;
-$green-light: #E8F2E7;
-$green-bg: #F6F7F4;
-$green-dark: #3D6B3C;
-$text-primary: #2D3A2E;
-$text-secondary: #5C6B5D;
-$text-hint: #9CA89D;
-$red: #CF4A3E;
+$green: #4D704D;
+$green-light: #E8ECE8;
+$green-bg: #FDFDF8;
+$green-dark: #667166;
+$text-primary: #36454F;
+$text-secondary: #667166;
+$text-hint: #9A9A9A;
+$red: #36454F;
 
 page {
 	background: $green-bg;
@@ -311,7 +311,7 @@ page {
 	display: flex;
 	justify-content: center;
 	padding: 18rpx 24rpx;
-	background: #fff;
+	background: #FEFEFC;
 }
 
 .guarantee-item {
@@ -332,10 +332,10 @@ page {
 /* 包邮进度条 */
 .shipping-bar {
 	margin: 16rpx 24rpx 0;
-	background: #fff;
+	background: #FEFEFC;
 	border-radius: 14rpx;
 	padding: 20rpx 24rpx;
-	box-shadow: 0 2rpx 8rpx rgba(91,140,90,0.05);
+	box-shadow: 0 2rpx 8rpx rgba(77,112,77,0.05);
 }
 
 .shipping-info {
@@ -407,7 +407,7 @@ page {
 	line-height: 80rpx;
 	text-align: center;
 	background: $green;
-	color: #fff;
+	color: #FEFEFC !important;
 	border-radius: 40rpx;
 	font-size: 28rpx;
 	font-weight: 600;
@@ -421,11 +421,11 @@ page {
 .cart-item {
 	display: flex;
 	align-items: center;
-	background: #fff;
+	background: #FEFEFC;
 	border-radius: 20rpx;
 	padding: 24rpx;
 	margin-bottom: 16rpx;
-	box-shadow: 0 2rpx 12rpx rgba(91, 140, 90, 0.05);
+	box-shadow: 0 2rpx 12rpx rgba(77, 112, 77, 0.05);
 }
 
 /* 选择框 */
@@ -446,7 +446,7 @@ page {
 }
 
 .check-icon {
-	color: #fff;
+	color: #FEFEFC;
 	font-size: 24rpx;
 	font-weight: 700;
 }
@@ -583,10 +583,10 @@ page {
 	flex-direction: column;
 	width: 200rpx;
 	margin-right: 16rpx;
-	background: #fff;
+	background: #FEFEFC;
 	border-radius: 14rpx;
 	overflow: hidden;
-	box-shadow: 0 2rpx 8rpx rgba(91,140,90,0.06);
+	box-shadow: 0 2rpx 8rpx rgba(77,112,77,0.06);
 	text-decoration: none;
 	flex-shrink: 0;
 }
@@ -619,11 +619,11 @@ page {
 	left: 0;
 	right: 0;
 	height: 110rpx;
-	background: #fff;
+	background: #FEFEFC;
 	display: flex;
 	align-items: center;
 	padding: 0 24rpx;
-	box-shadow: 0 -4rpx 16rpx rgba(91, 140, 90, 0.08);
+	box-shadow: 0 -4rpx 16rpx rgba(77, 112, 77, 0.08);
 	z-index: 100;
 }
 
@@ -688,9 +688,13 @@ page {
 	align-items: center;
 	justify-content: center;
 	font-size: 26rpx;
-	color: #fff;
+	color: #FEFEFC !important;
 	background: $red;
 	border-radius: 34rpx;
+
+	text {
+		color: #FEFEFC !important;
+	}
 }
 
 .checkout-btn {
@@ -700,9 +704,13 @@ page {
 	align-items: center;
 	justify-content: center;
 	font-size: 28rpx;
-	color: #fff;
+	color: #FEFEFC !important;
 	background: linear-gradient(135deg, $green, $green-dark);
 	border-radius: 34rpx;
 	font-weight: 600;
+
+	text {
+		color: #FEFEFC !important;
+	}
 }
 </style>

@@ -1,21 +1,25 @@
 /**app.css**/
 .container {
   box-sizing: border-box;
-  background-color: #F6F7F4;
-  font-family: PingFangSC-Light,helvetica,'Heiti SC';
+  background-color: #FDFDF8;
+  font-family: PingFangSC-Light, helvetica, 'Heiti SC';
 }
 
-view,image,text,navigator{
+view,
+image,
+text,
+navigator {
   box-sizing: border-box;
-  padding:0;
-  margin:0;
+  padding: 0;
+  margin: 0;
 
 }
 
-view,text{
-  font-family: PingFangSC-Light,helvetica,'Heiti SC';
+view,
+text {
+  font-family: PingFangSC-Light, helvetica, 'Heiti SC';
   font-size: 29rpx;
-  color: #333;
+  color: #36454F;
 }
 
 button::after {
@@ -25,11 +29,12 @@ button::after {
 .display-none {
   display: none !important;
 }
+
 ::-webkit-scrollbar {
   width: 5px;
-  background-color: #F6F7F4;
+  background-color: #FDFDF8;
 }
 
 ::-webkit-scrollbar-thumb {
-  background-color: #999;
+  background-color: #9A9A9A;
 }

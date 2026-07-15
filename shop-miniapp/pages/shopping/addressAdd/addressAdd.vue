@@ -243,7 +243,7 @@
 	}
 
 	.form-card {
-		background: #fff;
+		background: #FEFEFC;
 		border-radius: 20rpx;
 		overflow: hidden;
 		box-shadow: 0 2rpx 12rpx rgba(91,140,90,0.08);
@@ -305,7 +305,7 @@
 		width: 40rpx;
 		height: 40rpx;
 		border-radius: 50%;
-		background: #fff;
+		background: #FEFEFC;
 		box-shadow: 0 2rpx 4rpx rgba(0,0,0,0.15);
 		transition: transform 0.3s;
 	}
@@ -330,7 +330,7 @@
 		text-align: center;
 		font-size: 30rpx;
 		color: #666;
-		background: #fff;
+		background: #FEFEFC;
 	}
 
 	.btn-save {
@@ -339,7 +339,7 @@
 		line-height: 100rpx;
 		text-align: center;
 		font-size: 30rpx;
-		color: #fff;
+		color: #FEFEFC;
 		font-weight: 500;
 		background: linear-gradient(135deg, $green 0%, $green-light 100%);
 	}
@@ -359,7 +359,7 @@
 		bottom: 0;
 		left: 0;
 		width: 100%;
-		background: #fff;
+		background: #FEFEFC;
 		border-radius: 24rpx 24rpx 0 0;
 		z-index: 100;
 		overflow: hidden;

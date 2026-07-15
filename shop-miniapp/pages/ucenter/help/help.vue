@@ -57,7 +57,7 @@
 	}
 
 	.help-list {
-		background: #fff;
+		background: #FEFEFC;
 		border-radius: 16rpx;
 		overflow: hidden;
 		box-shadow: 0 2rpx 10rpx rgba(91,140,90,0.08);

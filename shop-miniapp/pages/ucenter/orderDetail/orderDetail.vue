@@ -176,7 +176,7 @@
 	}
 
 	.order-info {
-		background: #fff;
+		background: #FEFEFC;
 		border-radius: 16rpx;
 		padding: 28rpx 30rpx;
 		margin-bottom: 20rpx;
@@ -234,13 +234,13 @@
 
 		&.primary {
 			background: $green;
-			color: #fff;
+			color: #FEFEFC;
 			border-color: $green;
 		}
 	}
 
 	.order-goods {
-		background: #fff;
+		background: #FEFEFC;
 		border-radius: 16rpx;
 		padding: 0 30rpx;
 		margin-bottom: 20rpx;
@@ -320,7 +320,7 @@
 	}
 
 	.order-address {
-		background: #fff;
+		background: #FEFEFC;
 		border-radius: 16rpx;
 		padding: 28rpx 30rpx;
 		margin-bottom: 20rpx;
@@ -350,7 +350,7 @@
 	}
 
 	.order-total {
-		background: #fff;
+		background: #FEFEFC;
 		border-radius: 16rpx;
 		padding: 24rpx 30rpx;
 		box-shadow: 0 2rpx 10rpx rgba(91,140,90,0.08);

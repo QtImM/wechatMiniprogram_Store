@@ -3,11 +3,11 @@ schema_version: 1
 locale: zh-CN
 branch: main
 nodes_managed: true
-exported_at: "2026-06-28T14:13:31Z"
+exported_at: "2026-07-12T03:54:05Z"
 modules:
     "":
-        dir_name: 药食同源商城全栈工程
-        title: 药食同源商城全栈工程
+        dir_name: wx-mall 电商项目根编排层
+        title: wx-mall 电商项目根编排层
         scope:
             - README.md
             - AGENTS.md
@@ -99,8 +99,8 @@ modules:
         depends_on: []
         related_to: []
     shop_backend:
-        dir_name: 药食同源商城后端核心
-        title: 药食同源商城后端核心
+        dir_name: Shop 电商后端单体工程
+        title: Shop 电商后端单体工程
         scope:
             - shop-backend/
         source_files: []
@@ -111,8 +111,8 @@ modules:
         depends_on: []
         related_to: []
     shop_backend/framework:
-        dir_name: 基础框架与通用组件
-        title: 基础框架与通用组件
+        dir_name: 后端通用框架与 Starter 组件集
+        title: 后端通用框架与 Starter 组件集
         scope:
             - shop-backend/shop-framework/
         source_files: []
@@ -120,8 +120,8 @@ modules:
         depends_on: []
         related_to: []
     shop_backend/module_product:
-        dir_name: 商品与分类管理模块
-        title: 商品与分类管理模块
+        dir_name: 商品 SPU 与分类模块
+        title: 商品 SPU 与分类模块
         scope:
             - shop-backend/shop-module-product/
         source_files: []
@@ -130,8 +130,8 @@ modules:
         related_to:
             - path: shop_miniapp
     shop_backend/server:
-        dir_name: 应用启动与基础设施配置
-        title: 应用启动与基础设施配置
+        dir_name: Shop 后端服务启动与装配核心
+        title: Shop 后端服务启动与装配核心
         scope:
             - shop-backend/shop-server/
         source_files: []
@@ -139,8 +139,8 @@ modules:
         depends_on: []
         related_to: []
     shop_miniapp:
-        dir_name: 药食同源商城微信小程序
-        title: 药食同源商城微信小程序
+        dir_name: 开源 wx-mall 小程序源码快照
+        title: 开源 wx-mall 小程序源码快照
         scope:
             - shop-miniapp/
         source_files: []

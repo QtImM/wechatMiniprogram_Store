@@ -117,7 +117,7 @@
 
 	.content-area {
 		width: 100%;
-		background: #fff;
+		background: #FEFEFC;
 		font-size: 0;
 
 		image {
@@ -128,7 +128,7 @@
 
 	.comment-section {
 		margin: 20rpx 24rpx;
-		background: #fff;
+		background: #FEFEFC;
 		border-radius: 16rpx;
 		padding: 0 28rpx;
 		box-shadow: 0 2rpx 10rpx rgba(91,140,90,0.08);
@@ -224,7 +224,7 @@
 
 	.recommend-section {
 		margin: 0 24rpx;
-		background: #fff;
+		background: #FEFEFC;
 		border-radius: 16rpx;
 		padding: 0 28rpx 24rpx;
 		box-shadow: 0 2rpx 10rpx rgba(91,140,90,0.08);
@@ -253,6 +253,6 @@
 		padding: 16rpx 20rpx;
 		font-size: 26rpx;
 		color: #333;
-		background: #fff;
+		background: #FEFEFC;
 	}
 </style>

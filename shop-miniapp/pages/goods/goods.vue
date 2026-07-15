@@ -5,7 +5,7 @@
 			<view v-if="!openAttr">
 				<!-- 商品轮播图 -->
 				<swiper class="gallery-swiper" indicator-dots circular autoplay :interval="3000"
-					indicator-color="rgba(255,255,255,0.4)" indicator-active-color="#fff">
+					indicator-color="rgba(255,255,255,0.4)" indicator-active-color="#FEFEFC">
 					<swiper-item v-for="(item, index) in gallery" :key="item.id">
 						<image class="gallery-img" :src="item.imgUrl" mode="aspectFill"></image>
 					</swiper-item>
@@ -542,7 +542,7 @@ export default {
 
 <style lang="scss">
 .page {
-	background: #fff;
+	background: #FEFEFC;
 }
 
 .scroll-area {
@@ -566,7 +566,7 @@ export default {
 	align-items: baseline;
 	justify-content: space-between;
 	padding: 24rpx 30rpx 16rpx;
-	background: #fff;
+	background: #FEFEFC;
 }
 
 .price-row {
@@ -601,19 +601,19 @@ export default {
 /* VIP会员权益卡 */
 .vip-section {
 	margin: 0 30rpx 24rpx;
-	background: linear-gradient(135deg, $gold-light 0%, #ffffff 100%);
-	border: 1rpx solid rgba(184, 134, 11, 0.2);
+	background: linear-gradient(135deg, $gold-light 0%, #FEFEFC 100%);
+	border: 1rpx solid rgba(77, 112, 77, 0.2);
 	border-radius: 16rpx;
 	padding: 18rpx 24rpx;
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
-	box-shadow: 0 4rpx 12rpx rgba(184, 134, 11, 0.05);
+	box-shadow: 0 4rpx 12rpx rgba(77, 112, 77, 0.05);
 	transition: all 0.2s ease;
 
 	&:active {
 		transform: scale(0.98);
-		background: linear-gradient(135deg, $gold-light 30%, #fefcf7 100%);
+		background: linear-gradient(135deg, $gold-light 30%, #FDFDF8 100%);
 	}
 }
 
@@ -623,8 +623,8 @@ export default {
 }
 
 .vip-badge {
-	background: linear-gradient(135deg, $gold, #d4a843);
-	color: #fff;
+	background: linear-gradient(135deg, $gold 0%, #667166 100%);
+	color: #FEFEFC;
 	font-size: 18rpx;
 	font-weight: 700;
 	padding: 2rpx 8rpx;
@@ -666,7 +666,7 @@ export default {
 /* 商品信息 */
 .info-section {
 	padding: 0 30rpx 24rpx;
-	background: #fff;
+	background: #FEFEFC;
 }
 
 .goods-name {
@@ -699,7 +699,7 @@ export default {
 	display: flex;
 	gap: 24rpx;
 	padding: 16rpx 30rpx 24rpx;
-	background: #fff;
+	background: #FEFEFC;
 	border-bottom: 1rpx solid $green-bg;
 }
 
@@ -721,7 +721,7 @@ export default {
 	display: flex;
 	align-items: center;
 	padding: 28rpx 30rpx;
-	background: #fff;
+	background: #FEFEFC;
 	margin-top: 16rpx;
 }
 
@@ -746,7 +746,7 @@ export default {
 .comment-section {
 	margin-top: 16rpx;
 	padding: 28rpx 30rpx;
-	background: #fff;
+	background: #FEFEFC;
 }
 
 .comment-header {
@@ -819,7 +819,7 @@ export default {
 .attr-section {
 	margin-top: 16rpx;
 	padding: 28rpx 30rpx;
-	background: #fff;
+	background: #FEFEFC;
 }
 
 .attr-title {
@@ -839,7 +839,7 @@ export default {
 .attr-item {
 	display: flex;
 	padding: 16rpx 24rpx;
-	border-bottom: 1rpx solid #fff;
+	border-bottom: 1rpx solid #FEFEFC;
 }
 
 .attr-key {
@@ -877,7 +877,7 @@ export default {
 
 /* 图文详情 */
 .detail-section {
-	background: #fff;
+	background: #FEFEFC;
 	margin-top: 16rpx;
 	padding: 0 30rpx 30rpx;
 }
@@ -894,7 +894,7 @@ export default {
 
 /* 常见问题 */
 .faq-section {
-	background: #fff;
+	background: #FEFEFC;
 	padding: 0 30rpx 30rpx;
 }
 
@@ -931,7 +931,7 @@ export default {
 
 /* 相关推荐 */
 .related-section {
-	background: #fff;
+	background: #FEFEFC;
 	margin-top: 16rpx;
 	padding: 0 24rpx 30rpx;
 }
@@ -980,7 +980,7 @@ export default {
 /* SKU 选择面板 */
 .sku-panel {
 	padding: 30rpx;
-	background: #fff;
+	background: #FEFEFC;
 	min-height: 600rpx;
 }
 
@@ -1046,7 +1046,7 @@ export default {
 	border-radius: 32rpx;
 	font-size: 26rpx;
 	color: $text-primary;
-	background: #fff;
+	background: #FEFEFC;
 	transition: all 0.15s ease-in-out;
 
 	&:active {
@@ -1119,7 +1119,7 @@ export default {
 	display: flex;
 	align-items: center;
 	padding: 0 20rpx;
-	box-shadow: 0 -4rpx 24rpx rgba(91, 140, 90, 0.05);
+	box-shadow: 0 -4rpx 24rpx rgba(77, 112, 77, 0.05);
 	z-index: 100;
 }
 
@@ -1157,7 +1157,7 @@ export default {
 	line-height: 28rpx;
 	text-align: center;
 	background: $red;
-	color: #fff;
+	color: #FEFEFC;
 	font-size: 18rpx;
 	border-radius: 14rpx;
 	padding: 0 6rpx;
@@ -1189,17 +1189,17 @@ export default {
 
 .action-buy {
 	background: linear-gradient(135deg, $green, $green-dark);
-	color: #fff;
+	color: #FEFEFC;
 }
 
 /* 药食百科看板样式 */
 .science-board-card {
-	background: linear-gradient(135deg, #fdfdfd 0%, #f6fdf5 100%);
-	border: 1rpx solid rgba(91, 140, 90, 0.15);
+	background: linear-gradient(135deg, #fdfdfd 0%, #FDFDF8 100%);
+	border: 1rpx solid rgba(77, 112, 77, 0.15);
 	border-radius: 20rpx;
 	margin: 20rpx 30rpx;
 	padding: 24rpx 28rpx;
-	box-shadow: 0 4rpx 16rpx rgba(91, 140, 90, 0.03);
+	box-shadow: 0 4rpx 16rpx rgba(77, 112, 77, 0.03);
 }
 
 .science-header {
@@ -1235,7 +1235,7 @@ export default {
 	&:nth-child(2n) {
 		padding-left: 20rpx;
 		padding-right: 0;
-		border-left: 1rpx dashed rgba(91, 140, 90, 0.15);
+		border-left: 1rpx dashed rgba(77, 112, 77, 0.15);
 	}
 }
 
@@ -1259,11 +1259,11 @@ export default {
 
 /* 经典推荐搭配样式 */
 .combo-recommend-card {
-	background: #fff;
+	background: #FEFEFC;
 	border-radius: 20rpx;
 	margin: 24rpx 30rpx;
 	padding: 28rpx;
-	border: 1rpx dashed rgba(91, 140, 90, 0.25);
+	border: 1rpx dashed rgba(77, 112, 77, 0.25);
 }
 
 .combo-header {
@@ -1348,7 +1348,7 @@ export default {
 
 .combo-add-btn {
 	background: $green;
-	color: #fff;
+	color: #FEFEFC;
 	font-size: 24rpx;
 	font-weight: 700;
 	height: 64rpx;
