@@ -215,17 +215,17 @@ export default {
 </script>
 
 <style lang="scss">
-$green: #5B8C5A;
-$green-light: #E8F2E7;
-$green-bg: #F6F7F4;
-$text-primary: #2D3A2E;
-$text-secondary: #5C6B5D;
-$text-hint: #9CA89D;
-$red: #CF4A3E;
+$green: #4D704D;
+$green-light: #E8ECE8;
+$green-bg: #FDFDF8;
+$text-primary: #36454F;
+$text-secondary: #667166;
+$text-hint: #9A9A9A;
+$red: #36454F;
 
 page {
 	height: 100%;
-	background: #fff;
+	background: #FEFEFC;
 }
 
 .page {
@@ -237,7 +237,7 @@ page {
 /* 搜索栏 */
 .search-bar {
 	padding: 12rpx 24rpx;
-	background: #fff;
+	background: #FEFEFC;
 	flex-shrink: 0;
 }
 
@@ -284,7 +284,7 @@ page {
 	color: $text-secondary;
 
 	&.active {
-		background: #fff;
+		background: #F5F5EA;
 		color: $green;
 		font-weight: 700;
 	}
@@ -344,7 +344,7 @@ page {
 .goods-card {
 	float: left;
 	width: 270rpx;
-	background: #fff;
+	background: #FEFEFC;
 	border-radius: 12rpx;
 	overflow: hidden;
 	margin-bottom: 12rpx;
@@ -417,7 +417,7 @@ page {
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	box-shadow: 0 4rpx 10rpx rgba(91, 140, 90, 0.2);
+	box-shadow: 0 4rpx 10rpx rgba(77, 112, 77, 0.2);
 	transition: transform 0.1s ease;
 
 	&:active {
@@ -426,7 +426,7 @@ page {
 }
 
 .goods-cart-btn-icon {
-	color: #fff;
+	color: #FEFEFC;
 	font-size: 26rpx;
 	font-weight: 700;
 	line-height: 1;
@@ -444,7 +444,7 @@ page {
 	width: 32rpx;
 	height: 32rpx;
 	border-radius: 50%;
-	background: #CF4A3E;
-	box-shadow: 0 4rpx 10rpx rgba(207, 74, 62, 0.4);
+	background: #36454F;
+	box-shadow: 0 4rpx 10rpx rgba(54, 69, 79, 0.4);
 }
 </style>

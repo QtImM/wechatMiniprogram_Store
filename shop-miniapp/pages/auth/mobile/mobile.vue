@@ -125,13 +125,13 @@
 	}
 
 	.user-name {
-		color: #fff;
+		color: #FEFEFC;
 		font-size: 28rpx;
 	}
 
 	.form-card {
 		margin: -20rpx 24rpx 0;
-		background: #fff;
+		background: #FEFEFC;
 		border-radius: 20rpx;
 		padding: 40rpx 30rpx;
 		box-shadow: 0 4rpx 20rpx rgba(91,140,90,0.12);
@@ -172,7 +172,7 @@
 	.code-btn {
 		white-space: nowrap;
 		font-size: 26rpx;
-		color: #fff;
+		color: #FEFEFC;
 		background: $green;
 		padding: 12rpx 24rpx;
 		border-radius: 8rpx;
@@ -188,7 +188,7 @@
 		height: 88rpx;
 		line-height: 88rpx;
 		background: linear-gradient(135deg, $green 0%, $green-light 100%);
-		color: #fff;
+		color: #FEFEFC;
 		font-size: 30rpx;
 		font-weight: 500;
 		border-radius: 44rpx;
@@ -197,7 +197,7 @@
 
 		&[disabled] {
 			background: #ccc;
-			color: #fff;
+			color: #FEFEFC;
 		}
 	}
 </style>

@@ -124,7 +124,7 @@
 	.brand-name {
 		font-size: 34rpx;
 		font-weight: bold;
-		color: #fff;
+		color: #FEFEFC;
 		letter-spacing: 2rpx;
 	}
 

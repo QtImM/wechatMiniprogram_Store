@@ -12,37 +12,37 @@ $uni-color-warning: #ff7900;
 $uni-color-error: #EB0909;
 $uni-color-blue: #007AFF;
 $uni-color-black: #000000;
-$uni-color-white: #ffffff;
-$uni-color-pink:#f74d54;
+$uni-color-white: #FEFEFC;
+$uni-color-pink: #f74d54;
 
 
 /* 文字基本颜色 */
-$uni-text-color:#333;//基本色
-$uni-text-color-inverse:#fff;//反色
-$uni-text-color-grey:#999;//辅助灰色，如加载更多的提示信息
+$uni-text-color: #333; //基本色
+$uni-text-color-inverse: #FEFEF6; //反色
+$uni-text-color-grey: #999; //辅助灰色，如加载更多的提示信息
 $uni-text-color-placeholder: #bfbfbf;
-$uni-text-color-disable:#c0c0c0;
+$uni-text-color-disable: #c0c0c0;
 
 /* 背景颜色 */
-$uni-bg-color:#ffffff;
-$uni-bg-color-grey:#fafafa;
-$uni-bg-color-hover:#f1f1f1;//点击状态颜色
-$uni-bg-color-mask:rgba(0, 0, 0, 0.4);//遮罩颜色
+$uni-bg-color: #FEFEFC;
+$uni-bg-color-grey: #fafafa;
+$uni-bg-color-hover: #f1f1f1; //点击状态颜色
+$uni-bg-color-mask: rgba(0, 0, 0, 0.4); //遮罩颜色
 
 /* 边框颜色 */
-$uni-border-color:#eaeef1;
+$uni-border-color: #eaeef1;
 
 /* 尺寸变量 */
 
 /* 文字尺寸 */
-$uni-font-size-sm:24rpx;
-$uni-font-size-base:28rpx;
-$uni-font-size-lg:32rpx;
+$uni-font-size-sm: 24rpx;
+$uni-font-size-base: 28rpx;
+$uni-font-size-lg: 32rpx;
 
 /* 图片尺寸 */
-$uni-img-size-sm:40rpx;
-$uni-img-size-base:52rpx;
-$uni-img-size-lg:80rpx;
+$uni-img-size-sm: 40rpx;
+$uni-img-size-base: 52rpx;
+$uni-img-size-lg: 80rpx;
 
 /* Border Radius */
 $uni-border-radius-sm: 4rpx;
@@ -65,21 +65,22 @@ $uni-opacity-disabled: 0.3; // 组件禁用态的透明度
 
 /* 文章场景相关 */
 $uni-color-title: #2C405A; // 文章标题颜色
-$uni-font-size-title:40rpx;
+$uni-font-size-title: 40rpx;
 $uni-color-subtitle: #555555; // 二级标题颜色
-$uni-font-size-subtitle:36rpx;
+$uni-font-size-subtitle: 36rpx;
 $uni-color-paragraph: #3F536E; // 文章段落颜色
-$uni-font-size-paragraph:30rpx;
+$uni-font-size-paragraph: 30rpx;
 
 /* 药食同源专属设计系统变量 */
-$green: #5B8C5A;        // 主色：草木绿
-$green-light: #E8F2E7;  // 浅色背景/标签底
-$green-bg: #F6F7F4;     // 页面大底色
-$green-dark: #3D6B3C;   // 状态激活/深绿
-$gold: #B8860B;         // 辅色：暗金（会员专用）
-$gold-light: #FBF4E4;   // 会员卡背景
-$orange: #E07C4F;       // 强调色：陶土橙
-$red: #CF4A3E;          // 价格/警告红
-$text-primary: #2D3A2E; // 主文字色（深绿灰）
-$text-secondary: #5C6B5D;// 副文字色
-$text-hint: #9CA89D;     // 辅助/Placeholder
+$green: #4D704D; // 主色：浅墨绿
+$green-light: #E8ECE8; // 浅色背景/标签底
+$green-bg: #FDFDF8; // 页面大底色（浅米）
+$green-dark: #667166; // 灰墨绿
+$gold: #FAFAD2; // 点缀：浅金（哑光）
+$gold-light: #F5F5E0; // 浅金浅底
+$charcoal: #36454F; // 主色：哑光炭灰
+$orange: #8B7355; // 中性暖棕（替代陶土橙）
+$red: #36454F; // 价格色（炭灰替代红）
+$text-primary: #36454F; // 主文字色（炭灰）
+$text-secondary: #667166; // 副文字色（灰墨绿）
+$text-hint: #9A9A9A; // 辅助/Placeholder

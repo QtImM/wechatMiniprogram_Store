@@ -94,7 +94,7 @@
 	.collect-item {
 		display: flex;
 		align-items: center;
-		background: #fff;
+		background: #FEFEFC;
 		border-radius: 16rpx;
 		padding: 24rpx;
 		margin-bottom: 16rpx;

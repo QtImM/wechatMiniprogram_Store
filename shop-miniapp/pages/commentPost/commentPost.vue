@@ -67,7 +67,7 @@
 
 	.post-card {
 		position: relative;
-		background: #fff;
+		background: #FEFEFC;
 		border-radius: 16rpx;
 		padding: 24rpx;
 		min-height: 340rpx;
@@ -103,7 +103,7 @@
 		text-align: center;
 		font-size: 28rpx;
 		color: #666;
-		background: #fff;
+		background: #FEFEFC;
 		border-radius: 40rpx;
 		margin-right: 20rpx;
 	}
@@ -114,7 +114,7 @@
 		line-height: 80rpx;
 		text-align: center;
 		font-size: 28rpx;
-		color: #fff;
+		color: #FEFEFC;
 		font-weight: 500;
 		background: linear-gradient(135deg, $green 0%, $green-light 100%);
 		border-radius: 40rpx;

@@ -250,7 +250,7 @@ page {
 	left: 0;
 	right: 0;
 	height: 100rpx;
-	background: #fff;
+	background: #FEFEFC;
 	display: flex;
 	align-items: center;
 	padding: 0 24rpx;
@@ -306,7 +306,7 @@ page {
 
 /* 关键词区 */
 .keyword-section {
-	background: #fff;
+	background: #FEFEFC;
 	margin: 0 0 16rpx;
 	padding: 28rpx;
 }
@@ -353,7 +353,7 @@ page {
 
 /* 搜索建议 */
 .suggest-list {
-	background: #fff;
+	background: #FEFEFC;
 	margin-top: 0;
 	padding: 0 28rpx;
 }
@@ -378,7 +378,7 @@ page {
 	left: 0;
 	right: 0;
 	height: 84rpx;
-	background: #fff;
+	background: #FEFEFC;
 	display: flex;
 	align-items: center;
 	padding: 0 48rpx;
@@ -412,7 +412,7 @@ page {
 	top: 184rpx;
 	left: 0;
 	right: 0;
-	background: #fff;
+	background: #FEFEFC;
 	padding: 24rpx;
 	display: flex;
 	flex-wrap: wrap;
@@ -446,7 +446,7 @@ page {
 .goods-card {
 	float: left;
 	width: 350rpx;
-	background: #fff;
+	background: #FEFEFC;
 	border-radius: 16rpx;
 	overflow: hidden;
 	text-decoration: none;

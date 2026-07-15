@@ -110,7 +110,7 @@
 	}
 
 	.ai-guide-text {
-		color: #fff;
+		color: #FEFEFC;
 		font-size: 18rpx;
 		line-height: 1.25;
 		font-weight: 600;

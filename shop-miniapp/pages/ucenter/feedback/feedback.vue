@@ -94,7 +94,7 @@
 	}
 
 	.form-card {
-		background: #fff;
+		background: #FEFEFC;
 		border-radius: 20rpx;
 		overflow: hidden;
 		box-shadow: 0 2rpx 12rpx rgba(91,140,90,0.08);
@@ -172,7 +172,7 @@
 		text-align: center;
 		background: linear-gradient(135deg, $green 0%, $green-light 100%);
 		border-radius: 45rpx;
-		color: #fff;
+		color: #FEFEFC;
 		font-size: 30rpx;
 		font-weight: 500;
 		box-shadow: 0 6rpx 24rpx rgba(91,140,90,0.3);

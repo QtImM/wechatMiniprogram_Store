@@ -208,7 +208,7 @@ page {
 
 /* 地址卡片 */
 .address-card {
-	background: #fff;
+	background: #FEFEFC;
 	border-radius: 20rpx;
 	padding: 28rpx;
 	margin-bottom: 16rpx;
@@ -276,7 +276,7 @@ page {
 
 /* 商品卡片 */
 .goods-card {
-	background: #fff;
+	background: #FEFEFC;
 	border-radius: 20rpx;
 	padding: 24rpx;
 	margin-bottom: 16rpx;
@@ -355,7 +355,7 @@ page {
 
 /* 选项卡片 */
 .option-card {
-	background: #fff;
+	background: #FEFEFC;
 	border-radius: 20rpx;
 	padding: 28rpx;
 	margin-bottom: 16rpx;
@@ -392,7 +392,7 @@ page {
 
 /* 金额卡片 */
 .amount-card {
-	background: #fff;
+	background: #FEFEFC;
 	border-radius: 20rpx;
 	padding: 24rpx 28rpx;
 	margin-bottom: 16rpx;
@@ -427,7 +427,7 @@ page {
 	right: 0;
 	bottom: 0;
 	height: 110rpx;
-	background: #fff;
+	background: #FEFEFC;
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
@@ -462,7 +462,7 @@ page {
 	align-items: center;
 	justify-content: center;
 	font-size: 30rpx;
-	color: #fff;
+	color: #FEFEFC;
 	font-weight: 600;
 }
 </style>

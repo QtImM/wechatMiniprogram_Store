@@ -1,42 +1,44 @@
 <template>
 	<view class="page" :style="{paddingTop: statusBarHeight + 'px'}">
-		<!-- 自定义顶部导航 -->
-		<view class="nav-bar" :style="{top: statusBarHeight + 'px'}">
-			<view class="nav-brand">
-				<image class="nav-logo" src="/static/images/logo.png" mode="aspectFit"></image>
-				<view class="nav-title">
-					<text class="brand-name">药食同源</text>
-					<text class="brand-slogan">让健康触手可及</text>
+		<!-- 顶部统一区块：导航+搜索+分类Tab -->
+		<view class="top-header">
+			<view class="nav-bar" :style="{top: statusBarHeight + 'px'}">
+				<view class="nav-brand">
+					<image class="nav-logo" src="/static/images/logo.png" mode="aspectFit"></image>
+					<view class="nav-title">
+						<text class="brand-name">药食同源</text>
+						<text class="brand-slogan">让健康触手可及</text>
+					</view>
 				</view>
 			</view>
-		</view>
 
-		<!-- 搜索栏 -->
-		<view class="search-bar">
-			<navigator url="/pages/search/search" class="search-box">
-				<image class="search-icon" src="/static/images/icon-search.png" mode="aspectFit"></image>
-				<text class="search-placeholder">搜索商品、品牌</text>
-			</navigator>
-		</view>
-
-		<!-- 分类横滑Tab -->
-		<scroll-view scroll-x class="category-tabs" :show-scrollbar="false">
-			<view
-				class="tab-item"
-				:class="{active: currentTab === index}"
-				v-for="(item, index) in categoryTabs"
-				:key="index"
-				@tap="switchTab(index)"
-			>
-				<text>{{item.name}}</text>
-				<view class="tab-line" v-if="currentTab === index"></view>
+			<!-- 搜索栏 -->
+			<view class="search-bar">
+				<navigator url="/pages/search/search" class="search-box">
+					<image class="search-icon" src="/static/images/icon-search.png" mode="aspectFit"></image>
+					<text class="search-placeholder">搜索商品、品牌</text>
+				</navigator>
 			</view>
-		</scroll-view>
+
+			<!-- 分类横滑Tab -->
+			<scroll-view scroll-x class="category-tabs" :show-scrollbar="false">
+				<view
+					class="tab-item"
+					:class="{active: currentTab === index}"
+					v-for="(item, index) in categoryTabs"
+					:key="index"
+					@tap="switchTab(index)"
+				>
+					<text>{{item.name}}</text>
+					<view class="tab-line" v-if="currentTab === index"></view>
+				</view>
+			</scroll-view>
+		</view>
 
 		<!-- 轮播Banner -->
 		<view class="banner-wrap" v-if="currentTab === 0">
 			<swiper class="banner-swiper" indicator-dots circular autoplay :interval="4000" :duration="500"
-				indicator-color="rgba(91,140,90,0.3)" indicator-active-color="#5B8C5A">
+				indicator-color="rgba(77,112,77,0.3)" indicator-active-color="#4D704D">
 				<swiper-item v-for="(item, index) in banner" :key="index">
 					<navigator v-if="item.link" :url="item.link">
 						<image class="banner-img" :src="item.imageUrl" mode="aspectFill"></image>
@@ -309,11 +311,11 @@ export default {
 				5: 'https://images.unsplash.com/photo-1514733670139-4d87a19b179d?w=750'
 			},
 			menuItems: [
-				{ name: '新人礼', icon: '🎁', bgColor: '#FEF0E5', url: '' },
-				{ name: '会员', icon: '👑', bgColor: '#FBF4E4', url: '' },
-				{ name: '优惠券', icon: '🎫', bgColor: '#E8F2E7', url: '' },
-				{ name: '分销', icon: '🤝', bgColor: '#EAF0F9', url: '' },
-				{ name: '全部分类', icon: '📋', bgColor: '#F3EFF8', url: '/pages/catalog/catalog' }
+				{ name: '新人礼', icon: '🎁', bgColor: '#F5F5E0', url: '' },
+				{ name: '会员', icon: '👑', bgColor: '#F5F5E0', url: '' },
+				{ name: '优惠券', icon: '🎫', bgColor: '#E8ECE8', url: '' },
+				{ name: '分销', icon: '🤝', bgColor: '#E8ECE8', url: '' },
+				{ name: '全部分类', icon: '📋', bgColor: '#FDFDF8', url: '/pages/catalog/catalog' }
 			],
 			sectionTabs: ['今日主推', '热销爆款', '新品上架'],
 			showNewUserModal: false,
@@ -540,33 +542,39 @@ export default {
 </script>
 
 <style lang="scss">
-$green: #5B8C5A;
-$green-light: #E8F2E7;
-$green-bg: #F6F7F4;
-$gold: #B8860B;
-$gold-light: #FBF4E4;
-$orange: #E07C4F;
-$red: #CF4A3E;
-$text-primary: #2D3A2E;
-$text-secondary: #5C6B5D;
-$text-hint: #9CA89D;
+$green: #4D704D;
+$green-light: #E8ECE8;
+$green-bg: #FDFDF8;
+$gold: #FAFAD2;
+$gold-light: #F5F5E0;
+$orange: #8B7355;
+$red: #36454F;
+$text-primary: #36454F;
+$text-secondary: #667166;
+$text-hint: #9A9A9A;
 
 .page {
-	background-color: $green-bg;
+	background: #FDFDF8;
 	min-height: 100vh;
 	padding-bottom: 20rpx;
 }
 
-/* 顶部导航 */
-.nav-bar {
+/* 顶部统一区块 */
+.top-header {
 	position: sticky;
 	top: 0;
 	z-index: 100;
+	background: linear-gradient(90deg, #879F8C 0%, #7A9482 100%);
+	border-radius: 0 0 32rpx 32rpx;
+	overflow: hidden;
+}
+
+/* 顶部导航 */
+.nav-bar {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
 	padding: 16rpx 30rpx;
-	background: #fff;
 }
 
 .nav-brand {
@@ -589,26 +597,25 @@ $text-hint: #9CA89D;
 .brand-name {
 	font-size: 32rpx;
 	font-weight: 700;
-	color: $green;
+	color: #FEFEFC !important;
 }
 
 .brand-slogan {
 	font-size: 20rpx;
-	color: $text-hint;
+	color: rgba(254, 254, 252, 0.7) !important;
 	margin-top: 2rpx;
 }
 
 /* 搜索栏 */
 .search-bar {
 	padding: 12rpx 30rpx 20rpx;
-	background: #fff;
 }
 
 .search-box {
 	display: flex;
 	align-items: center;
 	height: 72rpx;
-	background: $green-bg;
+	background: rgba(255, 255, 255, 0.15);
 	border-radius: 36rpx;
 	padding: 0 28rpx;
 }
@@ -622,13 +629,12 @@ $text-hint: #9CA89D;
 
 .search-placeholder {
 	font-size: 26rpx;
-	color: $text-hint;
+	color: rgba(254, 254, 252, 0.6) !important;
 }
 
 /* 分类Tab */
 .category-tabs {
 	white-space: nowrap;
-	background: #fff;
 	padding: 0 20rpx 20rpx;
 }
 
@@ -638,20 +644,28 @@ $text-hint: #9CA89D;
 	align-items: center;
 	padding: 12rpx 24rpx;
 	font-size: 28rpx;
-	color: $text-secondary;
+	color: #FEFEFC !important;
 	position: relative;
 
+	text {
+		color: #FEFEFC !important;
+	}
+
 	&.active {
-		color: $green;
+		color: #FEFEFC !important;
 		font-weight: 700;
 		font-size: 30rpx;
+
+		text {
+			color: #FEFEFC !important;
+		}
 	}
 }
 
 .tab-line {
 	width: 40rpx;
 	height: 6rpx;
-	background: $green;
+	background: #FEFEFC;
 	border-radius: 3rpx;
 	margin-top: 6rpx;
 }
@@ -678,7 +692,7 @@ $text-hint: #9CA89D;
 	display: flex;
 	justify-content: space-around;
 	padding: 24rpx 20rpx 32rpx;
-	background: #fff;
+	background: #FEFEFC;
 	margin: 0 24rpx;
 	border-radius: 20rpx;
 }
@@ -714,13 +728,13 @@ $text-hint: #9CA89D;
 	align-items: center;
 	margin: 20rpx 24rpx 0;
 	padding: 16rpx 24rpx;
-	background: #fff;
+	background: #FEFEFC;
 	border-radius: 16rpx;
 }
 
 .notice-tag {
 	font-size: 20rpx;
-	color: #fff;
+	color: #FEFEFC;
 	background: $green;
 	padding: 4rpx 12rpx;
 	border-radius: 8rpx;
@@ -749,7 +763,7 @@ $text-hint: #9CA89D;
 
 .dual-left {
 	flex: 1.2;
-	background: #fff;
+	background: #FEFEFC;
 	border-radius: 20rpx;
 	padding: 24rpx;
 	display: flex;
@@ -770,9 +784,9 @@ $text-hint: #9CA89D;
 
 .dual-sub {
 	font-size: 20rpx;
-	color: $orange;
+	color: #8B7355;
 	margin-left: 8rpx;
-	background: #FEF0E5;
+	background: rgba(139, 115, 85, 0.15);
 	padding: 2rpx 10rpx;
 	border-radius: 8rpx;
 }
@@ -812,7 +826,7 @@ $text-hint: #9CA89D;
 
 .dual-card {
 	flex: 1;
-	background: #fff;
+	background: #FEFEFC;
 	border-radius: 20rpx;
 	padding: 20rpx;
 	position: relative;
@@ -893,10 +907,10 @@ $text-hint: #9CA89D;
 }
 
 .goods-card {
-	background: #fff;
+	background: #FEFEFC;
 	border-radius: 20rpx;
 	overflow: hidden;
-	box-shadow: 0 4rpx 16rpx rgba(91, 140, 90, 0.06);
+	box-shadow: 0 4rpx 16rpx rgba(77, 112, 77, 0.06);
 }
 
 .goods-img {
@@ -964,7 +978,7 @@ $text-hint: #9CA89D;
 }
 
 .modal-content {
-	background: #fff;
+	background: #FEFEFC;
 	border-radius: 36rpx;
 	width: 100%;
 	max-width: 600rpx;
@@ -987,21 +1001,21 @@ $text-hint: #9CA89D;
 .modal-title {
 	font-size: 36rpx;
 	font-weight: 700;
-	color: #2D3A2E;
+	color: #36454F;
 	display: block;
 }
 
 .modal-sub {
 	font-size: 24rpx;
-	color: #9CA89D;
+	color: #9A9A9A;
 	margin-top: 10rpx;
 	display: block;
 }
 
 /* 新人礼特别样式 */
 .new-user-modal {
-	background: linear-gradient(135deg, #FFF9F6 0%, #FFFFFF 100%);
-	border-top: 10rpx solid #CF4A3E;
+	background: linear-gradient(135deg, #FDFDF8 0%, #FEFEFC 100%);
+	border-top: 10rpx solid #36454F;
 }
 
 .coupon-list-wrap {
@@ -1013,16 +1027,16 @@ $text-hint: #9CA89D;
 
 .coupon-card {
 	display: flex;
-	background: linear-gradient(90deg, #FEF0E5 0%, #FFF9F6 100%);
-	border: 2rpx dashed #E07C4F;
+	background: linear-gradient(90deg, #F5F5E0 0%, #FDFDF8 100%);
+	border: 2rpx dashed #8B7355;
 	border-radius: 16rpx;
 	overflow: hidden;
 }
 
 .coupon-left {
 	width: 160rpx;
-	background: #E07C4F;
-	color: #fff;
+	background: #4D704D;
+	color: #FEFEFC;
 	display: flex;
 	align-items: baseline;
 	justify-content: center;
@@ -1050,12 +1064,12 @@ $text-hint: #9CA89D;
 .cp-name {
 	font-size: 26rpx;
 	font-weight: 700;
-	color: #2D3A2E;
+	color: #36454F;
 }
 
 .cp-limit {
 	font-size: 20rpx;
-	color: #5C6B5D;
+	color: #667166;
 	margin-top: 6rpx;
 }
 
@@ -1065,20 +1079,25 @@ $text-hint: #9CA89D;
 	border-radius: 44rpx;
 	font-size: 30rpx;
 	font-weight: 700;
-	color: #fff;
+	color: #FEFEFC;
 	text-align: center;
 	border: none;
 }
 
 .new-user-btn {
-	background: linear-gradient(135deg, #CF4A3E 0%, #E07C4F 100%);
-	box-shadow: 0 10rpx 30rpx rgba(224, 124, 79, 0.3);
+	background: #FDFDF8;
+	margin-bottom: 40rpx;
+}
+
+.new-user-btn {
+	background: linear-gradient(135deg, #36454F 0%, #667166 100%);
+	box-shadow: 0 10rpx 30rpx rgba(54, 69, 79, 0.3);
 }
 
 /* 会员卡特别样式 */
 .vip-modal {
-	background: linear-gradient(135deg, #FDFBF7 0%, #FFFFFF 100%);
-	border-top: 10rpx solid #B8860B;
+	background: linear-gradient(135deg, #F5F5E0 0%, #FEFEFC 100%);
+	border-top: 10rpx solid #4D704D;
 }
 
 .vip-privileges {
@@ -1101,7 +1120,7 @@ $text-hint: #9CA89D;
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	background: #FBF4E4;
+	background: #F5F5E0;
 	border-radius: 50%;
 }
 
@@ -1113,12 +1132,12 @@ $text-hint: #9CA89D;
 .vip-p-title {
 	font-size: 28rpx;
 	font-weight: 700;
-	color: #B8860B;
+	color: #4D704D;
 }
 
 .vip-p-desc {
 	font-size: 22rpx;
-	color: #9CA89D;
+	color: #9A9A9A;
 	margin-top: 4rpx;
 }
 
@@ -1129,30 +1148,30 @@ $text-hint: #9CA89D;
 
 .vip-old-price {
 	font-size: 24rpx;
-	color: #9CA89D;
+	color: #9A9A9A;
 	text-decoration: line-through;
 	margin-right: 16rpx;
 }
 
 .vip-now-price {
 	font-size: 32rpx;
-	color: #B8860B;
+	color: #4D704D;
 	font-weight: 700;
 }
 
 .vip-btn {
-	background: linear-gradient(135deg, #B8860B 0%, #DAA520 100%);
-	box-shadow: 0 10rpx 30rpx rgba(184, 134, 11, 0.3);
+	background: linear-gradient(135deg, #4D704D 0%, #667166 100%);
+	box-shadow: 0 10rpx 30rpx rgba(77, 112, 77, 0.3);
 }
 
 /* 分销特别样式 */
 .share-modal {
-	background: linear-gradient(135deg, #F6F7F4 0%, #FFFFFF 100%);
-	border-top: 10rpx solid #5B8C5A;
+	background: linear-gradient(135deg, #FDFDF8 0%, #FEFEFC 100%);
+	border-top: 10rpx solid #4D704D;
 }
 
 .share-benefit-wrap {
-	background: #E8F2E7;
+	background: #E8ECE8;
 	border-radius: 20rpx;
 	padding: 30rpx 36rpx;
 	margin-bottom: 40rpx;
@@ -1162,14 +1181,14 @@ $text-hint: #9CA89D;
 .share-title {
 	font-size: 30rpx;
 	font-weight: 700;
-	color: #5B8C5A;
+	color: #4D704D;
 	display: block;
 	margin-bottom: 12rpx;
 }
 
 .share-rules {
 	font-size: 24rpx;
-	color: #5C6B5D;
+	color: #667166;
 	line-height: 1.6;
 	display: block;
 }
@@ -1191,14 +1210,14 @@ $text-hint: #9CA89D;
 }
 
 .share-btn-action.sec {
-	background: #E8F2E7;
-	color: #5B8C5A;
+	background: #E8ECE8;
+	color: #4D704D;
 }
 
 .share-btn-action.pri {
-	background: #5B8C5A;
-	color: #fff;
-	box-shadow: 0 10rpx 30rpx rgba(91, 140, 90, 0.3);
+	background: #4D704D;
+	color: #FEFEFC;
+	box-shadow: 0 10rpx 30rpx rgba(77, 112, 77, 0.3);
 }
 
 /* 关闭按钮 */
@@ -1207,7 +1226,7 @@ $text-hint: #9CA89D;
 	top: 24rpx;
 	right: 28rpx;
 	font-size: 48rpx;
-	color: #9CA89D;
+	color: #9A9A9A;
 	line-height: 1;
 	padding: 10rpx;
 	cursor: pointer;
@@ -1240,7 +1259,7 @@ $text-hint: #9CA89D;
 .cat-title {
 	font-size: 36rpx;
 	font-weight: 700;
-	color: #fff;
+	color: #FEFEFC;
 	text-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.4);
 }
 
@@ -1260,7 +1279,7 @@ $text-hint: #9CA89D;
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	box-shadow: 0 4rpx 10rpx rgba(91, 140, 90, 0.2);
+	box-shadow: 0 4rpx 10rpx rgba(77, 112, 77, 0.2);
 	transition: transform 0.1s ease;
 
 	&:active {
@@ -1269,7 +1288,7 @@ $text-hint: #9CA89D;
 }
 
 .goods-cart-btn-icon {
-	color: #fff;
+	color: #FEFEFC;
 	font-size: 28rpx;
 	font-weight: 700;
 	line-height: 1;
@@ -1287,7 +1306,7 @@ $text-hint: #9CA89D;
 	width: 32rpx;
 	height: 32rpx;
 	border-radius: 50%;
-	background: #CF4A3E;
-	box-shadow: 0 4rpx 10rpx rgba(207, 74, 62, 0.4);
+	background: #36454F;
+	box-shadow: 0 4rpx 10rpx rgba(54, 69, 79, 0.4);
 }
 </style>

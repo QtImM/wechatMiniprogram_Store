@@ -160,7 +160,7 @@ page {
 
 .banner-title {
 	font-size: 36rpx;
-	color: #fff;
+	color: #FEFEFC;
 	font-weight: 700;
 	letter-spacing: 4rpx;
 }
@@ -170,7 +170,7 @@ page {
 	display: flex;
 	align-items: center;
 	height: 84rpx;
-	background: #fff;
+	background: #FEFEFC;
 	padding: 0 48rpx;
 }
 
@@ -196,7 +196,7 @@ page {
 
 /* 筛选面板 */
 .filter-panel {
-	background: #fff;
+	background: #FEFEFC;
 	padding: 24rpx;
 	display: flex;
 	flex-wrap: wrap;
@@ -229,7 +229,7 @@ page {
 .goods-card {
 	float: left;
 	width: 350rpx;
-	background: #fff;
+	background: #FEFEFC;
 	border-radius: 16rpx;
 	overflow: hidden;
 	text-decoration: none;

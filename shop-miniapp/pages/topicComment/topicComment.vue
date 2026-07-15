@@ -93,7 +93,7 @@
 	}
 
 	.comment-item {
-		background: #fff;
+		background: #FEFEFC;
 		border-radius: 16rpx;
 		padding: 28rpx;
 		margin-bottom: 16rpx;

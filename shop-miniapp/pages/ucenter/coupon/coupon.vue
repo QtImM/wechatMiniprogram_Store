@@ -77,7 +77,7 @@ page {
 /* 优惠券卡片 */
 .coupon-card {
 	display: flex;
-	background: #fff;
+	background: #FEFEFC;
 	border-radius: 20rpx;
 	margin-bottom: 16rpx;
 	overflow: hidden;
@@ -105,7 +105,7 @@ page {
 
 .coupon-amount {
 	font-size: 44rpx;
-	color: #fff;
+	color: #FEFEFC;
 	font-weight: 700;
 }
 

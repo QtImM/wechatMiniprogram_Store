@@ -178,7 +178,7 @@ export default {
 
 		// 页面进入动画
 		uni.setNavigationBarColor &&
-			uni.setNavigationBarColor({ frontColor: '#ffffff', backgroundColor: 'transparent' });
+			uni.setNavigationBarColor({ frontColor: '#FEFEFC', backgroundColor: 'transparent' });
 	},
 	onBackPress() {
 		this.onCancel();
@@ -230,7 +230,7 @@ page {
 	display: flex;
 	align-items: center;
 	padding: 24rpx 40rpx 32rpx;
-	background: #fff;
+	background: #FEFEFC;
 	border-bottom: 1rpx solid #f0f0f0;
 }
 
@@ -247,7 +247,7 @@ page {
 
 .logo-text {
 	font-size: 36rpx;
-	color: #fff;
+	color: #FEFEFC;
 	font-weight: 700;
 }
 
@@ -278,7 +278,7 @@ page {
 
 /* 金额 */
 .amount-row {
-	background: #fff;
+	background: #FEFEFC;
 	padding: 48rpx 40rpx 40rpx;
 	text-align: center;
 	border-bottom: 1rpx solid #f0f0f0;
@@ -318,7 +318,7 @@ page {
 	align-items: center;
 	justify-content: space-between;
 	padding: 28rpx 40rpx;
-	background: #fff;
+	background: #FEFEFC;
 	margin-top: 16rpx;
 }
 
@@ -372,8 +372,8 @@ page {
 .check-dot {
 	width: 16rpx;
 	height: 28rpx;
-	border-right: 4rpx solid #fff;
-	border-bottom: 4rpx solid #fff;
+	border-right: 4rpx solid #FEFEFC;
+	border-bottom: 4rpx solid #FEFEFC;
 	transform: rotate(45deg) translate(-2rpx, -4rpx);
 }
 
@@ -407,7 +407,7 @@ page {
 	height: 88rpx;
 	line-height: 88rpx;
 	text-align: center;
-	background: #fff;
+	background: #FEFEFC;
 	border-radius: 44rpx;
 	font-size: 30rpx;
 	color: #666;
@@ -423,7 +423,7 @@ page {
 	background: #07C160;
 	border-radius: 44rpx;
 	font-size: 32rpx;
-	color: #fff;
+	color: #FEFEFC;
 	font-weight: 600;
 
 	&.paying {
@@ -451,7 +451,7 @@ page {
 }
 
 .pwd-panel {
-	background: #fff;
+	background: #FEFEFC;
 	border-radius: 24rpx 24rpx 0 0;
 	padding: 30rpx 40rpx 48rpx;
 	animation: keyboardSlide 0.25s ease-out;
@@ -502,7 +502,7 @@ page {
 	border-radius: 12rpx;
 	overflow: hidden;
 	height: 100rpx;
-	background: #fff;
+	background: #FEFEFC;
 }
 
 .pwd-dot-cell {
@@ -550,7 +550,7 @@ page {
 	font-size: 38rpx;
 	font-weight: 500;
 	color: #000;
-	background: #fff;
+	background: #FEFEFC;
 	border-right: 1rpx solid #e5e5e5;
 
 	&:last-child {
@@ -582,7 +582,7 @@ page {
 	left: 0;
 	right: 0;
 	bottom: 0;
-	background: #fff;
+	background: #FEFEFC;
 	z-index: 1100;
 	display: flex;
 	align-items: center;
@@ -614,8 +614,8 @@ page {
 .wechat-check-icon {
 	width: 36rpx;
 	height: 60rpx;
-	border-right: 6rpx solid #fff;
-	border-bottom: 6rpx solid #fff;
+	border-right: 6rpx solid #FEFEFC;
+	border-bottom: 6rpx solid #FEFEFC;
 	transform: rotate(40deg) translate(-4rpx, -8rpx);
 }
 

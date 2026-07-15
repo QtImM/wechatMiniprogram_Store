@@ -78,7 +78,7 @@
 		height: 80rpx;
 		line-height: 80rpx;
 		text-align: center;
-		background: #fff;
+		background: #FEFEFC;
 		border-radius: 12rpx;
 		font-size: 28rpx;
 		color: #666;
@@ -122,7 +122,7 @@
 		display: block;
 		font-size: 48rpx;
 		font-weight: bold;
-		color: #fff;
+		color: #FEFEFC;
 	}
 
 	.coupon-condition {
@@ -139,7 +139,7 @@
 	.coupon-name {
 		display: block;
 		font-size: 30rpx;
-		color: #fff;
+		color: #FEFEFC;
 		font-weight: 500;
 		margin-bottom: 8rpx;
 	}
@@ -155,7 +155,7 @@
 		top: 16rpx;
 		right: 16rpx;
 		font-size: 20rpx;
-		color: #fff;
+		color: #FEFEFC;
 		background: rgba(255,255,255,0.2);
 		padding: 4rpx 12rpx;
 		border-radius: 10rpx;

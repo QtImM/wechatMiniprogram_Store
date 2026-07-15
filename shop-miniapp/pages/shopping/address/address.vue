@@ -78,7 +78,7 @@
 	}
 
 	.address-card {
-		background: #fff;
+		background: #FEFEFC;
 		border-radius: 16rpx;
 		padding: 28rpx 30rpx;
 		margin-bottom: 20rpx;
@@ -156,7 +156,7 @@
 
 	.add-btn-text {
 		font-size: 30rpx;
-		color: #fff;
+		color: #FEFEFC;
 		font-weight: 500;
 	}
 </style>

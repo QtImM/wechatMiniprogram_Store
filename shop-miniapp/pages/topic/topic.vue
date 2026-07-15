@@ -93,7 +93,7 @@
 	.topic-card {
 		display: block;
 		width: 100%;
-		background: #fff;
+		background: #FEFEFC;
 		border-radius: 20rpx;
 		overflow: hidden;
 		margin-bottom: 24rpx;
@@ -150,7 +150,7 @@
 		left: 0;
 		width: 100%;
 		height: 100rpx;
-		background: #fff;
+		background: #FEFEFC;
 		display: flex;
 		align-items: center;
 		justify-content: center;
@@ -160,7 +160,7 @@
 	.page-btn {
 		padding: 14rpx 40rpx;
 		font-size: 26rpx;
-		color: #fff;
+		color: #FEFEFC;
 		background: $green;
 		border-radius: 30rpx;
 

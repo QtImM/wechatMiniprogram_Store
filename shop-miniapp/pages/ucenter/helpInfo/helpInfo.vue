@@ -49,7 +49,7 @@
 	}
 
 	.help-card {
-		background: #fff;
+		background: #FEFEFC;
 		border-radius: 16rpx;
 		padding: 28rpx 30rpx;
 		margin-bottom: 16rpx;
