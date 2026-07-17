@@ -3,7 +3,7 @@
 		<!-- 搜索栏 -->
 		<view class="search-bar">
 			<navigator url="/pages/search/search" class="search-box">
-				<text class="search-icon">🔍</text>
+				<image class="search-icon" src="/static/images/icon-search.png" mode="aspectFit"></image>
 				<text class="search-text">搜索商品, 共{{goodsCount}}款好物</text>
 			</navigator>
 		</view>
@@ -29,19 +29,26 @@
 			 @scrolltolower="loadMore">
 				<!-- 当前分类名 -->
 				<view class="cate-name-bar">
-					<text class="cate-name">{{currentName}}</text>
+					<view class="cate-name-wrap">
+						<text class="cate-name">{{currentName}}</text>
+						<text class="cate-desc">按品类精选的日常养生好物</text>
+					</view>
 					<text class="cate-count">{{goodsList.length}}件商品</text>
 				</view>
 
-				<!-- 商品网格 -->
-				<view class="goods-grid">
+				<!-- 商品列表 -->
+				<view class="goods-list">
 					<view class="goods-card" v-for="(item, index) in goodsList" :key="index"
 					 @tap="goToGoods(item.id)">
 						<image class="goods-img" :src="item.listPicUrl" mode="aspectFill"></image>
 						<view class="goods-info">
 							<text class="goods-name">{{item.name||''}}</text>
+							<text class="goods-brief">甄选原料，适合日常调养与送礼分享</text>
 							<view class="goods-bottom">
-								<text class="goods-price">¥{{item.retailPrice}}</text>
+								<view class="goods-price-wrap">
+									<text class="goods-price">¥{{item.retailPrice}}</text>
+									<text class="goods-price-note">精选价</text>
+								</view>
 								<view class="goods-cart-btn" @tap.stop="quickAddToCart(item, $event)">
 									<text class="goods-cart-btn-icon">+</text>
 								</view>
@@ -236,29 +243,33 @@ page {
 
 /* 搜索栏 */
 .search-bar {
-	padding: 12rpx 24rpx;
-	background: #FEFEFC;
+	padding: 18rpx 24rpx 16rpx;
+	background: linear-gradient(180deg, #FEFEFC 0%, #FBFBF7 100%);
 	flex-shrink: 0;
+	box-shadow: 0 8rpx 18rpx rgba(100, 118, 102, 0.04);
 }
 
 .search-box {
 	display: flex;
 	align-items: center;
-	height: 64rpx;
-	background: $green-bg;
-	border-radius: 32rpx;
+	height: 72rpx;
+	background: rgba(248, 250, 246, 0.96);
+	border-radius: 36rpx;
 	padding: 0 24rpx;
 	text-decoration: none;
+	border: 1rpx solid rgba(111, 142, 117, 0.10);
 }
 
 .search-icon {
-	font-size: 26rpx;
+	width: 28rpx;
+	height: 28rpx;
 	margin-right: 10rpx;
+	opacity: 0.78;
 }
 
 .search-text {
 	font-size: 24rpx;
-	color: $text-hint;
+	color: #8A958A;
 }
 
 /* 分类主体 */
@@ -270,9 +281,10 @@ page {
 
 /* 左侧导航 */
 .side-nav {
-	width: 176rpx;
-	background: $green-bg;
+	width: 164rpx;
+	background: linear-gradient(180deg, #F7F8F3 0%, #F2F4ED 100%);
 	flex-shrink: 0;
+	border-right: 1rpx solid rgba(111, 142, 117, 0.06);
 }
 
 .nav-item {
@@ -280,13 +292,15 @@ page {
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	height: 104rpx;
+	height: 96rpx;
 	color: $text-secondary;
+	transition: all 0.15s ease;
 
 	&.active {
-		background: #F5F5EA;
+		background: linear-gradient(180deg, #FEFEFC 0%, #F9FBF7 100%);
 		color: $green;
 		font-weight: 700;
+		box-shadow: inset 0 1rpx 0 rgba(255, 255, 255, 0.8);
 	}
 }
 
@@ -302,8 +316,8 @@ page {
 }
 
 .nav-text {
-	font-size: 26rpx;
-	max-width: 136rpx;
+	font-size: 25rpx;
+	max-width: 128rpx;
 	text-align: center;
 	overflow: hidden;
 	text-overflow: ellipsis;
@@ -313,86 +327,121 @@ page {
 /* 右侧内容 */
 .main-content {
 	flex: 1;
-	background: $green-bg;
+	background: linear-gradient(180deg, #F8FAF6 0%, #FDFDF8 100%);
 }
 
 /* 分类名称条 */
 .cate-name-bar {
 	display: flex;
-	align-items: center;
+	align-items: flex-start;
 	justify-content: space-between;
-	padding: 20rpx 20rpx 8rpx;
+	padding: 26rpx 24rpx 18rpx;
+}
+
+.cate-name-wrap {
+	display: flex;
+	flex-direction: column;
 }
 
 .cate-name {
-	font-size: 28rpx;
+	font-size: 34rpx;
 	color: $text-primary;
 	font-weight: 700;
+}
+
+.cate-desc {
+	font-size: 20rpx;
+	color: #95A095;
+	margin-top: 8rpx;
 }
 
 .cate-count {
 	font-size: 22rpx;
 	color: $text-hint;
+	padding-top: 8rpx;
 }
 
-/* 商品网格 - 关键: 宽度精确计算 */
-.goods-grid {
-	padding: 8rpx 10rpx;
-	overflow: hidden;
+/* 商品列表 */
+.goods-list {
+	padding: 0 18rpx 18rpx;
 }
 
 .goods-card {
-	float: left;
-	width: 270rpx;
-	background: #FEFEFC;
-	border-radius: 12rpx;
+	display: flex;
+	align-items: stretch;
+	width: 100%;
+	background: linear-gradient(180deg, #FEFEFC 0%, #FCFCF8 100%);
+	border-radius: 22rpx;
 	overflow: hidden;
-	margin-bottom: 12rpx;
+	margin-bottom: 16rpx;
 	text-decoration: none;
-	box-shadow: 0 2rpx 8rpx rgba(0,0,0,0.04);
-
-	&:nth-child(odd) {
-		margin-right: 10rpx;
-	}
+	box-shadow: 0 12rpx 24rpx rgba(88, 109, 93, 0.07);
+	border: 1rpx solid rgba(111, 142, 117, 0.06);
 }
 
 .goods-img {
-	width: 270rpx;
-	height: 270rpx;
+	width: 188rpx;
+	height: 188rpx;
 	display: block;
+	flex-shrink: 0;
 }
 
 .goods-info {
-	padding: 12rpx 14rpx 16rpx;
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
+	padding: 18rpx 18rpx 18rpx 20rpx;
 }
 
 .goods-name {
-	font-size: 24rpx;
+	font-size: 28rpx;
 	color: $text-primary;
 	display: -webkit-box;
 	-webkit-box-orient: vertical;
 	-webkit-line-clamp: 2;
 	overflow: hidden;
-	line-height: 1.4;
-	height: 68rpx;
+	line-height: 1.45;
+}
+
+.goods-brief {
+	font-size: 21rpx;
+	color: #95A095;
+	line-height: 1.5;
+	margin-top: 10rpx;
+	display: -webkit-box;
+	-webkit-box-orient: vertical;
+	-webkit-line-clamp: 2;
+	overflow: hidden;
 }
 
 .goods-bottom {
-	margin-top: 8rpx;
+	margin-top: 16rpx;
 	display: flex;
 	justify-content: space-between;
-	align-items: center;
+	align-items: flex-end;
+}
+
+.goods-price-wrap {
+	display: flex;
+	flex-direction: column;
 }
 
 .goods-price {
-	font-size: 28rpx;
-	color: $red;
+	font-size: 36rpx;
+	color: #32453C;
 	font-weight: 700;
+}
+
+.goods-price-note {
+	font-size: 20rpx;
+	color: #9AA49A;
+	margin-top: 6rpx;
 }
 
 /* 加载提示 */
 .load-tip {
-	padding: 20rpx 0 40rpx;
+	padding: 24rpx 0 44rpx;
 	text-align: center;
 }
 
@@ -402,7 +451,7 @@ page {
 }
 
 .empty-tip {
-	padding: 80rpx 0;
+	padding: 100rpx 30rpx;
 	text-align: center;
 	font-size: 26rpx;
 	color: $text-hint;
@@ -410,14 +459,15 @@ page {
 
 /* 一键加购绿色小圆钮 */
 .goods-cart-btn {
-	width: 44rpx;
-	height: 44rpx;
-	background: $green;
-	border-radius: 50%;
+	width: 58rpx;
+	height: 58rpx;
+	background: linear-gradient(135deg, #D7E3D8 0%, #C7D7C9 100%);
+	border-radius: 18rpx;
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	box-shadow: 0 4rpx 10rpx rgba(77, 112, 77, 0.2);
+	box-shadow: 0 8rpx 16rpx rgba(111, 142, 117, 0.12);
+	border: 1rpx solid rgba(111, 142, 117, 0.12);
 	transition: transform 0.1s ease;
 
 	&:active {
@@ -426,8 +476,8 @@ page {
 }
 
 .goods-cart-btn-icon {
-	color: #FEFEFC;
-	font-size: 26rpx;
+	color: #5F7A64;
+	font-size: 28rpx;
 	font-weight: 700;
 	line-height: 1;
 }

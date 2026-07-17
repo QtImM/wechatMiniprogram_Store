@@ -3,15 +3,18 @@
 		<!-- 顶部用户区（绿色渐变背景） -->
 		<view class="header">
 			<view class="user-section" @tap="onUserTap">
-				<image class="avatar" :src="avatarUrl" mode="aspectFill"></image>
-				<view class="user-info">
-					<text class="nickname">{{ nicknameText }}</text>
-					<text class="user-desc" v-if="!isLogin">点击登录，享受更多权益</text>
-					<text class="user-desc" v-else>{{ userInfo.mobile || '欢迎回来' }}</text>
+				<view class="user-main">
+					<image class="avatar" :src="avatarUrl" mode="aspectFill"></image>
+					<view class="user-info">
+						<text class="nickname">{{ nicknameText }}</text>
+						<text class="user-desc" v-if="!isLogin">点击登录，享受更多权益</text>
+						<text class="user-desc" v-else>{{ userInfo.mobile || '欢迎回来' }}</text>
+					</view>
 				</view>
 				<view class="vip-card" @tap.stop="goMember">
+					<text class="vip-badge">GOLD</text>
 					<text class="vip-title">会员中心</text>
-					<text class="vip-sub">专享折扣/优先发货</text>
+					<text class="vip-sub">专享折扣 / 优先发货</text>
 				</view>
 			</view>
 		</view>
@@ -31,8 +34,8 @@
 				<text class="stat-label">足迹</text>
 			</navigator>
 			<view class="stat-item" @tap="goMember">
-				<text class="stat-num stat-vip">VIP</text>
-				<text class="stat-label">会员</text>
+				<text class="stat-num stat-vip">黄金卡</text>
+				<text class="stat-label stat-label-vip">立即开通</text>
 			</view>
 		</view>
 
@@ -47,22 +50,27 @@
 			</view>
 			<view class="order-tabs">
 				<navigator :url="'/pages/ucenter/order/order?status=1'" class="order-tab">
+					<view class="order-status-dot hot"></view>
 					<image class="order-icon-img" src="/static/images/service/order_pay.svg"></image>
 					<text class="order-label">待付款</text>
 				</navigator>
 				<navigator :url="'/pages/ucenter/order/order?status=2'" class="order-tab">
+					<view class="order-status-dot"></view>
 					<image class="order-icon-img" src="/static/images/service/order_shipping.svg"></image>
 					<text class="order-label">待发货</text>
 				</navigator>
 				<navigator :url="'/pages/ucenter/order/order?status=3'" class="order-tab">
+					<view class="order-status-dot"></view>
 					<image class="order-icon-img" src="/static/images/service/order_delivery.svg"></image>
 					<text class="order-label">待收货</text>
 				</navigator>
 				<navigator :url="'/pages/ucenter/order/order?status=4'" class="order-tab">
+					<view class="order-status-dot"></view>
 					<image class="order-icon-img" src="/static/images/service/order_rate.svg"></image>
 					<text class="order-label">待评价</text>
 				</navigator>
 				<navigator :url="'/pages/ucenter/order/order?status=5'" class="order-tab">
+					<view class="order-status-dot subtle"></view>
 					<image class="order-icon-img" src="/static/images/service/order_refund.svg"></image>
 					<text class="order-label">退款/售后</text>
 				</navigator>
@@ -74,61 +82,79 @@
 			<view class="section-header">
 				<text class="section-title">我的服务</text>
 			</view>
-			<view class="service-grid">
-				<navigator url="/pages/ucenter/address/address" class="service-item">
-					<view class="service-icon" style="background-color: #E8ECE8;">
-						<image class="service-icon-img" src="/static/images/service/service_address.svg"></image>
-					</view>
-					<text class="service-label">地址管理</text>
-				</navigator>
-				<view class="service-item" @tap="goMember">
-					<view class="service-icon" style="background-color: #F5F5E0;">
-						<image class="service-icon-img" src="/static/images/service/service_vip.svg"></image>
-					</view>
-					<text class="service-label">会员中心</text>
+			<view class="service-group">
+				<view class="service-group-header">
+					<text class="service-group-title">高频服务</text>
+					<text class="service-group-desc">常用入口一键直达</text>
 				</view>
-				<view class="service-item" @tap="goDistribution">
-					<view class="service-icon" style="background-color: #E8ECE8;">
-						<image class="service-icon-img" src="/static/images/service/service_distribution.svg"></image>
+				<view class="service-grid primary">
+					<navigator url="/pages/ucenter/address/address" class="service-item">
+						<view class="service-icon" style="background: linear-gradient(135deg, #E3EFE4 0%, #F3F8F3 100%);">
+							<image class="service-icon-img" src="/static/images/service/service_address.svg"></image>
+						</view>
+						<text class="service-label">地址管理</text>
+					</navigator>
+					<navigator url="/pages/ucenter/coupon/coupon" class="service-item">
+						<view class="service-icon" style="background: linear-gradient(135deg, #F6ECD1 0%, #FBF5E7 100%);">
+							<image class="service-icon-img" src="/static/images/service/service_coupon.svg"></image>
+						</view>
+						<text class="service-label">优惠券</text>
+					</navigator>
+					<button class="service-item service-btn" open-type="contact">
+						<view class="service-icon" style="background: linear-gradient(135deg, #E4ECE4 0%, #F2F7F2 100%);">
+							<image class="service-icon-img" src="/static/images/service/service_kefu.svg"></image>
+						</view>
+						<text class="service-label">在线客服</text>
+					</button>
+					<view class="service-item" @tap="goMember">
+						<view class="service-icon" style="background: linear-gradient(135deg, #F2E6C1 0%, #F9F2DE 100%);">
+							<image class="service-icon-img" src="/static/images/service/service_vip.svg"></image>
+						</view>
+						<text class="service-label">会员中心</text>
 					</view>
-					<text class="service-label">分销中心</text>
 				</view>
-				<button class="service-item service-btn" open-type="contact">
-					<view class="service-icon" style="background-color: #E8ECE8;">
-						<image class="service-icon-img" src="/static/images/service/service_kefu.svg"></image>
-					</view>
-					<text class="service-label">在线客服</text>
-				</button>
-				<navigator url="/pages/ucenter/coupon/coupon" class="service-item">
-					<view class="service-icon" style="background-color: #F5F5E0;">
-						<image class="service-icon-img" src="/static/images/service/service_coupon.svg"></image>
-					</view>
-					<text class="service-label">优惠券</text>
-				</navigator>
-				<view class="service-item" @tap="goWallet">
-					<view class="service-icon" style="background-color: #FDFDF8;">
-						<image class="service-icon-img" src="/static/images/service/service_wallet.svg"></image>
-					</view>
-					<text class="service-label">余额钱包</text>
+			</view>
+			<view class="service-group service-group-secondary">
+				<view class="service-group-header">
+					<text class="service-group-title">更多工具</text>
+					<text class="service-group-desc">账户、反馈与帮助服务</text>
 				</view>
-				<navigator url="/pages/ucenter/feedback/feedback" class="service-item">
-					<view class="service-icon" style="background-color: #E8ECE8;">
-						<image class="service-icon-img" src="/static/images/service/service_feedback.svg"></image>
+				<view class="service-grid secondary">
+					<view class="service-item" @tap="goDistribution">
+						<view class="service-icon" style="background: linear-gradient(135deg, #E7EEE8 0%, #F6F8F6 100%);">
+							<image class="service-icon-img" src="/static/images/service/service_distribution.svg"></image>
+						</view>
+						<text class="service-label">分销中心</text>
 					</view>
-					<text class="service-label">意见反馈</text>
-				</navigator>
-				<navigator url="/pages/ucenter/help/help" class="service-item">
-					<view class="service-icon" style="background-color: #FDFDF8;">
-						<image class="service-icon-img" src="/static/images/service/service_help.svg"></image>
+					<view class="service-item" @tap="goWallet">
+						<view class="service-icon" style="background: linear-gradient(135deg, #EEF2EC 0%, #FAFBF8 100%);">
+							<image class="service-icon-img" src="/static/images/service/service_wallet.svg"></image>
+						</view>
+						<text class="service-label">余额钱包</text>
 					</view>
-					<text class="service-label">帮助中心</text>
-				</navigator>
+					<navigator url="/pages/ucenter/feedback/feedback" class="service-item">
+						<view class="service-icon" style="background: linear-gradient(135deg, #E6EEE7 0%, #F4F8F4 100%);">
+							<image class="service-icon-img" src="/static/images/service/service_feedback.svg"></image>
+						</view>
+						<text class="service-label">意见反馈</text>
+					</navigator>
+					<navigator url="/pages/ucenter/help/help" class="service-item">
+						<view class="service-icon" style="background: linear-gradient(135deg, #F2F3EC 0%, #FBFBF8 100%);">
+							<image class="service-icon-img" src="/static/images/service/service_help.svg"></image>
+						</view>
+						<text class="service-label">帮助中心</text>
+					</navigator>
+				</view>
 			</view>
 		</view>
 
-		<!-- 底部 -->
-		<view class="footer">
-			<text class="footer-text">药食同源 · 让健康触手可及</text>
+		<!-- 品牌收尾区 -->
+		<view class="brand-footer">
+			<view class="brand-footer-card">
+				<view class="brand-footer-line"></view>
+				<text class="brand-footer-title">药食同源</text>
+				<text class="brand-footer-desc">甄选原料，安心到家，让健康触手可及</text>
+			</view>
 		</view>
 
 		<!-- 退出登录 -->
@@ -229,27 +255,52 @@ page {
 
 .page {
 	min-height: 100vh;
-	padding-bottom: env(safe-area-inset-bottom);
+	padding-bottom: calc(40rpx + env(safe-area-inset-bottom));
 }
 
 /* 顶部区域 */
 .header {
-	background: linear-gradient(160deg, #879F8C 0%, #7A9482 60%, #6E8E76 100%);
-	padding: 80rpx 30rpx 60rpx;
+	background:
+		radial-gradient(circle at 12% 18%, rgba(255, 255, 255, 0.18) 0, rgba(255, 255, 255, 0.08) 18%, transparent 42%),
+		linear-gradient(145deg, #97AC96 0%, #879F8C 58%, #78907C 100%);
+	padding: 74rpx 30rpx 72rpx;
 	border-radius: 0 0 40rpx 40rpx;
+	position: relative;
+	overflow: hidden;
+}
+
+.header::after {
+	content: '';
+	position: absolute;
+	right: -30rpx;
+	top: 18rpx;
+	width: 240rpx;
+	height: 240rpx;
+	background: radial-gradient(circle, rgba(244, 232, 190, 0.24) 0%, rgba(244, 232, 190, 0.08) 48%, rgba(244, 232, 190, 0) 74%);
 }
 
 .user-section {
 	display: flex;
+	align-items: stretch;
+	position: relative;
+	z-index: 1;
+	gap: 20rpx;
+}
+
+.user-main {
+	flex: 1;
+	display: flex;
 	align-items: center;
+	padding: 18rpx 0;
 }
 
 .avatar {
-	width: 120rpx;
-	height: 120rpx;
+	width: 112rpx;
+	height: 112rpx;
 	border-radius: 50%;
-	border: 4rpx solid rgba(255, 255, 255, 0.4);
+	border: 4rpx solid rgba(255, 255, 255, 0.36);
 	flex-shrink: 0;
+	box-shadow: 0 10rpx 24rpx rgba(77, 95, 82, 0.14);
 }
 
 .user-info {
@@ -259,7 +310,7 @@ page {
 }
 
 .nickname {
-	font-size: 34rpx;
+	font-size: 38rpx;
 	font-weight: 700;
 	color: #FEFEFC;
 	display: block;
@@ -267,43 +318,53 @@ page {
 
 .user-desc {
 	font-size: 24rpx;
-	color: rgba(255, 255, 255, 0.75);
-	margin-top: 6rpx;
+	color: rgba(255, 255, 255, 0.78);
+	margin-top: 8rpx;
 	display: block;
 }
 
 .vip-card {
+	width: 178rpx;
 	flex-shrink: 0;
-	background: linear-gradient(135deg, #8B7355, $gold);
-	border-radius: 16rpx;
-	padding: 16rpx 20rpx;
+	background: linear-gradient(135deg, rgba(151, 128, 90, 0.84) 0%, rgba(239, 227, 184, 0.86) 100%);
+	border-radius: 24rpx 24rpx 24rpx 8rpx;
+	padding: 16rpx 18rpx;
 	display: flex;
 	flex-direction: column;
-	align-items: center;
+	justify-content: center;
+	box-shadow: 0 10rpx 18rpx rgba(104, 95, 60, 0.09);
+}
+
+.vip-badge {
+	font-size: 18rpx;
+	color: rgba(255, 255, 255, 0.76);
+	letter-spacing: 2rpx;
 }
 
 .vip-title {
-	font-size: 22rpx;
+	font-size: 26rpx;
 	color: #FEFEFC;
 	font-weight: 700;
+	margin-top: 6rpx;
 }
 
 .vip-sub {
 	font-size: 18rpx;
-	color: rgba(255, 255, 255, 0.8);
+	color: rgba(255, 255, 255, 0.78);
 	margin-top: 4rpx;
+	line-height: 1.45;
 }
 
 /* 数据统计行 */
 .stats-row {
 	display: flex;
-	background: #FEFEFC;
-	margin: -30rpx 24rpx 0;
-	border-radius: 20rpx;
-	padding: 28rpx 0;
+	background: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(252, 252, 249, 0.98) 100%);
+	margin: -42rpx 24rpx 0;
+	border-radius: 24rpx;
+	padding: 30rpx 0;
 	position: relative;
 	z-index: 10;
-	box-shadow: 0 8rpx 24rpx rgba(77, 112, 77, 0.08);
+	box-shadow: 0 12rpx 28rpx rgba(77, 112, 77, 0.08);
 }
 
 .stat-item {
@@ -321,7 +382,12 @@ page {
 }
 
 .stat-vip {
-	color: $gold;
+	color: #C9AE63;
+	font-size: 30rpx;
+}
+
+.stat-label-vip {
+	color: #B59955;
 }
 
 .stat-label {
@@ -333,9 +399,10 @@ page {
 /* 区块卡片 */
 .section-card {
 	background: #FEFEFC;
-	margin: 20rpx 24rpx 0;
-	border-radius: 20rpx;
-	padding: 28rpx 28rpx 8rpx;
+	margin: 22rpx 24rpx 0;
+	border-radius: 24rpx;
+	padding: 28rpx 28rpx 18rpx;
+	box-shadow: 0 10rpx 24rpx rgba(77, 112, 77, 0.05);
 }
 
 .section-header {
@@ -346,7 +413,7 @@ page {
 }
 
 .section-title {
-	font-size: 30rpx;
+	font-size: 34rpx;
 	font-weight: 700;
 	color: $text-primary;
 }
@@ -367,7 +434,7 @@ page {
 /* 订单Tab */
 .order-tabs {
 	display: flex;
-	padding-bottom: 20rpx;
+	padding-bottom: 16rpx;
 }
 
 .order-tab {
@@ -376,12 +443,33 @@ page {
 	flex-direction: column;
 	align-items: center;
 	text-decoration: none;
+	padding: 8rpx 0;
+	position: relative;
 }
 
 .order-icon-img {
-	width: 48rpx;
-	height: 48rpx;
-	margin-bottom: 10rpx;
+	width: 52rpx;
+	height: 52rpx;
+	margin-bottom: 12rpx;
+}
+
+.order-status-dot {
+	position: absolute;
+	top: 2rpx;
+	right: 34rpx;
+	width: 12rpx;
+	height: 12rpx;
+	border-radius: 50%;
+	background: rgba(111, 142, 117, 0.24);
+}
+
+.order-status-dot.hot {
+	background: #D29A68;
+	box-shadow: 0 0 0 6rpx rgba(210, 154, 104, 0.12);
+}
+
+.order-status-dot.subtle {
+	background: rgba(111, 142, 117, 0.16);
 }
 
 .order-label {
@@ -390,9 +478,47 @@ page {
 }
 
 /* 服务网格 */
+.service-group {
+	padding-bottom: 12rpx;
+}
+
+.service-group-secondary {
+	margin-top: 8rpx;
+	padding-top: 28rpx;
+	border-top: 1rpx solid rgba(111, 142, 117, 0.08);
+}
+
+.service-group-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 12rpx;
+}
+
+.service-group-title {
+	font-size: 24rpx;
+	font-weight: 700;
+	color: #506553;
+}
+
+.service-group-desc {
+	font-size: 20rpx;
+	color: $text-hint;
+}
+
 .service-grid {
 	display: flex;
 	flex-wrap: wrap;
+}
+
+.service-grid.primary .service-item {
+	padding-top: 24rpx;
+	padding-bottom: 20rpx;
+}
+
+.service-grid.secondary .service-item {
+	padding-top: 20rpx;
+	padding-bottom: 18rpx;
 }
 
 .service-item {
@@ -419,13 +545,14 @@ page {
 }
 
 .service-icon {
-	width: 80rpx;
-	height: 80rpx;
-	border-radius: 50%;
+	width: 88rpx;
+	height: 88rpx;
+	border-radius: 26rpx;
 	display: flex;
 	align-items: center;
 	justify-content: center;
 	margin-bottom: 12rpx;
+	box-shadow: inset 0 1rpx 0 rgba(255, 255, 255, 0.78), 0 8rpx 18rpx rgba(100, 118, 102, 0.08);
 }
 
 .service-icon-img {
@@ -436,29 +563,54 @@ page {
 .service-label {
 	font-size: 22rpx;
 	color: $text-primary;
+	font-weight: 500;
 }
 
-/* 底部 */
-.footer {
-	padding: 48rpx 0 20rpx;
+/* 品牌收尾 */
+.brand-footer {
+	padding: 28rpx 24rpx 0;
+}
+
+.brand-footer-card {
+	padding: 18rpx 0 8rpx;
 	text-align: center;
 }
 
-.footer-text {
+.brand-footer-line {
+	width: 72rpx;
+	height: 4rpx;
+	border-radius: 999rpx;
+	margin: 0 auto 18rpx;
+	background: linear-gradient(90deg, rgba(111, 142, 117, 0) 0%, rgba(111, 142, 117, 0.45) 50%, rgba(111, 142, 117, 0) 100%);
+}
+
+.brand-footer-title {
+	font-size: 24rpx;
+	font-weight: 600;
+	color: #8A958A;
+	display: block;
+	letter-spacing: 2rpx;
+}
+
+.brand-footer-desc {
 	font-size: 22rpx;
-	color: $text-hint;
+	color: #A0AAA0;
+	display: block;
+	margin-top: 10rpx;
+	line-height: 1.6;
 }
 
 /* 退出登录 */
 .logout-btn {
-	margin: 20rpx 24rpx 40rpx;
+	margin: 24rpx 24rpx 0;
 	height: 88rpx;
 	display: flex;
 	align-items: center;
 	justify-content: center;
 	background: #FEFEFC;
-	border-radius: 20rpx;
+	border-radius: 24rpx;
 	font-size: 28rpx;
 	color: $red;
+	box-shadow: 0 10rpx 24rpx rgba(77, 112, 77, 0.05);
 }
 </style>

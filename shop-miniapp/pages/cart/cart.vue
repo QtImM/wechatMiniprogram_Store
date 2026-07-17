@@ -24,7 +24,7 @@
 				<text class="shipping-text">即可享受包邮~</text>
 			</view>
 			<view class="shipping-info" v-else>
-				<text class="shipping-done">🎉 已满足包邮条件</text>
+				<text class="shipping-done">已满足包邮条件</text>
 			</view>
 			<view class="shipping-progress">
 				<view class="shipping-progress-fill" :style="{width: shippingPercent + '%'}"></view>
@@ -33,7 +33,9 @@
 
 		<!-- 空购物车 -->
 		<view class="empty-cart" v-if="cartGoods.length <= 0">
-			<view class="empty-icon">🛒</view>
+			<view class="empty-icon">
+				<image class="empty-icon-img" src="/static/images/ic_menu_shoping_nor.png" mode="aspectFit"></image>
+			</view>
 			<text class="empty-title">购物车是空的</text>
 			<text class="empty-desc">去逛逛，发现更多好物吧</text>
 			<view class="empty-btn" @tap="toIndexPage">去逛逛</view>
@@ -310,8 +312,8 @@ page {
 .guarantee-bar {
 	display: flex;
 	justify-content: center;
-	padding: 18rpx 24rpx;
-	background: #FEFEFC;
+	padding: 20rpx 24rpx 14rpx;
+	background: linear-gradient(180deg, #FEFEFC 0%, #FBFBF7 100%);
 }
 
 .guarantee-item {
@@ -332,10 +334,11 @@ page {
 /* 包邮进度条 */
 .shipping-bar {
 	margin: 16rpx 24rpx 0;
-	background: #FEFEFC;
-	border-radius: 14rpx;
-	padding: 20rpx 24rpx;
-	box-shadow: 0 2rpx 8rpx rgba(77,112,77,0.05);
+	background: linear-gradient(180deg, #FEFEFC 0%, #FAFCF9 100%);
+	border-radius: 18rpx;
+	padding: 22rpx 24rpx;
+	box-shadow: 0 10rpx 24rpx rgba(77,112,77,0.06);
+	border: 1rpx solid rgba(111, 142, 117, 0.08);
 }
 
 .shipping-info {
@@ -357,20 +360,20 @@ page {
 .shipping-done {
 	font-size: 24rpx;
 	color: $green;
-	font-weight: 500;
+	font-weight: 600;
 }
 
 .shipping-progress {
-	height: 8rpx;
-	background: #eee;
-	border-radius: 4rpx;
+	height: 10rpx;
+	background: rgba(221, 227, 219, 0.9);
+	border-radius: 999rpx;
 	overflow: hidden;
 }
 
 .shipping-progress-fill {
 	height: 100%;
-	background: linear-gradient(90deg, $green-light, $green);
-	border-radius: 4rpx;
+	background: linear-gradient(90deg, #B9CDBA 0%, $green 100%);
+	border-radius: 999rpx;
 	transition: width 0.3s;
 }
 
@@ -379,12 +382,24 @@ page {
 	display: flex;
 	flex-direction: column;
 	align-items: center;
-	padding-top: 240rpx;
+	padding-top: 220rpx;
 }
 
 .empty-icon {
-	font-size: 120rpx;
-	opacity: 0.6;
+	width: 164rpx;
+	height: 164rpx;
+	border-radius: 50%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: linear-gradient(180deg, #F4F7F1 0%, #EDF2EB 100%);
+	box-shadow: inset 0 1rpx 0 rgba(255,255,255,0.8);
+}
+
+.empty-icon-img {
+	width: 78rpx;
+	height: 78rpx;
+	opacity: 0.7;
 }
 
 .empty-title {
@@ -406,11 +421,12 @@ page {
 	height: 80rpx;
 	line-height: 80rpx;
 	text-align: center;
-	background: $green;
+	background: linear-gradient(135deg, $green 0%, $green-dark 100%);
 	color: #FEFEFC !important;
 	border-radius: 40rpx;
 	font-size: 28rpx;
 	font-weight: 600;
+	box-shadow: 0 10rpx 24rpx rgba(77, 112, 77, 0.18);
 }
 
 /* 购物车列表 */
@@ -421,11 +437,11 @@ page {
 .cart-item {
 	display: flex;
 	align-items: center;
-	background: #FEFEFC;
-	border-radius: 20rpx;
+	background: linear-gradient(180deg, #FEFEFC 0%, #FBFBF8 100%);
+	border-radius: 22rpx;
 	padding: 24rpx;
 	margin-bottom: 16rpx;
-	box-shadow: 0 2rpx 12rpx rgba(77, 112, 77, 0.05);
+	box-shadow: 0 12rpx 24rpx rgba(77, 112, 77, 0.06);
 }
 
 /* 选择框 */
@@ -433,20 +449,20 @@ page {
 	width: 44rpx;
 	height: 44rpx;
 	border-radius: 50%;
-	border: 3rpx solid #ddd;
+	border: 3rpx solid rgba(155, 169, 156, 0.7);
 	display: flex;
 	align-items: center;
 	justify-content: center;
 	flex-shrink: 0;
 
 	&.checked {
-		background: $green;
-		border-color: $green;
+		background: linear-gradient(135deg, #D7E3D8 0%, #C8D7C9 100%);
+		border-color: rgba(111, 142, 117, 0.32);
 	}
 }
 
 .check-icon {
-	color: #FEFEFC;
+	color: #5E7963;
 	font-size: 24rpx;
 	font-weight: 700;
 }
@@ -486,10 +502,10 @@ page {
 
 .item-spec {
 	font-size: 22rpx;
-	color: $text-hint;
-	background: $green-bg;
-	padding: 4rpx 12rpx;
-	border-radius: 6rpx;
+	color: #839083;
+	background: rgba(232, 236, 232, 0.8);
+	padding: 6rpx 14rpx;
+	border-radius: 999rpx;
 	margin-top: 8rpx;
 	align-self: flex-start;
 }
@@ -513,7 +529,7 @@ page {
 	align-items: center;
 	height: 52rpx;
 	border-radius: 26rpx;
-	background: $green-bg;
+	background: linear-gradient(180deg, #F4F7F1 0%, #EEF2EB 100%);
 	overflow: hidden;
 }
 
@@ -532,7 +548,7 @@ page {
 	}
 
 	&.plus {
-		color: $green;
+		color: #68846D;
 		font-weight: 700;
 	}
 }
@@ -547,8 +563,8 @@ page {
 
 /* 凑单助手 */
 .addon-section {
-	padding: 24rpx 0 0;
-	margin-top: 8rpx;
+	padding: 26rpx 0 0;
+	margin-top: 12rpx;
 }
 
 .addon-header {
@@ -560,7 +576,7 @@ page {
 
 .addon-title {
 	font-size: 26rpx;
-	color: $green;
+	color: #4C6651;
 	font-weight: 600;
 }
 
@@ -583,10 +599,10 @@ page {
 	flex-direction: column;
 	width: 200rpx;
 	margin-right: 16rpx;
-	background: #FEFEFC;
-	border-radius: 14rpx;
+	background: linear-gradient(180deg, #FEFEFC 0%, #FBFBF8 100%);
+	border-radius: 18rpx;
 	overflow: hidden;
-	box-shadow: 0 2rpx 8rpx rgba(77,112,77,0.06);
+	box-shadow: 0 10rpx 22rpx rgba(77,112,77,0.06);
 	text-decoration: none;
 	flex-shrink: 0;
 }
@@ -619,7 +635,9 @@ page {
 	left: 0;
 	right: 0;
 	height: 110rpx;
-	background: #FEFEFC;
+	background: rgba(254, 254, 252, 0.92);
+	backdrop-filter: blur(18rpx);
+	-webkit-backdrop-filter: blur(18rpx);
 	display: flex;
 	align-items: center;
 	padding: 0 24rpx;
@@ -676,9 +694,10 @@ page {
 	justify-content: center;
 	font-size: 26rpx;
 	color: $text-secondary;
-	border: 2rpx solid #ddd;
+	border: 2rpx solid rgba(155, 169, 156, 0.48);
 	border-radius: 34rpx;
 	margin-right: 12rpx;
+	background: rgba(255, 255, 255, 0.72);
 }
 
 .delete-btn {
@@ -704,13 +723,14 @@ page {
 	align-items: center;
 	justify-content: center;
 	font-size: 28rpx;
-	color: #FEFEFC !important;
-	background: linear-gradient(135deg, $green, $green-dark);
+	color: #4F6854 !important;
+	background: linear-gradient(135deg, #D9E6DA 0%, #C9D8CB 100%);
 	border-radius: 34rpx;
 	font-weight: 600;
+	border: 1rpx solid rgba(111, 142, 117, 0.12);
 
 	text {
-		color: #FEFEFC !important;
+		color: #4F6854 !important;
 	}
 }
 </style>

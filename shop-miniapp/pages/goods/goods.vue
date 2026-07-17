@@ -26,13 +26,14 @@
 				<!-- VIP会员权益卡 -->
 				<view class="vip-section" v-if="goods.retailPrice">
 					<view class="vip-left">
-						<text class="vip-badge">VIP</text>
-						<text class="vip-price-label">会员专享价</text>
-						<text class="vip-price-symbol">¥</text>
-						<text class="vip-price-value">{{ (parseFloat(goods.retailPrice) * 0.9).toFixed(2) }}</text>
+						<view class="vip-badge-wrap">
+							<text class="vip-badge">黄金会员</text>
+							<text class="vip-price-label">专享价 ¥{{ (parseFloat(goods.retailPrice) * 0.9).toFixed(2) }}</text>
+						</view>
+						<text class="vip-note">开卡后下单立享折扣</text>
 					</view>
 					<navigator url="/pages/ucenter/coupon/coupon" class="vip-right">
-						<text class="vip-action-text">开通会员享9折 ›</text>
+						<text class="vip-action-text">立即开通</text>
 					</navigator>
 				</view>
 
@@ -65,7 +66,7 @@
 				<!-- 药食百科科普看板 -->
 				<view class="science-board-card" v-if="scienceData">
 					<view class="science-header">
-						<text class="science-icon">🍃</text>
+						<view class="science-mark"></view>
 						<text class="science-title">药食同源 · 养生百科</text>
 					</view>
 					<view class="science-grid">
@@ -128,7 +129,8 @@
 				<!-- 经典膳食推荐搭配 -->
 				<view class="combo-recommend-card" v-if="comboData">
 					<view class="combo-header">
-						<text class="combo-title">🌟 膳食养生黄金搭档推荐</text>
+						<text class="combo-title">膳食养生搭配推荐</text>
+						<text class="combo-subtitle">为这款商品精选一组更顺口的日常组合</text>
 					</view>
 					<view class="combo-body">
 						<view class="combo-goods">
@@ -144,11 +146,11 @@
 						</view>
 						<view class="combo-action-area">
 							<view class="combo-benefit">
-								<text class="combo-tip">【双效温补，气血调和】</text>
-								<text class="combo-price-tip">搭配购买更省心</text>
+								<text class="combo-tip">双效温补，气血调和</text>
+								<text class="combo-price-tip">搭配购买更省心，也更适合送礼自用</text>
 							</view>
 							<button class="combo-add-btn" @tap="addComboToCart">
-								<text>🛒 一键搭配加购</text>
+								<text>一键搭配加购</text>
 							</button>
 						</view>
 					</view>
@@ -601,66 +603,73 @@ export default {
 /* VIP会员权益卡 */
 .vip-section {
 	margin: 0 30rpx 24rpx;
-	background: linear-gradient(135deg, $gold-light 0%, #FEFEFC 100%);
-	border: 1rpx solid rgba(77, 112, 77, 0.2);
-	border-radius: 16rpx;
-	padding: 18rpx 24rpx;
+	background:
+		linear-gradient(135deg, rgba(255, 255, 255, 0.30) 0%, rgba(255, 255, 255, 0.08) 42%, rgba(250, 244, 222, 0.22) 100%),
+		linear-gradient(135deg, #F6F2E4 0%, #FDFBF4 100%);
+	border: 1rpx solid rgba(160, 138, 95, 0.16);
+	border-radius: 22rpx;
+	padding: 22rpx 24rpx;
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
-	box-shadow: 0 4rpx 12rpx rgba(77, 112, 77, 0.05);
+	box-shadow: 0 10rpx 24rpx rgba(126, 116, 92, 0.08);
 	transition: all 0.2s ease;
 
 	&:active {
 		transform: scale(0.98);
-		background: linear-gradient(135deg, $gold-light 30%, #FDFDF8 100%);
+		filter: brightness(0.98);
 	}
 }
 
 .vip-left {
 	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+}
+
+.vip-badge-wrap {
+	display: flex;
 	align-items: center;
+	flex-wrap: wrap;
+	gap: 12rpx;
 }
 
 .vip-badge {
-	background: linear-gradient(135deg, $gold 0%, #667166 100%);
-	color: #FEFEFC;
-	font-size: 18rpx;
+	background: rgba(145, 122, 78, 0.12);
+	color: #8D7248;
+	font-size: 20rpx;
 	font-weight: 700;
-	padding: 2rpx 8rpx;
-	border-radius: 6rpx;
-	margin-right: 12rpx;
+	padding: 6rpx 14rpx;
+	border-radius: 999rpx;
+	letter-spacing: 1rpx;
 }
 
 .vip-price-label {
+	font-size: 28rpx;
+	color: #7D6847;
+	font-weight: 700;
+}
+
+.vip-note {
+	margin-top: 10rpx;
 	font-size: 22rpx;
-	color: $gold;
-	margin-right: 8rpx;
-	font-weight: 500;
-}
-
-.vip-price-symbol {
-	font-size: 20rpx;
-	color: $gold;
-	font-weight: 700;
-	margin-right: 2rpx;
-}
-
-.vip-price-value {
-	font-size: 32rpx;
-	color: $gold;
-	font-weight: 700;
+	color: rgba(118, 104, 77, 0.72);
 }
 
 .vip-right {
 	display: flex;
 	align-items: center;
+	height: 68rpx;
+	padding: 0 24rpx;
+	border-radius: 999rpx;
+	background: linear-gradient(135deg, #7B957F 0%, #6A846F 100%);
+	box-shadow: 0 8rpx 18rpx rgba(106, 132, 111, 0.16);
 }
 
 .vip-action-text {
 	font-size: 22rpx;
-	color: $gold;
-	font-weight: 500;
+	color: #FEFEFC;
+	font-weight: 700;
 }
 
 /* 商品信息 */
@@ -697,7 +706,8 @@ export default {
 /* 服务保障 */
 .service-tags {
 	display: flex;
-	gap: 24rpx;
+	flex-wrap: wrap;
+	gap: 14rpx;
 	padding: 16rpx 30rpx 24rpx;
 	background: #FEFEFC;
 	border-bottom: 1rpx solid $green-bg;
@@ -706,13 +716,16 @@ export default {
 .service-tag {
 	display: flex;
 	align-items: center;
+	padding: 10rpx 16rpx;
+	background: rgba(232, 236, 232, 0.65);
+	border-radius: 999rpx;
 	font-size: 22rpx;
 	color: $text-secondary;
 }
 
 .tag-dot {
 	color: $green;
-	margin-right: 4rpx;
+	margin-right: 8rpx;
 	font-weight: 700;
 }
 
@@ -864,15 +877,16 @@ export default {
 }
 
 .divider-line {
-	width: 80rpx;
+	width: 68rpx;
 	height: 2rpx;
-	background: #e0e0e0;
+	background: linear-gradient(90deg, rgba(111, 142, 117, 0), rgba(111, 142, 117, 0.34), rgba(111, 142, 117, 0));
 }
 
 .divider-text {
-	font-size: 26rpx;
-	color: $text-hint;
-	margin: 0 20rpx;
+	font-size: 24rpx;
+	color: #889388;
+	margin: 0 18rpx;
+	letter-spacing: 4rpx;
 }
 
 /* 图文详情 */
@@ -1182,41 +1196,47 @@ export default {
 }
 
 .action-cart {
-	background: $green-light;
-	color: $green;
-	border: 2rpx solid $green;
+	background: linear-gradient(135deg, #EEF3ED 0%, #E1E9E0 100%);
+	color: #567159;
+	border: 2rpx solid rgba(111, 142, 117, 0.18);
 }
 
 .action-buy {
-	background: linear-gradient(135deg, $green, $green-dark);
-	color: #FEFEFC;
+	background: linear-gradient(135deg, #D7E3D8 0%, #C8D7C9 100%);
+	color: #4F6854;
 }
 
 /* 药食百科看板样式 */
 .science-board-card {
-	background: linear-gradient(135deg, #fdfdfd 0%, #FDFDF8 100%);
-	border: 1rpx solid rgba(77, 112, 77, 0.15);
-	border-radius: 20rpx;
+	background:
+		linear-gradient(180deg, rgba(255, 255, 255, 0.34) 0%, rgba(255, 255, 255, 0.10) 100%),
+		linear-gradient(135deg, #F7FAF6 0%, #FDFDF8 100%);
+	border: 1rpx solid rgba(111, 142, 117, 0.12);
+	border-radius: 24rpx;
 	margin: 20rpx 30rpx;
-	padding: 24rpx 28rpx;
-	box-shadow: 0 4rpx 16rpx rgba(77, 112, 77, 0.03);
+	padding: 26rpx 28rpx;
+	box-shadow: 0 12rpx 26rpx rgba(94, 116, 97, 0.05);
 }
 
 .science-header {
 	display: flex;
 	align-items: center;
-	margin-bottom: 20rpx;
+	margin-bottom: 22rpx;
 }
 
-.science-icon {
-	font-size: 32rpx;
-	margin-right: 12rpx;
+.science-mark {
+	width: 18rpx;
+	height: 18rpx;
+	border-radius: 50%;
+	margin-right: 14rpx;
+	background: linear-gradient(135deg, #8EAA92 0%, #6F8E75 100%);
+	box-shadow: 0 0 0 8rpx rgba(111, 142, 117, 0.10);
 }
 
 .science-title {
 	font-size: 26rpx;
 	font-weight: 700;
-	color: $green;
+	color: #4F6854;
 }
 
 .science-grid {
@@ -1229,13 +1249,13 @@ export default {
 	width: 50%;
 	display: flex;
 	flex-direction: column;
-	padding-right: 10rpx;
+	padding: 8rpx 12rpx 8rpx 0;
 	box-sizing: border-box;
 
 	&:nth-child(2n) {
 		padding-left: 20rpx;
 		padding-right: 0;
-		border-left: 1rpx dashed rgba(77, 112, 77, 0.15);
+		border-left: 1rpx dashed rgba(111, 142, 117, 0.14);
 	}
 }
 
@@ -1259,21 +1279,30 @@ export default {
 
 /* 经典推荐搭配样式 */
 .combo-recommend-card {
-	background: #FEFEFC;
-	border-radius: 20rpx;
+	background: linear-gradient(180deg, #FEFEFC 0%, #FAFCF9 100%);
+	border-radius: 24rpx;
 	margin: 24rpx 30rpx;
 	padding: 28rpx;
-	border: 1rpx dashed rgba(77, 112, 77, 0.25);
+	border: 1rpx solid rgba(111, 142, 117, 0.10);
+	box-shadow: 0 12rpx 28rpx rgba(88, 109, 93, 0.05);
 }
 
 .combo-header {
 	margin-bottom: 24rpx;
+	display: flex;
+	flex-direction: column;
 }
 
 .combo-title {
 	font-size: 26rpx;
 	font-weight: 700;
 	color: $text-primary;
+}
+
+.combo-subtitle {
+	font-size: 22rpx;
+	color: $text-hint;
+	margin-top: 8rpx;
 }
 
 .combo-body {
@@ -1324,9 +1353,9 @@ export default {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
-	background: $green-bg;
-	padding: 16rpx 20rpx;
-	border-radius: 12rpx;
+	background: rgba(232, 236, 232, 0.52);
+	padding: 18rpx 20rpx;
+	border-radius: 16rpx;
 }
 
 .combo-benefit {
@@ -1337,17 +1366,17 @@ export default {
 .combo-tip {
 	font-size: 22rpx;
 	font-weight: 700;
-	color: $green;
+	color: #4F6854;
 }
 
 .combo-price-tip {
-	font-size: 18rpx;
-	color: $text-hint;
+	font-size: 20rpx;
+	color: #879187;
 	margin-top: 4rpx;
 }
 
 .combo-add-btn {
-	background: $green;
+	background: linear-gradient(135deg, #6F8E75 0%, #5E7B64 100%);
 	color: #FEFEFC;
 	font-size: 24rpx;
 	font-weight: 700;
