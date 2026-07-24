@@ -83,9 +83,18 @@ docker exec shop-mysql mysql -u root -proot --default-character-set=utf8mb4 -e "
 cd shop-backend
 # 设置 JAVA_HOME 指向 Java 17（如果默认 Java 版本不是 17）
 export JAVA_HOME=/usr/local/Cellar/openjdk@17/17.0.19/libexec/openjdk.jdk/Contents/Home
+# 全量构建（必须，确保所有子模块编译到本地仓库）
 mvn install -DskipTests -q
-mvn spring-boot:run -pl shop-server
+# 启动后端（开发环境，使用 Mock 微信登录）
+cd shop-server
+mvn spring-boot:run
 ```
+
+> 如需测试**真实微信登录**，先配置 `application-local.yml`（填入真实 AppID/Secret，已 gitignore），然后用双 profile 启动：
+> ```bash
+> mvn spring-boot:run -Dspring-boot.run.profiles=dev,local
+> ```
+> 注意：修改子模块代码后需重新执行 `mvn install -DskipTests -q` 才能生效。
 
 后端启动成功后监听端口 80。
 
@@ -106,13 +115,12 @@ curl http://localhost/app-api/product/spu/page?pageNo=1&pageSize=10
 
 ### 第四步：启动小程序
 
-1. 下载安装 [HBuilderX](https://www.dcloud.io/hbuilderx.html)（选 **App开发版**，自带 uni-app 编译器）
-2. 打开 HBuilderX → 「文件 → 导入 → 从本地目录导入」→ 选择 `shop-miniapp` 目录
-3. 首次使用需配置微信开发者工具路径：
-   - HBuilderX「设置 → 运行配置 → 微信开发者工具路径」→ 选择微信开发者工具安装目录
-   - 同时勾选「启动时打开微信开发者工具」
-4. 菜单栏「运行 → 运行到小程序模拟器 → 微信开发者工具」
-5. 微信开发者工具自动打开，在「本地设置」中勾选「不校验合法域名」
+1. 在微信开发者工具中导入 `shop-miniapp` 目录，AppID 填写你的真实小程序 AppID
+2. 在「本地设置」中勾选「不校验合法域名」
+3. 如使用 HBuilderX 编译 uni-app：
+   - HBuilderX「设置 → 运行配置 → 微信开发者工具路径」→ 选择安装目录
+   - 菜单栏「运行 → 运行到小程序模拟器 → 微信开发者工具」
+   - HBuilderX 会将 `.vue` 文件编译为微信小程序原生格式，每次保存自动热更新
 
 > HBuilderX 会将 `.vue` 文件编译为微信小程序原生格式，每次保存代码会自动热更新。
 

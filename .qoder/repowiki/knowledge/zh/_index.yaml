@@ -3,7 +3,7 @@ schema_version: 1
 locale: zh-CN
 branch: main
 nodes_managed: true
-exported_at: "2026-07-12T03:54:05Z"
+exported_at: "2026-07-23T09:08:14Z"
 modules:
     "":
         dir_name: wx-mall 电商项目根编排层
@@ -24,29 +24,27 @@ modules:
         depends_on: []
         related_to: []
     build_system:
-        dir_name: 药食同源商城构建与部署体系
-        title: 药食同源商城构建与部署体系
+        dir_name: 构建与部署体系：Maven 多模块 + Docker 镜像打包
+        title: 构建与部署体系：Maven 多模块 + Docker 镜像打包
         scope: []
         source_files:
             - shop-backend/pom.xml
             - shop-backend/Dockerfile
-            - shop-miniapp/package.json
-            - shop-miniapp/vite.config.ts
-            - .github/copilot-instructions.md
+            - shop-backend/container.config.json
+            - shop-miniapp/project.config.json
+            - sql/init.sql
         children: []
         depends_on: []
         related_to: []
     configuration_system:
-        dir_name: 配置系统：Spring Boot Starter 自动装配与多环境 YAML 管理
-        title: 配置系统：Spring Boot Starter 自动装配与多环境 YAML 管理
+        dir_name: Spring Boot 多环境 YAML 配置体系
+        title: Spring Boot 多环境 YAML 配置体系
         scope: []
         source_files:
             - shop-backend/shop-server/src/main/resources/application.yml
             - shop-backend/shop-server/src/main/resources/application-dev.yml
-            - shop-backend/shop-framework/shop-starter-mybatis/src/main/java/com/shop/framework/mybatis/MybatisAutoConfiguration.java
-            - shop-backend/shop-framework/shop-starter-security/src/main/java/com/shop/framework/security/SecurityAutoConfiguration.java
-            - shop-backend/shop-framework/shop-starter-web/src/main/java/com/shop/framework/web/WebAutoConfiguration.java
-            - shop-miniapp/src/api/request.ts
+            - shop-backend/Dockerfile
+            - .gitignore
         children: []
         depends_on: []
         related_to: []
@@ -64,7 +62,7 @@ modules:
         depends_on: []
         related_to: []
     error_handling:
-        dir_name: 统一异常处理与错误码规范
+        dir_name: 统一异常处理与错误码规范_2
         title: 统一异常处理与错误码规范
         scope: []
         source_files:

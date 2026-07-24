@@ -25,7 +25,7 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
             LoginUser loginUser = tokenService.getLoginUser(token);
             if (loginUser != null) {
                 UsernamePasswordAuthenticationToken authentication =
-                        new UsernamePasswordAuthenticationToken(loginUser, null, Collections.emptyList());
+                        new UsernamePasswordAuthenticationToken(loginUser, token, Collections.emptyList());
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             }
         }
