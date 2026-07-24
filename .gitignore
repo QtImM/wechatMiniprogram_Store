@@ -28,6 +28,9 @@ application-local.yml
 *.swp
 *.swo
 
+# Git worktrees
+.worktrees/
+
 # OS
 Thumbs.db
 Desktop.ini
