@@ -40,6 +40,12 @@ wechatMiniprogram_Store/
 └── README.md
 ```
 
+## 当前协作入口
+
+- [项目状态仪表盘](docs/superpowers/status.md)：查看当前阶段、进度和下一步行动
+- [后端三人并行开发分工](docs/superpowers/plans/2026-07-24-backend-three-person-division.md)：查看后端 A/B/C 三条工作线、接口范围、数据表和验收标准
+- [后续开发路径规划](docs/superpowers/plans/2026-07-16-next-development-path.md)：查看 Phase 1-5 的整体推进路线
+
 ## 开发流程
 
 本项目采用 **Spec-Driven Development**：
