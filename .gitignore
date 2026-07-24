@@ -4,6 +4,7 @@ target/
 *.jar
 *.war
 *.log
+*.err
 .settings/
 .classpath
 .project
