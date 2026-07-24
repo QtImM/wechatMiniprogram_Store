@@ -107,6 +107,22 @@ INSERT INTO `product_category` (`name`, `icon`, `sort`, `status`) VALUES
 ('课程研学', '', 80, 1),
 ('组合套装', '', 70, 1);
 
+INSERT INTO `product_category` (`parent_id`, `name`, `icon`, `sort`, `status`) VALUES
+(1, '滋补养生', '', 100, 1), (1, '茶饮花茶', '', 90, 1),
+(2, '营养补充', '', 100, 1), (2, '药膳食材', '', 90, 1);
+
+INSERT INTO `product_spu` (`category_id`, `name`, `keyword`, `introduction`, `description`, `pic_url`, `slider_pic_urls`, `price`, `market_price`, `stock`, `sales_count`, `sort`, `status`) VALUES
+(5, '东阿阿胶糕 250g', '阿胶 滋补', '甄选阿胶与核桃芝麻', '<p>传统工艺熬制，滋补养生。</p>', 'https://picsum.photos/seed/ejiao/600/600', '["https://picsum.photos/seed/ejiao/600/600"]', 9980, 12800, 120, 328, 100, 1),
+(6, '枸杞菊花茶 120g', '枸杞 花茶', '清润回甘，独立小袋装', '<p>每日一杯，清润舒心。</p>', 'https://picsum.photos/seed/tea/600/600', '["https://picsum.photos/seed/tea/600/600"]', 3980, 5980, 160, 246, 90, 1),
+(7, '维生素C咀嚼片', '维生素 营养', '每日营养补充', '<p>清新橙味，便携易食。</p>', 'https://picsum.photos/seed/vitamin/600/600', '["https://picsum.photos/seed/vitamin/600/600"]', 5980, 7980, 200, 180, 80, 1),
+(8, '黄芪片 200g', '黄芪 药膳', '优选黄芪切片', '<p>汤饮皆宜，片型完整。</p>', 'https://picsum.photos/seed/huangqi/600/600', '["https://picsum.photos/seed/huangqi/600/600"]', 4580, 6800, 80, 96, 70, 1);
+
+INSERT INTO `product_sku` (`spu_id`, `properties`, `price`, `market_price`, `stock`, `pic_url`) VALUES
+(1, '[{"id":1,"name":"规格","valueId":1,"valueName":"250g"}]', 9980, 12800, 120, 'https://picsum.photos/seed/ejiao/600/600'),
+(2, '[{"id":1,"name":"规格","valueId":2,"valueName":"120g"}]', 3980, 5980, 160, 'https://picsum.photos/seed/tea/600/600'),
+(3, '[{"id":1,"name":"规格","valueId":3,"valueName":"60片"}]', 5980, 7980, 200, 'https://picsum.photos/seed/vitamin/600/600'),
+(4, '[{"id":1,"name":"规格","valueId":4,"valueName":"200g"}]', 4580, 6800, 80, 'https://picsum.photos/seed/huangqi/600/600');
+
 -- ============ 内容相关 ============
 
 CREATE TABLE `content_banner` (

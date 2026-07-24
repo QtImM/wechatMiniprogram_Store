@@ -30,7 +30,7 @@ public class AppMockController {
                 "subCategoryList", subList);
     }
 
-    @RequestMapping("/app-api/catalog/index")
+    @RequestMapping("/app-api/mock/catalog/index")
     public Map<String, Object> catalogIndex() {
         List<Map<String, Object>> categoryList = List.of(
                 Map.of("id", 1, "name", "滋补养生"),
@@ -42,22 +42,22 @@ public class AppMockController {
         return ok(Map.of("categoryList", categoryList, "currentCategory", buildCategory(1L)));
     }
 
-    @RequestMapping("/app-api/catalog/current")
+    @RequestMapping("/app-api/mock/catalog/current")
     public Map<String, Object> catalogCurrent(@RequestParam(value = "id", defaultValue = "1") Long id) {
         return ok(Map.of("currentCategory", buildCategory(id)));
     }
 
-    @RequestMapping("/app-api/catalog/{id}")
+    @RequestMapping("/app-api/mock/catalog/{id}")
     public Map<String, Object> catalogDetail(@PathVariable Long id) {
         return ok(Map.of("currentCategory", buildCategory(id)));
     }
 
-    @RequestMapping("/app-api/goods/count")
+    @RequestMapping("/app-api/mock/goods/count")
     public Map<String, Object> goodsCount() {
         return ok(Map.of("goodsCount", 68));
     }
 
-    @RequestMapping("/app-api/goods/category")
+    @RequestMapping("/app-api/mock/goods/category")
     public Map<String, Object> goodsCategory(@RequestParam(value = "id", defaultValue = "1") Long id) {
         List<Map<String, Object>> allCats = List.of(
                 Map.of("id", 1, "name", "滋补养生"),
@@ -71,7 +71,7 @@ public class AppMockController {
         return ok(Map.of("brotherCategory", allCats, "currentCategory", current));
     }
 
-    @RequestMapping("/app-api/goods/list")
+    @RequestMapping("/app-api/mock/goods/list")
     public Map<String, Object> goodsList(
             @RequestParam(value = "categoryId", defaultValue = "0") Long categoryId,
             @RequestParam(value = "brandId", defaultValue = "0") Long brandId,
@@ -147,7 +147,7 @@ public class AppMockController {
 
     // =========== 商品详情 ===========
 
-    @RequestMapping("/app-api/goods/detail")
+    @RequestMapping("/app-api/mock/goods/detail")
     public Map<String, Object> goodsDetail(@RequestParam(value = "id", defaultValue = "1") Long id) {
         String name = "药食同源好物 #" + id;
         String brief = "精选优质原料，传统工艺制作";
@@ -222,7 +222,7 @@ public class AppMockController {
         return ok(data);
     }
 
-    @RequestMapping("/app-api/goods/related")
+    @RequestMapping("/app-api/mock/goods/related")
     public Map<String, Object> goodsRelated(@RequestParam(value = "id", defaultValue = "1") Long id) {
         List<Map<String, Object>> goodsList = new ArrayList<>();
         for (int i = 1; i <= 4; i++) {
