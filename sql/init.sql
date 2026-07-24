@@ -121,3 +121,121 @@ CREATE TABLE `content_banner` (
     `deleted` bit(1) NOT NULL DEFAULT b'0',
     PRIMARY KEY (`id`)
 ) ENGINE=InnoDB COMMENT='轮播图表';
+
+-- ============ 交易闭环相关 ============
+
+CREATE TABLE `member_address` (
+    `id` bigint NOT NULL AUTO_INCREMENT,
+    `user_id` bigint NOT NULL COMMENT '会员用户ID',
+    `user_name` varchar(64) NOT NULL COMMENT '收货人',
+    `tel_number` varchar(20) NOT NULL COMMENT '手机号',
+    `province_id` bigint DEFAULT 0 COMMENT '省份ID',
+    `city_id` bigint DEFAULT 0 COMMENT '城市ID',
+    `district_id` bigint DEFAULT 0 COMMENT '区县ID',
+    `province_name` varchar(64) DEFAULT '' COMMENT '省份名称',
+    `city_name` varchar(64) DEFAULT '' COMMENT '城市名称',
+    `district_name` varchar(64) DEFAULT '' COMMENT '区县名称',
+    `full_region` varchar(255) DEFAULT '' COMMENT '省市区完整名称',
+    `detail_info` varchar(255) NOT NULL COMMENT '详细地址',
+    `is_default` tinyint NOT NULL DEFAULT 0 COMMENT '是否默认 1=是 0=否',
+    `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    `deleted` bit(1) NOT NULL DEFAULT b'0',
+    PRIMARY KEY (`id`),
+    KEY `idx_user_id` (`user_id`)
+) ENGINE=InnoDB COMMENT='会员收货地址表';
+
+CREATE TABLE `trade_cart` (
+    `id` bigint NOT NULL AUTO_INCREMENT,
+    `user_id` bigint NOT NULL COMMENT '会员用户ID',
+    `spu_id` bigint NOT NULL COMMENT '商品SPU ID',
+    `sku_id` bigint NOT NULL COMMENT '商品SKU ID',
+    `goods_name` varchar(128) NOT NULL COMMENT '商品名称快照',
+    `goods_pic_url` varchar(512) DEFAULT '' COMMENT '商品图片快照',
+    `spec_name` varchar(128) DEFAULT '' COMMENT '规格快照',
+    `price` int NOT NULL COMMENT '单价(分)',
+    `count` int NOT NULL COMMENT '数量',
+    `checked` tinyint NOT NULL DEFAULT 1 COMMENT '是否选中 1=是 0=否',
+    `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    `deleted` bit(1) NOT NULL DEFAULT b'0',
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_user_sku` (`user_id`, `sku_id`, `deleted`),
+    KEY `idx_user_id` (`user_id`)
+) ENGINE=InnoDB COMMENT='购物车表';
+
+CREATE TABLE `trade_order` (
+    `id` bigint NOT NULL AUTO_INCREMENT,
+    `order_sn` varchar(32) NOT NULL COMMENT '订单号',
+    `user_id` bigint NOT NULL COMMENT '会员用户ID',
+    `status` tinyint NOT NULL DEFAULT 0 COMMENT '订单状态 0=待付款 1=待发货 2=待收货 3=已完成 4=已取消',
+    `pay_status` tinyint NOT NULL DEFAULT 0 COMMENT '支付状态 0=未支付 1=已支付 2=已退款',
+    `goods_price` int NOT NULL DEFAULT 0 COMMENT '商品总价(分)',
+    `freight_price` int NOT NULL DEFAULT 0 COMMENT '运费(分)',
+    `coupon_price` int NOT NULL DEFAULT 0 COMMENT '优惠金额(分)',
+    `order_price` int NOT NULL DEFAULT 0 COMMENT '订单总价(分)',
+    `actual_price` int NOT NULL DEFAULT 0 COMMENT '实付金额(分)',
+    `address_id` bigint DEFAULT NULL COMMENT '地址ID',
+    `consignee` varchar(64) DEFAULT '' COMMENT '收货人快照',
+    `mobile` varchar(20) DEFAULT '' COMMENT '手机号快照',
+    `full_region` varchar(255) DEFAULT '' COMMENT '省市区快照',
+    `address` varchar(255) DEFAULT '' COMMENT '详细地址快照',
+    `pay_time` datetime DEFAULT NULL COMMENT '支付时间',
+    `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    `deleted` bit(1) NOT NULL DEFAULT b'0',
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_order_sn` (`order_sn`),
+    KEY `idx_user_id` (`user_id`),
+    KEY `idx_status` (`status`)
+) ENGINE=InnoDB COMMENT='交易订单表';
+
+CREATE TABLE `trade_order_item` (
+    `id` bigint NOT NULL AUTO_INCREMENT,
+    `order_id` bigint NOT NULL COMMENT '订单ID',
+    `user_id` bigint NOT NULL COMMENT '会员用户ID',
+    `spu_id` bigint NOT NULL COMMENT '商品SPU ID',
+    `sku_id` bigint NOT NULL COMMENT '商品SKU ID',
+    `goods_name` varchar(128) NOT NULL COMMENT '商品名称快照',
+    `goods_pic_url` varchar(512) DEFAULT '' COMMENT '商品图片快照',
+    `spec_name` varchar(128) DEFAULT '' COMMENT '规格快照',
+    `price` int NOT NULL COMMENT '单价(分)',
+    `count` int NOT NULL COMMENT '数量',
+    `total_price` int NOT NULL COMMENT '小计(分)',
+    `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    `deleted` bit(1) NOT NULL DEFAULT b'0',
+    PRIMARY KEY (`id`),
+    KEY `idx_order_id` (`order_id`),
+    KEY `idx_user_id` (`user_id`)
+) ENGINE=InnoDB COMMENT='交易订单明细表';
+
+CREATE TABLE `pay_order` (
+    `id` bigint NOT NULL AUTO_INCREMENT,
+    `pay_sn` varchar(32) NOT NULL COMMENT '支付单号',
+    `order_id` bigint NOT NULL COMMENT '订单ID',
+    `user_id` bigint NOT NULL COMMENT '会员用户ID',
+    `amount` int NOT NULL COMMENT '支付金额(分)',
+    `channel` varchar(32) NOT NULL DEFAULT 'mock' COMMENT '支付渠道 mock/wx_lite',
+    `status` tinyint NOT NULL DEFAULT 0 COMMENT '支付状态 0=待支付 1=已支付 2=已关闭',
+    `pay_time` datetime DEFAULT NULL COMMENT '支付时间',
+    `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    `deleted` bit(1) NOT NULL DEFAULT b'0',
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_pay_sn` (`pay_sn`),
+    KEY `idx_order_id` (`order_id`)
+) ENGINE=InnoDB COMMENT='支付单表';
+
+CREATE TABLE `trade_order_logistics` (
+    `id` bigint NOT NULL AUTO_INCREMENT,
+    `order_id` bigint NOT NULL COMMENT '订单ID',
+    `logistics_company` varchar(64) DEFAULT '' COMMENT '物流公司',
+    `logistics_no` varchar(64) DEFAULT '' COMMENT '物流单号',
+    `delivery_time` datetime DEFAULT NULL COMMENT '发货时间',
+    `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    `deleted` bit(1) NOT NULL DEFAULT b'0',
+    PRIMARY KEY (`id`),
+    KEY `idx_order_id` (`order_id`)
+) ENGINE=InnoDB COMMENT='订单物流表';

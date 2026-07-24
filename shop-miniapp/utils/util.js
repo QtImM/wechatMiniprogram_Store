@@ -423,6 +423,16 @@ const utils = {
 			}, 'POST').then((res) => {
 				if (res.code === 0) {
 					let payParam = res.data;
+					if (payParam.mockPay) {
+						const app = getApp();
+						app.globalData._payResolve = resolve;
+						app.globalData._payReject = reject;
+						app.globalData._payAmount = payParam.amount || app.globalData._payAmount || '0.00';
+						uni.navigateTo({
+							url: '/pages/payMock/payMock?orderId=' + orderId + '&amount=' + app.globalData._payAmount
+						});
+						return;
+					}
 					uni.requestPayment({
 						'timeStamp': payParam.timeStamp,
 						'nonceStr': payParam.nonceStr,

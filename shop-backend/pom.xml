@@ -15,6 +15,7 @@
         <module>shop-framework</module>
         <module>shop-module-product</module>
         <module>shop-module-member</module>
+        <module>shop-module-trade</module>
         <module>shop-module-system</module>
         <module>shop-server</module>
     </modules>

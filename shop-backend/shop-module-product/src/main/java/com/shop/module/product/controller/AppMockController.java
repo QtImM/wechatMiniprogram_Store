@@ -240,12 +240,12 @@ public class AppMockController {
 
     // =========== 购物车 ===========
 
-    @RequestMapping("/app-api/cart/goodscount")
+    @RequestMapping("/app-api/mock/cart/goodscount")
     public Map<String, Object> cartGoodsCount() {
         return ok(Map.of("cartTotal", Map.of("goodsCount", 2)));
     }
 
-    @RequestMapping("/app-api/cart/index")
+    @RequestMapping("/app-api/mock/cart/index")
     public Map<String, Object> cartIndex() {
         List<Map<String, Object>> cartList = new ArrayList<>();
         cartList.add(makeCartItem(1, 101, "东阿阿胶糕 250g", "250g", 99.90, 1));
@@ -260,21 +260,21 @@ public class AppMockController {
         return ok(Map.of("cartList", cartList, "cartTotal", cartTotal));
     }
 
-    @RequestMapping("/app-api/cart/add")
+    @RequestMapping("/app-api/mock/cart/add")
     public Map<String, Object> cartAdd(@RequestParam(value = "goodsId", defaultValue = "1") Long goodsId,
                                         @RequestParam(value = "number", defaultValue = "1") int number,
                                         @RequestParam(value = "productId", defaultValue = "101") Long productId) {
         return ok(Map.of("cartTotal", Map.of("goodsCount", number + 2)));
     }
 
-    @RequestMapping("/app-api/buy/add")
+    @RequestMapping("/app-api/mock/buy/add")
     public Map<String, Object> buyAdd(@RequestParam(value = "goodsId", defaultValue = "1") Long goodsId,
                                        @RequestParam(value = "number", defaultValue = "1") int number,
                                        @RequestParam(value = "productId", defaultValue = "101") Long productId) {
         return ok(Map.of());
     }
 
-    @RequestMapping("/app-api/cart/update")
+    @RequestMapping("/app-api/mock/cart/update")
     public Map<String, Object> cartUpdate(@RequestParam(value = "id", defaultValue = "1") Long id,
                                            @RequestParam(value = "number", defaultValue = "1") int number,
                                            @RequestParam(value = "goodsId", defaultValue = "1") Long goodsId,
@@ -282,7 +282,7 @@ public class AppMockController {
         return ok(Map.of());
     }
 
-    @RequestMapping("/app-api/cart/delete")
+    @RequestMapping("/app-api/mock/cart/delete")
     public Map<String, Object> cartDelete() {
         List<Map<String, Object>> cartList = new ArrayList<>();
         cartList.add(makeCartItem(1, 101, "东阿阿胶糕 250g", "250g", 99.90, 1));
@@ -295,7 +295,7 @@ public class AppMockController {
         return ok(Map.of("cartList", cartList, "cartTotal", cartTotal));
     }
 
-    @RequestMapping("/app-api/cart/checked")
+    @RequestMapping("/app-api/mock/cart/checked")
     public Map<String, Object> cartChecked(@RequestParam(value = "productIds", defaultValue = "") String productIds,
                                             @RequestParam(value = "isChecked", defaultValue = "1") int isChecked) {
         List<Map<String, Object>> cartList = new ArrayList<>();
@@ -313,7 +313,7 @@ public class AppMockController {
         return ok(Map.of("cartList", cartList, "cartTotal", cartTotal));
     }
 
-    @RequestMapping("/app-api/cart/checkout")
+    @RequestMapping("/app-api/mock/cart/checkout")
     public Map<String, Object> cartCheckout(@RequestParam(value = "addressId", defaultValue = "0") Long addressId,
                                              @RequestParam(value = "couponId", defaultValue = "0") Long couponId,
                                              @RequestParam(value = "type", defaultValue = "cart") String type) {
@@ -360,13 +360,13 @@ public class AppMockController {
 
     // =========== 订单 ===========
 
-    @RequestMapping("/app-api/order/submit")
+    @RequestMapping("/app-api/mock/order/submit")
     public Map<String, Object> orderSubmit() {
         Map<String, Object> orderInfo = Map.of("id", 10001, "orderSn", "202607030001");
         return ok(Map.of("orderInfo", orderInfo));
     }
 
-    @RequestMapping("/app-api/order/list")
+    @RequestMapping("/app-api/mock/order/list")
     public Map<String, Object> orderList(@RequestParam(value = "page", defaultValue = "1") int page,
                                           @RequestParam(value = "size", defaultValue = "10") int size) {
         List<Map<String, Object>> list = List.of(
@@ -381,7 +381,7 @@ public class AppMockController {
         return ok(Map.of("list", list, "page", page, "total", 1));
     }
 
-    @RequestMapping("/app-api/order/detail")
+    @RequestMapping("/app-api/mock/order/detail")
     public Map<String, Object> orderDetail(@RequestParam(value = "id", defaultValue = "10001") Long id) {
         Map<String, Object> orderInfo = new LinkedHashMap<>();
         orderInfo.put("id", id);
@@ -395,7 +395,7 @@ public class AppMockController {
         return ok(Map.of("orderInfo", orderInfo));
     }
 
-    @RequestMapping("/app-api/pay/prepay")
+    @RequestMapping("/app-api/mock/pay/prepay")
     public Map<String, Object> payPrepay(@RequestParam(value = "orderId", defaultValue = "10001") Long orderId) {
         return ok(Map.of(
                 "timeStamp", String.valueOf(System.currentTimeMillis() / 1000),
@@ -406,7 +406,7 @@ public class AppMockController {
         ));
     }
 
-    @RequestMapping("/app-api/pay/query")
+    @RequestMapping("/app-api/mock/pay/query")
     public Map<String, Object> payQuery(@RequestParam(value = "orderId", defaultValue = "10001") Long orderId) {
         return ok(Map.of("orderStatus", "paid"));
     }
@@ -553,7 +553,7 @@ public class AppMockController {
 
     // =========== 地址 ===========
 
-    @RequestMapping("/app-api/address/list")
+    @RequestMapping("/app-api/mock/address/list")
     public Map<String, Object> addressList() {
         List<Map<String, Object>> list = List.of(
                 Map.of("id", 1, "userName", "张三", "telNumber", "13800138000",
@@ -566,12 +566,12 @@ public class AppMockController {
         return result;
     }
 
-    @RequestMapping("/app-api/address/save")
+    @RequestMapping("/app-api/mock/address/save")
     public Map<String, Object> addressSave() {
         return ok(Map.of());
     }
 
-    @RequestMapping("/app-api/address/delete")
+    @RequestMapping("/app-api/mock/address/delete")
     public Map<String, Object> addressDelete() {
         return ok(Map.of());
     }

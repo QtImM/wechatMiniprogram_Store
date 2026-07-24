@@ -44,30 +44,36 @@
 		<!-- 购物车列表 -->
 		<view class="cart-list" v-if="cartGoods.length > 0">
 			<view
-				class="cart-item"
+				class="cart-swipe-row"
 				v-for="(item, index) in cartGoods"
 				:key="item.id"
+				@touchstart="touchStart($event, index)"
+				@touchmove="touchMove($event, index)"
+				@touchend="touchEnd($event, index)"
 			>
-				<view class="checkbox" :class="{checked: item.checked}" @tap="checkedItem(index)">
-					<text class="check-icon" v-if="item.checked">✓</text>
-				</view>
+				<view class="swipe-delete" @tap.stop="deleteSingle(index)">删除</view>
+				<view class="cart-item" :style="{transform: 'translateX(' + (item.swipeOffset || 0) + 'rpx)'}">
+					<view class="checkbox" :class="{checked: item.checked}" @tap="checkedItem(index)">
+						<text class="check-icon" v-if="item.checked">✓</text>
+					</view>
 
-				<navigator :url="'/pages/goods/goods?id=' + item.goodsId" class="item-img-wrap">
-					<image class="item-img" :src="item.listPicUrl" mode="aspectFill"></image>
-				</navigator>
+					<navigator :url="'/pages/goods/goods?id=' + item.goodsId" class="item-img-wrap">
+						<image class="item-img" :src="item.listPicUrl" mode="aspectFill"></image>
+					</navigator>
 
-				<view class="item-info">
-					<text class="item-name">{{item.goodsName}}</text>
-					<text class="item-spec" v-if="item.goodsSpecifitionNameValue">{{item.goodsSpecifitionNameValue}}</text>
-					<view class="item-bottom">
-						<text class="item-price">¥{{item.retailPrice}}</text>
-						<view class="stepper">
-							<view class="stepper-btn minus" :class="{disabled: item.number <= 1}" @tap="cutNumber(index)">
-								<text>−</text>
-							</view>
-							<text class="stepper-num">{{item.number}}</text>
-							<view class="stepper-btn plus" @tap="addNumber(index)">
-								<text>+</text>
+					<view class="item-info">
+						<text class="item-name">{{item.goodsName}}</text>
+						<text class="item-spec" v-if="item.goodsSpecifitionNameValue">{{item.goodsSpecifitionNameValue}}</text>
+						<view class="item-bottom">
+							<text class="item-price">¥{{item.retailPrice}}</text>
+							<view class="stepper">
+								<view class="stepper-btn minus" :class="{disabled: item.number <= 1}" @tap="cutNumber(index)">
+									<text>−</text>
+								</view>
+								<text class="stepper-num">{{item.number}}</text>
+								<view class="stepper-btn plus" @tap="addNumber(index)">
+									<text>+</text>
+								</view>
 							</view>
 						</view>
 					</view>
@@ -142,7 +148,10 @@ export default {
 			},
 			isEditCart: false,
 			checkedAllStatus: true,
-			recommendList: []
+			recommendList: [],
+			touchStartX: 0,
+			touchStartY: 0,
+			touchMoveX: 0
 		}
 	},
 	computed: {
@@ -162,7 +171,10 @@ export default {
 		getCartList() {
 			util.request(api.CartList).then(res => {
 				if (res.code === 0) {
-					this.cartGoods = res.data.cartList;
+					this.cartGoods = (res.data.cartList || []).map(item => ({
+						...item,
+						swipeOffset: 0
+					}));
 					this.cartTotal = res.data.cartTotal;
 				}
 				this.checkedAllStatus = this.isCheckedAll();
@@ -176,7 +188,37 @@ export default {
 			});
 		},
 		isCheckedAll() {
-			return this.cartGoods.every(item => item.checked === true);
+			return this.cartGoods.length > 0 && this.cartGoods.every(item => item.checked === true);
+		},
+		closeSwipe(exceptIndex) {
+			this.cartGoods.forEach((item, index) => {
+				if (index !== exceptIndex && item.swipeOffset !== 0) {
+					this.$set(this.cartGoods[index], 'swipeOffset', 0);
+				}
+			});
+		},
+		touchStart(e, index) {
+			this.touchStartX = e.touches[0].clientX;
+			this.touchStartY = e.touches[0].clientY;
+			this.touchMoveX = this.touchStartX;
+			this.closeSwipe(index);
+		},
+		touchMove(e, index) {
+			const currentX = e.touches[0].clientX;
+			const currentY = e.touches[0].clientY;
+			const diffX = currentX - this.touchStartX;
+			const diffY = currentY - this.touchStartY;
+			if (Math.abs(diffY) > Math.abs(diffX)) return;
+			this.touchMoveX = currentX;
+			if (diffX < -18) {
+				this.$set(this.cartGoods[index], 'swipeOffset', -148);
+			} else if (diffX > 18) {
+				this.$set(this.cartGoods[index], 'swipeOffset', 0);
+			}
+		},
+		touchEnd(e, index) {
+			const diffX = this.touchMoveX - this.touchStartX;
+			this.$set(this.cartGoods[index], 'swipeOffset', diffX < -60 ? -148 : 0);
 		},
 		getCheckedGoodsCount() {
 			let count = 0;
@@ -262,7 +304,20 @@ export default {
 				productIds: productIds.join(',')
 			}, 'POST', 'application/json').then(res => {
 				if (res.code === 0) {
-					this.cartGoods = res.data.cartList.map(v => ({ ...v, checked: false }));
+					this.cartGoods = res.data.cartList.map(v => ({ ...v, checked: false, swipeOffset: 0 }));
+					this.cartTotal = res.data.cartTotal;
+				}
+				this.checkedAllStatus = this.isCheckedAll();
+			});
+		},
+		deleteSingle(index) {
+			const item = this.cartGoods[index];
+			if (!item) return;
+			util.request(api.CartDelete, {
+				productIds: String(item.productId)
+			}, 'POST', 'application/json').then(res => {
+				if (res.code === 0) {
+					this.cartGoods = (res.data.cartList || []).map(v => ({ ...v, swipeOffset: 0 }));
 					this.cartTotal = res.data.cartTotal;
 				}
 				this.checkedAllStatus = this.isCheckedAll();
@@ -434,14 +489,40 @@ page {
 	padding: 16rpx 24rpx 0;
 }
 
+.cart-swipe-row {
+	position: relative;
+	overflow: hidden;
+	border-radius: 22rpx;
+	margin-bottom: 16rpx;
+}
+
+.swipe-delete {
+	position: absolute;
+	top: 0;
+	right: 0;
+	width: 132rpx;
+	height: 100%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: #B65A52;
+	color: #FEFEFC;
+	font-size: 28rpx;
+	font-weight: 600;
+	border-radius: 0 22rpx 22rpx 0;
+	z-index: 0;
+}
+
 .cart-item {
+	position: relative;
+	z-index: 1;
 	display: flex;
 	align-items: center;
 	background: linear-gradient(180deg, #FEFEFC 0%, #FBFBF8 100%);
 	border-radius: 22rpx;
 	padding: 24rpx;
-	margin-bottom: 16rpx;
 	box-shadow: 0 12rpx 24rpx rgba(77, 112, 77, 0.06);
+	transition: transform 0.18s ease;
 }
 
 /* 选择框 */

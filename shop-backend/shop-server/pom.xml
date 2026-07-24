@@ -32,6 +32,11 @@
         </dependency>
         <dependency>
             <groupId>com.shop</groupId>
+            <artifactId>shop-module-trade</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.shop</groupId>
             <artifactId>shop-module-system</artifactId>
             <version>${project.version}</version>
         </dependency>

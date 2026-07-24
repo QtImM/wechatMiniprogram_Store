@@ -27,6 +27,7 @@
 | Task 10: 小程序骨架 | ✅ 完成 | uni-app 首页+请求封装 |
 | Phase1-子阶段1: 登录与会话 | ✅ 完成 | 微信登录+Token+刷新 |
 | Phase1-子阶段2: 商品真实接口 | ⏳ 待开始 | MockData → 数据库 |
+| Phase1-子阶段3: 交易闭环 MVP | 🚧 进行中 | 购物车+地址+结算+订单+Mock支付首版 |
 
 ## 阻塞项
 
@@ -172,6 +173,53 @@
 
 - 已在仓库 README 增加“当前协作入口”
 - GitHub 首页可直接进入项目状态仪表盘、后端三人分工文档和后续开发路径规划
+
+## 2026-07-24 交易闭环 MVP 首版实现
+
+- 新增 `shop-module-trade` 模块，并接入父 POM 与 `shop-server`
+- 新增交易核心表：`member_address`、`trade_cart`、`trade_order`、`trade_order_item`、`pay_order`、`trade_order_logistics`
+- 完成小程序端真实交易接口首版：
+  - 购物车：数量统计、列表、加购、直接购买、改数量、删除、选中
+  - 地址：列表、详情、保存、删除、简化地区列表
+  - 结算：选中商品、默认/指定地址、固定运费与满额包邮、金额汇总
+  - 订单：提交、列表、详情、取消、确认收货
+  - 支付：Mock 预支付、Mock 支付成功确认、支付状态查询
+- 将旧 `AppMockController` 中购物车、地址、订单、支付 Mock 路径迁移到 `/app-api/mock/**`，避免与真实接口冲突
+- 前端 `payOrder` 支持识别后端 `mockPay` 标记，走现有仿微信支付页，并在确认支付后回调后端完成支付
+- 商品快照优先读取数据库商品，当前商品真实接口未完成时临时回退 `MockData`，保证交易链路可先跑通
+- 已验证：`cd shop-backend && mvn clean install -DskipTests` 构建通过
+
+## 2026-07-24 本项目独立开发数据库初始化
+
+- 发现本机 `3306` 已被非本项目 MySQL 占用，且 `root/root` 无法访问，为避免影响已有服务未做任何重置
+- 新建本项目专用 Docker MySQL 容器：`shop-mysql`
+- 容器内部端口 `3306` 映射到本机 `3307`
+- 已执行当前 `sql/init.sql`，确认 `shop` 数据库和交易表创建成功
+- `application-dev.yml` 数据库地址已调整为 `jdbc:mysql://localhost:3307/shop`
+
+## 2026-07-24 本项目独立 Redis 启动
+
+- 发现本机 `6379` 已被其他项目 Redis 使用，为避免 Token 与缓存串项目，未复用该 Redis
+- 新建本项目专用 Docker Redis 容器：`shop-redis`
+- 容器内部端口 `6379` 映射到本机 `6380`
+- `application-dev.yml` Redis 端口已调整为 `6380`
+
+## 2026-07-24 后端开发服务启动
+
+- 已启动后端开发服务：`http://127.0.0.1:8085`
+- 当前连接本项目专用 MySQL：`shop-mysql`，本机端口 `3307`
+- 当前连接本项目专用 Redis：`shop-redis`，本机端口 `6380`
+- 验证通过：`/app-api/product/category/list` 返回数据库分类数据
+- 验证通过：未登录访问 `/app-api/cart/index` 返回 `401 请先登录`
+
+## 2026-07-24 购物车问题修复
+
+- 修复不同商品加购后在购物车显示为同一商品的问题：后端购物车 SKU 标识改为按 `goodsId + productId` 组合生成，避免首页/分类快捷加购传入相同 `productId` 时发生合并
+- 小程序购物车页新增商品左滑删除交互：滑动商品行可露出“删除”按钮，并调用真实 `/app-api/cart/delete` 删除单个商品
+- 优化购物车全选状态：空购物车不再被误判为全选
+- 已清空本次测试购物车数据，避免旧错误数据继续影响页面展示
+- 已验证：`mvn clean install -DskipTests` 构建通过
+- 已验证：接口连续加购商品 1 和商品 2 时，购物车分别返回 `productId=1000000001` 与 `productId=2000000001`，删除单项正常
 
 ## 决策记录
 

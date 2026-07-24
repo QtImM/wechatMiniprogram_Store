@@ -106,6 +106,8 @@
 </template>
 
 <script>
+const util = require("@/utils/util.js");
+
 export default {
 	data() {
 		return {
@@ -154,12 +156,21 @@ export default {
 			setTimeout(() => {
 				this.showSuccessAnimation = false;
 				const app = getApp();
-				if (app.globalData._payResolve) {
-					app.globalData._payResolve({ errMsg: 'requestPayment:ok' });
-					app.globalData._payResolve = null;
-					app.globalData._payReject = null;
-				}
-				uni.navigateBack();
+				util.request('pay/mock-success', { orderId: this.orderId }, 'POST', 'application/json', false, true).then(() => {
+					if (app.globalData._payResolve) {
+						app.globalData._payResolve({ errMsg: 'requestPayment:ok' });
+						app.globalData._payResolve = null;
+						app.globalData._payReject = null;
+					}
+					uni.navigateBack();
+				}).catch(() => {
+					if (app.globalData._payReject) {
+						app.globalData._payReject({ errMsg: 'requestPayment:fail' });
+						app.globalData._payResolve = null;
+						app.globalData._payReject = null;
+					}
+					uni.navigateBack();
+				});
 			}, 1500);
 		},
 		onCancel() {
