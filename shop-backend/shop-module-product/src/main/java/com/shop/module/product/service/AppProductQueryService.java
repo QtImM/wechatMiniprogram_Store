@@ -1,6 +1,8 @@
 package com.shop.module.product.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.shop.common.exception.ErrorCode;
 import com.shop.common.exception.ServerException;
 import com.shop.module.product.dal.dataobject.CategoryDO;
@@ -18,6 +20,7 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class AppProductQueryService {
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     private final CategoryMapper categoryMapper;
     private final ProductSpuMapper productSpuMapper;
     private final ProductSkuMapper productSkuMapper;
@@ -43,7 +46,9 @@ public class AppProductQueryService {
     public Map<String,Object> detail(Long id) {
         ProductSpuDO s = productSpuMapper.selectById(id); if (s == null || s.getStatus() != 1) throw new ServerException(ErrorCode.PRODUCT_NOT_EXISTS);
         List<ProductSkuDO> skus = productSkuMapper.selectList(new LambdaQueryWrapper<ProductSkuDO>().eq(ProductSkuDO::getSpuId,id));
-        return Map.of("info", goods(s), "gallery", List.of(Map.of("id",1,"imgUrl",s.getPicUrl())), "specificationList",List.of(), "productList",skus.stream().map(k->Map.of("id",k.getId(),"goodsSpecificationIds","","goodsNumber",k.getStock())).toList(), "attribute",List.of(), "issue",List.of(), "comment",Map.of("count",0), "brand",Map.of(), "userHasCollect",0);
+        List<Map<String, Object>> values = skus.stream().map(this::skuProperty).filter(Objects::nonNull).map(p -> Map.<String,Object>of("id", p.get("valueId"), "specificationId", p.get("id"), "value", p.get("valueName"), "checked", false)).toList();
+        List<Map<String, Object>> specifications = values.isEmpty() ? List.of() : List.of(Map.of("specificationId", values.get(0).get("specificationId"), "name", "规格", "valueList", values));
+        return Map.of("info", goods(s), "gallery", List.of(Map.of("id",1,"imgUrl",s.getPicUrl())), "specificationList", specifications, "productList",skus.stream().map(k -> { Map<String,Object> p=skuProperty(k); return Map.<String,Object>of("id",k.getId(),"goodsSpecificationIds",p == null ? "" : String.valueOf(p.get("valueId")),"goodsNumber",k.getStock()); }).toList(), "attribute",List.of(), "issue",List.of(), "comment",Map.of("count",0), "brand",Map.of(), "userHasCollect",0);
     }
     public List<Map<String,Object>> related(Long id) { ProductSpuDO s=productSpuMapper.selectById(id); return s==null?List.of():productSpuMapper.selectList(available()).stream().filter(x->!Objects.equals(x.getId(),id)&&Objects.equals(x.getCategoryId(),s.getCategoryId())).limit(4).map(this::goods).toList(); }
     private LambdaQueryWrapper<ProductSpuDO> available(){return new LambdaQueryWrapper<ProductSpuDO>().eq(ProductSpuDO::getStatus,1).orderByDesc(ProductSpuDO::getSort);}
@@ -52,4 +57,5 @@ public class AppProductQueryService {
     private Set<Long> categoryIds(Long id){if(id==null||id==0)return Set.of(); return categories().stream().filter(c->Objects.equals(c.getId(),id)||Objects.equals(c.getParentId(),id)).map(CategoryDO::getId).collect(Collectors.toSet());}
     private Map<String,Object> categoryBrief(CategoryDO c){return Map.of("id",c.getId(),"name",c.getName(),"wapBannerUrl",c.getIcon()==null?"":c.getIcon());}
     private Map<String,Object> goods(ProductSpuDO s){return Map.of("id",s.getId(),"name",s.getName(),"goodsBrief",s.getIntroduction()==null?"":s.getIntroduction(),"goodsDesc",s.getDescription()==null?"":s.getDescription(),"listPicUrl",s.getPicUrl(),"retailPrice",AppProductResponseAssembler.formatPrice(s.getPrice()),"counterPrice",AppProductResponseAssembler.formatPrice(s.getMarketPrice()),"sellVolume",s.getSalesCount()==null?0:s.getSalesCount(),"categoryId",s.getCategoryId());}
+    private Map<String,Object> skuProperty(ProductSkuDO sku) { try { List<Map<String,Object>> p = OBJECT_MAPPER.readValue(sku.getProperties(), new TypeReference<>() {}); return p.isEmpty() ? null : p.get(0); } catch (Exception ignored) { return null; } }
 }
