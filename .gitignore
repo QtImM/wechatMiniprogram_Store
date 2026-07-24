@@ -21,6 +21,7 @@ unpackage/
 .env
 .env.local
 .env.*.local
+application-local.yml
 
 # IDE
 .vscode/

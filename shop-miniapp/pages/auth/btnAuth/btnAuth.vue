@@ -37,26 +37,37 @@
 		methods: {
 			getUserProfile() {
 				let that = this;
+				// 确保已有 code
+				if (!that.code) {
+					uni.login({
+						success: function(resp) {
+							if (resp.code) {
+								that.code = resp.code;
+								that._doGetProfile();
+							} else {
+								that.toast('获取微信登录凭证失败');
+							}
+						}
+					});
+				} else {
+					that._doGetProfile();
+				}
+			},
+			_doGetProfile() {
+				let that = this;
 				uni.getUserProfile({
 					desc: '用于完善会员资料',
 					success: (resp) => {
-						if (that.code) {
-							that.loginByWeixin(resp)
-						} else {
-							uni.login({
-								success: function(resp) {
-									if (resp.code) {
-										that.code = resp.code
-										that.loginByWeixin(resp)
-									}
-								}
-							});
-						}
+						that.loginByWeixin(resp);
+					},
+					fail: () => {
+						// 新版微信可能不支持 getUserProfile，直接用 code 登录
+						that.loginByWeixin({});
 					}
-				})
+				});
 			},
 			bindGetUserInfo: function(e) {
-				this.loginByWeixin(e.detail)
+				this.loginByWeixin(e.detail);
 			},
 			loginByWeixin: function(userInfo) {
 				let that = this;
@@ -77,6 +88,8 @@
 								showCancel: false
 							});
 						}
+					}).catch(err => {
+						console.error('[Login] 请求异常:', err);
 					});
 				}
 			},

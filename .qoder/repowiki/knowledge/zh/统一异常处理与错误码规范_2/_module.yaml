@@ -7,6 +7,6 @@ source_files:
     - shop-backend/shop-framework/shop-common/src/main/java/com/shop/common/exception/ServerException.java
     - shop-backend/shop-framework/shop-common/src/main/java/com/shop/common/exception/GlobalExceptionHandler.java
     - shop-backend/shop-framework/shop-common/src/main/java/com/shop/common/pojo/CommonResult.java
-    - shop-backend/shop-framework/shop-starter-security/src/main/java/com/shop/framework/security/SecurityAutoConfiguration.java
+    - shop-miniapp/src/api/request.ts
 depends_on: []
 related_to: []

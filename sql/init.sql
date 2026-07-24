@@ -11,6 +11,7 @@ CREATE TABLE `member_user` (
     `id` bigint NOT NULL AUTO_INCREMENT,
     `openid` varchar(64) DEFAULT NULL COMMENT '微信openid',
     `unionid` varchar(64) DEFAULT NULL COMMENT '微信unionid',
+    `session_key` varchar(128) DEFAULT NULL COMMENT '微信session_key',
     `mobile` varchar(20) DEFAULT NULL COMMENT '手机号',
     `nickname` varchar(64) DEFAULT '' COMMENT '昵称',
     `avatar` varchar(512) DEFAULT '' COMMENT '头像URL',

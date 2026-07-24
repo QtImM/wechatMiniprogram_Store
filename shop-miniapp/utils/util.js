@@ -2,7 +2,7 @@ const mock = require('./mock.js');
 
 const utils = {
 	// 是否使用本地Mock数据（true=纯前端演示，false=连接后端）
-	useMock: true,
+	useMock: false,
 	// 域名
 	domain: 'http://127.0.0.1:8085/',
 	//接口地址
@@ -109,7 +109,7 @@ const utils = {
 				data: postData,
 				header: {
 					'content-type': contentType,
-					'token': utils.getToken()
+					'Authorization': 'Bearer ' + utils.getToken()
 				},
 				method: method, //'GET','POST'
 				success: (res) => {
@@ -118,22 +118,22 @@ const utils = {
 					}
 					if (res.statusCode === 200) {
 						if (res.data.code === 401) {
-							utils.modal('温馨提示', '您还没有登录，是否去登录', true, (confirm) => {
-								if (confirm) {
-									uni.redirectTo({
-										url: '/pages/auth/btnAuth/btnAuth',
-									})
-								} else {
-									uni.navigateBack({
-										delta: 1,
-										fail: (res) => {
-											uni.switchTab({
-												url: '/pages/index/index',
-											})
-										}
-									})
-								}
-							})
+							// 尝试刷新 Token
+							const oldToken = utils.getToken();
+							if (oldToken && !url.includes('auth/refresh-token')) {
+								utils._refreshToken(oldToken).then(newToken => {
+									if (newToken) {
+										// 用新 token 重发原请求
+										utils.request(url, postData, method, contentType, isDelay, hideLoading).then(resolve).catch(reject);
+									} else {
+										utils._handleUnauthorized();
+									}
+								}).catch(() => {
+									utils._handleUnauthorized();
+								});
+							} else {
+								utils._handleUnauthorized();
+							}
 						} else if (res.data.code === 500) {
 							utils.toast(res.data.msg)
 						} else if (res.data.code === 404) {
@@ -181,7 +181,7 @@ const utils = {
 				name: 'file',
 				header: {
 					'content-type': 'multipart/form-data',
-					'token': utils.getToken()
+					'Authorization': 'Bearer ' + utils.getToken()
 				},
 				success: function (res) {
 					uni.hideLoading()
@@ -466,6 +466,52 @@ const utils = {
 					reject(err);
 				}
 			});
+		});
+	},
+
+	/**
+	 * 刷新 Token（内部方法，由 401 拦截器调用）
+	 */
+	_refreshToken: function (oldToken) {
+		return new Promise((resolve, reject) => {
+			uni.request({
+				url: utils.interfaceUrl() + 'auth/refresh-token',
+				method: 'POST',
+				data: { token: oldToken },
+				header: { 'content-type': 'application/json' },
+				success: (res) => {
+					if (res.statusCode === 200 && res.data && res.data.code === 0 && res.data.data && res.data.data.token) {
+						const newToken = res.data.data.token;
+						uni.setStorageSync('token', newToken);
+						resolve(newToken);
+					} else {
+						resolve(null);
+					}
+				},
+				fail: () => {
+					resolve(null);
+				}
+			});
+		});
+	},
+
+	/**
+	 * 未授权处理：清除 token 并跳转登录页
+	 */
+	_handleUnauthorized: function () {
+		uni.removeStorageSync('token');
+		uni.removeStorageSync('userId');
+		utils.modal('温馨提示', '您还没有登录，是否去登录', true, (confirm) => {
+			if (confirm) {
+				uni.redirectTo({ url: '/pages/auth/btnAuth/btnAuth' });
+			} else {
+				uni.navigateBack({
+					delta: 1,
+					fail: () => {
+						uni.switchTab({ url: '/pages/index/index' });
+					}
+				});
+			}
 		});
 	}
 }

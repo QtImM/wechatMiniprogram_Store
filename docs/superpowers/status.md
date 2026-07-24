@@ -24,6 +24,8 @@
 | Task 8: Product 模块 CRUD | ✅ 完成 | 商品分类+SPU 接口 |
 | Task 9: Server 启动入口 | ✅ 完成 | Spring Boot 主应用 |
 | Task 10: 小程序骨架 | ✅ 完成 | uni-app 首页+请求封装 |
+| Phase1-子阶段1: 登录与会话 | ✅ 完成 | 微信登录+Token+刷新 |
+| Phase1-子阶段2: 商品真实接口 | ⏳ 待开始 | MockData → 数据库 |
 
 ## 阻塞项
 
@@ -105,6 +107,50 @@
 - 收窄左侧一级分类宽度，释放右侧内容空间，改善标题、价格与操作按钮的阅读节奏
 - 为分类标题区补充说明文案，强化栏目感，避免页面中上部过于单薄
 
+## 2026-07-23 登录与会话子阶段完成 (Phase 1 - 子阶段 1)
+
+### 后端变更
+- 新增 `shop-module-member` 模块核心代码：
+  - `MemberUserDO`：会员用户实体，映射 `member_user` 表
+  - `MemberUserMapper`：MyBatis-Plus Mapper
+  - `WxMaProperties`：微信小程序配置属性（appid/secret/mock-enabled）
+  - `WxMaService`：微信 code2session 服务（支持 Mock 模式和真实模式）
+  - `MemberAuthService`：登录/注册/Token 刷新/用户信息服务
+  - `AppAuthController`：真实登录接口（`/app-api/auth/**`）
+- 删除 `shop-module-product` 中的旧版 Mock `AppAuthController`
+- 更新 `TokenAuthenticationFilter`：将 raw token 存入 credentials，支持 logout 删除
+- 更新 `sql/init.sql`：`member_user` 表新增 `session_key` 字段
+- 更新 `application-dev.yml`：新增 `wx.ma` 配置项（默认 Mock 模式）
+
+### 前端变更
+- `util.js`：请求 header 从 `token: xxx` 改为 `Authorization: Bearer xxx`
+- `util.js`：新增 401 自动刷新 Token 逻辑（调用 `auth/refresh-token` 后重发原请求）
+- `util.js`：新增 `_handleUnauthorized` 统一未授权处理（清 token + 跳转登录）
+- `btnAuth.vue`：优化登录流程，兼容新版微信 `getUserProfile` 失败时直接用 code 登录
+
+### 接口对照
+| 接口 | 说明 |
+|------|------|
+| `POST /app-api/auth/LoginByMa` | 微信登录（code 换 token） |
+| `POST /app-api/auth/refresh-token` | 刷新 Token |
+| `POST /app-api/auth/logout` | 退出登录 |
+| `GET /app-api/auth/user-info` | 获取当前用户信息 |
+
+### 开发注意事项
+- 微信登录默认 Mock 模式（`wx.ma.mock-enabled: true`），联调时改为 `false` 并填写 appid/secret
+- 运行数据库需执行 `ALTER TABLE member_user ADD COLUMN session_key varchar(128) DEFAULT NULL;`
+- 前端 mock 模式不受影响，`useMock: true` 时仍走本地 mock 数据
+
+## 2026-07-24 真实微信登录联调完成
+
+- 修复前后端字段名不一致：后端返回 `nickName`/`avatarUrl` → 改为 `nickname`/`avatar`/`mobile`（与前端 ucenter 页面匹配）
+- 配置多环境启动：`dev,local` 双 profile，`application-local.yml` 存放真实 AppID/Secret（已 gitignore）
+- 数据库密码修正：`application-dev.yml` 密码从 `qwerr521` 改为 `root`（与 Docker 容器一致）
+- 前端切换真实后端：`util.js` 的 `useMock` 改为 `false`
+- 微信开发者工具 AppID 配置：`project.config.json` 填入 `wx34175bfa441e4316`
+- 验证通过：后端日志确认用户登录成功，前端"我的"页面正确显示"微信用户"+"欢迎回来"
+- 关键经验：Maven 多模块项目修改子模块后需先 `mvn clean install -DskipTests` 再 `spring-boot:run`
+
 ## 决策记录
 
 | 日期 | 决策 | 原因 |
@@ -121,14 +167,12 @@
 | 2026-07-09 | 统一前后台 Mock 核心商品数据集 | 保证不管是前端还是后端，在 Mock 模式下都能展示完全一致的高画质真实商品图，完美呈现分类对应的商品列表 |
 | 2026-07-09 | 优化二级分类首屏体验 & 补全金刚区功能 | 解决首屏冗余和点击无交互的体验缺陷，提高 Demo 呈现的高保真度和完整性 |
 | 2026-07-16 | 后续阶段按“交易闭环优先”推进 | 当前项目已具备高保真 Demo，最大缺口是真实后端交易链路，先完成登录、商品、购物车、订单、支付适配，再推进会员营销和管理后台 |
+| 2026-07-24 | 后端 userInfo 字段名与前端对齐 | 后端返回 nickName/avatarUrl，前端期望 nickname/avatar，统一为小写 |
 
 ## 下一步行动
 
-Plan1 所有 Task 已完成，后续开发路径已规划。下一步：
-1. 提交并推送 `2026-07-16-next-development-path.md` 与本文件更新
-2. 创建 `2026-07-16-plan2-core-trade-loop.md`，细化核心交易闭环实施步骤
-3. 按 Plan2 依次实现真实登录、商品真实接口、购物车、地址、订单、支付适配
-4. 每完成一个阶段，执行验证、中文 commit、push 到 GitHub
+登录与会话子阶段已完成并通过真实微信联调。下一步：
+1. 推进 Phase 1 子阶段 2：商品真实接口（从 MockData 切换到数据库查询）
 
 ---
 

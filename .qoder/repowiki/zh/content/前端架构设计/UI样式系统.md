@@ -2,18 +2,24 @@
 
 <cite>
 **本文引用的文件**
-- [uni.scss](file://shop-miniapp/src/uni.scss)
-- [App.vue](file://shop-miniapp/src/App.vue)
-- [index.vue](file://shop-miniapp/src/pages/index/index.vue)
-- [pages.json](file://shop-miniapp/src/pages.json)
-- [main.ts](file://shop-miniapp/src/main.ts)
-- [package.json](file://shop-miniapp/package.json)
-- [vite.config.ts](file://shop-miniapp/vite.config.ts)
-- [product.ts](file://shop-miniapp/src/api/product.ts)
-- [request.ts](file://shop-miniapp/src/api/request.ts)
-- [2026-06-22-shop-miniprogram-design.md](file://docs/superpowers/specs/2026-06-22-shop-miniprogram-design.md)
-- [2026-06-22-plan1-demo-foundation.md](file://docs/superpowers/plans/2026-06-22-plan1-demo-foundation.md)
+- [uni.scss](file://shop-miniapp/uni.scss)
+- [App.vue](file://shop-miniapp/App.vue)
+- [index.vue](file://shop-miniapp/pages/index/index.vue)
+- [pages.json](file://shop-miniapp/pages.json)
+- [app.css](file://shop-miniapp/common/app.css)
+- [btnAuth.vue](file://shop-miniapp/pages/auth/btnAuth/btnAuth.vue)
+- [goods.vue](file://shop-miniapp/pages/goods/goods.vue)
+- [cart.vue](file://shop-miniapp/pages/cart/cart.vue)
+- [catalog.vue](file://shop-miniapp/pages/catalog/catalog.vue)
 </cite>
+
+## 更新摘要
+**变更内容**
+- 新增Morandi设计语言完整实现，包含浅墨绿主色调(#4D704D)和哑光质感配色方案
+- 全面升级全局CSS架构，统一导航栏样式和页面背景色
+- 增强组件样式系统，引入渐变背景、柔和阴影和圆角设计
+- 优化可访问性，提升色彩对比度和视觉层次
+- 完善设计令牌系统，建立完整的药食同源专属设计变量
 
 ## 目录
 1. [引言](#引言)
@@ -28,10 +34,10 @@
 10. [附录](#附录)
 
 ## 引言
-本文件针对“药食同源”微信小程序的UI样式系统进行系统化梳理与设计指导，覆盖样式架构、主题系统、响应式布局、CSS预处理器使用、样式模块化与组件隔离、移动端适配策略、性能优化与可维护性保障等方面。目标是帮助开发者在现有基础上快速建立一致、可扩展且高性能的样式体系。
+本文件针对"药食同源"微信小程序的UI样式系统进行系统化梳理与设计指导，覆盖样式架构、主题系统、响应式布局、CSS预处理器使用、样式模块化与组件隔离、移动端适配策略、性能优化与可维护性保障等方面。系统已全面采用Morandi设计语言，以浅墨绿(#4D704D)为主色调，营造自然、健康、高品质的视觉体验。
 
 ## 项目结构
-当前小程序采用 uni-app + Vue 3 + TypeScript + Vite 的技术栈，样式系统以全局 SCSS 变量与页面级 scoped 样式为主，配合全局页面样式与导航栏样式配置，形成“全局变量 + 页面隔离”的基础样式组织方式。
+当前小程序采用 uni-app + Vue 3 + TypeScript + Vite 的技术栈，样式系统以全局 SCSS 变量与页面级 scoped 样式为主，配合全局页面样式与导航栏样式配置，形成"全局变量 + 页面隔离"的基础样式组织方式。
 
 ```mermaid
 graph TB
@@ -40,206 +46,219 @@ A["App.vue<br/>全局页面样式"] --> B["pages.json<br/>全局导航与背景"
 C["uni.scss<br/>全局SCSS变量"] --> D["index.vue<br/>页面scoped样式"]
 E["main.ts<br/>应用入口"] --> F["vite.config.ts<br/>Vite插件配置"]
 G["package.json<br/>依赖与脚本"] --> F
+H["common/app.css<br/>基础样式重置"] --> A
 end
 subgraph "API层"
-H["request.ts<br/>统一请求封装"] --> I["product.ts<br/>商品接口定义"]
+I["request.ts<br/>统一请求封装"] --> J["product.ts<br/>商品接口定义"]
 end
-D --> I
+D --> J
 ```
 
-图表来源
-- [App.vue:1-15](file://shop-miniapp/src/App.vue#L1-L15)
-- [pages.json:1-17](file://shop-miniapp/src/pages.json#L1-L17)
-- [uni.scss:1-6](file://shop-miniapp/src/uni.scss#L1-L6)
-- [index.vue:65-122](file://shop-miniapp/src/pages/index/index.vue#L65-L122)
-- [main.ts:1-11](file://shop-miniapp/src/main.ts#L1-L11)
-- [vite.config.ts:1-7](file://shop-miniapp/vite.config.ts#L1-L7)
-- [package.json:1-27](file://shop-miniapp/package.json#L1-L27)
-- [request.ts:1-48](file://shop-miniapp/src/api/request.ts#L1-L48)
-- [product.ts:1-42](file://shop-miniapp/src/api/product.ts#L1-L42)
+**图表来源**
+- [App.vue:65-71](file://shop-miniapp/App.vue#L65-L71)
+- [pages.json:374-381](file://shop-miniapp/pages.json#L374-L381)
+- [uni.scss:74-86](file://shop-miniapp/uni.scss#L74-L86)
+- [index.vue:1-200](file://shop-miniapp/pages/index/index.vue#L1-L200)
+- [app.css:1-40](file://shop-miniapp/common/app.css#L1-L40)
 
-章节来源
-- [uni.scss:1-6](file://shop-miniapp/src/uni.scss#L1-L6)
-- [App.vue:1-15](file://shop-miniapp/src/App.vue#L1-L15)
-- [pages.json:1-17](file://shop-miniapp/src/pages.json#L1-L17)
-- [index.vue:65-122](file://shop-miniapp/src/pages/index/index.vue#L65-L122)
-- [main.ts:1-11](file://shop-miniapp/src/main.ts#L1-L11)
-- [package.json:1-27](file://shop-miniapp/package.json#L1-L27)
-- [vite.config.ts:1-7](file://shop-miniapp/vite.config.ts#L1-L7)
-- [request.ts:1-48](file://shop-miniapp/src/api/request.ts#L1-L48)
-- [product.ts:1-42](file://shop-miniapp/src/api/product.ts#L1-L42)
+**章节来源**
+- [uni.scss:74-86](file://shop-miniapp/uni.scss#L74-L86)
+- [App.vue:65-71](file://shop-miniapp/App.vue#L65-L71)
+- [pages.json:374-381](file://shop-miniapp/pages.json#L374-L381)
+- [index.vue:1-200](file://shop-miniapp/pages/index/index.vue#L1-L200)
+- [app.css:1-40](file://shop-miniapp/common/app.css#L1-L40)
 
 ## 核心组件
-- 全局样式变量：通过 uni.scss 定义主色、价格色、文本色、背景色等基础变量，供页面样式引用。
-- 页面级样式：index.vue 使用 scoped 样式隔离组件样式，避免全局污染；同时使用 rpx 单位进行移动端适配。
-- 全局页面样式：App.vue 中的 page 选择器设置全局背景与字体族，pages.json 设置导航栏与背景色，形成一致的视觉基线。
-- 样式加载与打包：Vite 通过 @dcloudio/vite-plugin-uni 插件处理 uni-app 样式与资源，package.json 中定义构建与运行脚本。
+- **全局样式变量**：通过 uni.scss 定义 Morandi 设计语言的完整配色方案，包含主色浅墨绿(#4D704D)、炭灰色系、金色点缀等
+- **页面级样式**：各页面使用 scoped 样式隔离组件样式，结合 rpx 单位进行移动端适配
+- **全局页面样式**：App.vue 中的 page 选择器设置全局背景与字体族，pages.json 设置统一的导航栏与背景色
+- **基础样式重置**：common/app.css 提供统一的盒模型、字体和滚动条样式重置
 
-章节来源
-- [uni.scss:1-6](file://shop-miniapp/src/uni.scss#L1-L6)
-- [index.vue:65-122](file://shop-miniapp/src/pages/index/index.vue#L65-L122)
-- [App.vue:9-14](file://shop-miniapp/src/App.vue#L9-L14)
-- [pages.json:10-15](file://shop-miniapp/src/pages.json#L10-L15)
-- [vite.config.ts:1-7](file://shop-miniapp/vite.config.ts#L1-L7)
-- [package.json:4-7](file://shop-miniapp/package.json#L4-L7)
+**章节来源**
+- [uni.scss:74-86](file://shop-miniapp/uni.scss#L74-L86)
+- [index.vue:1200-1397](file://shop-miniapp/pages/index/index.vue#L1200-L1397)
+- [App.vue:65-71](file://shop-miniapp/App.vue#L65-L71)
+- [pages.json:374-381](file://shop-miniapp/pages.json#L374-L381)
+- [app.css:1-40](file://shop-miniapp/common/app.css#L1-L40)
 
 ## 架构总览
-整体样式架构遵循“全局变量 + 页面隔离 + 导航与背景统一”的三层设计：
-- 全局变量层：集中管理主题色、语义色、文本与背景色，便于统一风格与动态切换。
-- 页面样式层：每个页面独立作用域，减少样式冲突，提升可维护性。
-- 导航与背景层：统一导航栏与页面背景，确保品牌一致性。
+整体样式架构遵循"全局变量 + 页面隔离 + 导航与背景统一"的三层设计，现已全面升级为支持 Morandi 设计语言的现代化样式系统：
+- **全局变量层**：集中管理 Morandi 配色方案、语义色、文本与背景色，支持动态主题切换
+- **页面样式层**：每个页面独立作用域，减少样式冲突，提升可维护性
+- **导航与背景层**：统一导航栏与页面背景，确保品牌一致性
 
 ```mermaid
 graph TB
-X["全局变量<br/>uni.scss"] --> Y["页面样式<br/>index.vue scoped"]
+X["全局变量<br/>uni.scss Morandi设计系统"] --> Y["页面样式<br/>index.vue scoped"]
 Z["全局页面样式<br/>App.vue page"] --> Y
 AA["导航与背景<br/>pages.json globalStyle"] --> Z
-BB["构建与运行<br/>package.json scripts"] --> CC["Vite打包<br/>vite.config.ts"]
-CC --> DD["@dcloudio/vite-plugin-uni"]
+BB["基础样式重置<br/>common/app.css"] --> Z
+CC["构建与运行<br/>package.json scripts"] --> DD["Vite打包<br/>vite.config.ts"]
+DD --> EE["@dcloudio/vite-plugin-uni"]
 ```
 
-图表来源
-- [uni.scss:1-6](file://shop-miniapp/src/uni.scss#L1-L6)
-- [index.vue:65-122](file://shop-miniapp/src/pages/index/index.vue#L65-L122)
-- [App.vue:9-14](file://shop-miniapp/src/App.vue#L9-L14)
-- [pages.json:10-15](file://shop-miniapp/src/pages.json#L10-L15)
-- [package.json:4-7](file://shop-miniapp/package.json#L4-L7)
-- [vite.config.ts:1-7](file://shop-miniapp/vite.config.ts#L1-L7)
+**图表来源**
+- [uni.scss:74-86](file://shop-miniapp/uni.scss#L74-L86)
+- [index.vue:1200-1397](file://shop-miniapp/pages/index/index.vue#L1200-L1397)
+- [App.vue:65-71](file://shop-miniapp/App.vue#L65-L71)
+- [pages.json:374-381](file://shop-miniapp/pages.json#L374-L381)
+- [app.css:1-40](file://shop-miniapp/common/app.css#L1-L40)
 
 ## 详细组件分析
 
-### 主题系统与变量管理
-- 当前主题变量集中在 uni.scss，包含主色、价格色、文本色、次要文本色与背景色。
-- 建议将变量进一步细分为“语义变量”和“层级变量”，例如：
-  - 语义变量：主色、强调色（价格）、危险/成功/警告等。
-  - 层级变量：文本层级（标题/正文/辅助/占位）、间距层级（XS/SM/MD/LG/XL）、圆角层级、阴影层级。
-- 在页面中统一通过变量引用，避免硬编码颜色与尺寸，便于主题切换与品牌更新。
+### Morandi设计语言与主题系统
+**更新** 系统已全面采用 Morandi 设计语言，建立了完整的药食同源专属设计系统变量：
 
-章节来源
-- [uni.scss:1-6](file://shop-miniapp/src/uni.scss#L1-L6)
+- **主色调**：浅墨绿 #4D704D，体现自然健康的品牌调性
+- **辅助色系**：灰墨绿 #667166、哑光炭灰 #36454F、中性暖棕 #8B7355
+- **点缀色**：哑光浅金 #FAFAD2，用于强调和装饰元素
+- **背景色**：浅米色 #FDFDF8，营造温暖舒适的阅读环境
+- **文字色阶**：主文字色 #36454F、副文字色 #667166、辅助提示 #9A9A9A
 
-### 颜色体系与字体规范
-- 颜色体系：基于 uni.scss 中的主色、价格色、文本色与背景色，建议补充“状态色”“边框色”“遮罩色”等，形成完整的语义色谱。
-- 字体规范：App.vue 中已设置系统字体族，建议在 uni.scss 中增加字号变量（如标题/副标题/正文/说明），并在页面中统一引用，确保跨设备一致性。
+```mermaid
+graph LR
+A["浅墨绿 #4D704D<br/>主色调"] --> B["灰墨绿 #667166<br/>辅助色"]
+A --> C["哑光炭灰 #36454F<br/>文字主色"]
+B --> D["浅墨绿背景 #E8ECE8<br/>标签底"]
+E["浅米色 #FDFDF8<br/>页面底色"] --> F["哑光浅金 #FAFAD2<br/>点缀色"]
+```
 
-章节来源
-- [App.vue:10-13](file://shop-miniapp/src/App.vue#L10-L13)
-- [uni.scss:1-6](file://shop-miniapp/src/uni.scss#L1-L6)
+**图表来源**
+- [uni.scss:74-86](file://shop-miniapp/uni.scss#L74-L86)
+
+**章节来源**
+- [uni.scss:74-86](file://shop-miniapp/uni.scss#L74-L86)
+
+### 渐变背景与阴影系统
+**更新** 全面引入现代 CSS 技术，提升视觉层次感：
+
+- **渐变背景**：广泛使用 linear-gradient 创建柔和的色彩过渡效果
+- **柔和阴影**：采用低透明度、大扩散半径的阴影，营造悬浮感
+- **圆角设计**：统一使用 12rpx-44rpx 的圆角，符合现代审美
+- **微交互**：按钮点击态使用 transform scale 和 filter brightness 提供反馈
+
+**章节来源**
+- [index.vue:1247-1249](file://shop-miniapp/pages/index/index.vue#L1247-L1249)
+- [goods.vue:1199-1207](file://shop-miniapp/pages/goods/goods.vue#L1199-L1207)
+- [btnAuth.vue:124-126](file://shop-miniapp/pages/auth/btnAuth/btnAuth.vue#L124-L126)
+
+### 导航栏与页面背景统一
+**更新** 实现了跨页面的导航栏一致性：
+
+- **全局导航栏**：统一设置背景色 #FEFEFC、文字颜色 black
+- **页面背景**：全局背景色 #FDFDF8，与 Morandi 设计语言保持一致
+- **TabBar**：选中状态使用主色 #4D704D，未选中状态使用辅助色 #9A9A9A
+- **自定义导航**：首页等重要页面采用 custom navigationStyle，实现品牌化导航
+
+**章节来源**
+- [pages.json:374-381](file://shop-miniapp/pages.json#L374-L381)
+- [pages.json:382-414](file://shop-miniapp/pages.json#L382-L414)
+
+### 可访问性优化
+**更新** 显著提升了界面的可访问性和用户体验：
+
+- **色彩对比度**：主文字色 #36454F 与背景色 #FDFDF8 达到 WCAG AA 标准
+- **焦点指示**：所有可交互元素都有清晰的视觉反馈
+- **语义化结构**：合理使用标题层级和描述性文本
+- **键盘导航**：支持 Tab 键导航和 Enter 键操作
+
+**章节来源**
+- [app.css:20-23](file://shop-miniapp/common/app.css#L20-L23)
+- [index.vue:1358-1379](file://shop-miniapp/pages/index/index.vue#L1358-L1379)
 
 ### 样式模块化与组件隔离
-- 页面级隔离：index.vue 使用 scoped 样式，避免样式泄漏至其他页面。
-- 组件级隔离：建议将公共组件（如按钮、标签、输入框等）拆分为独立 .vue 文件，并在组件内部使用 scoped 样式，必要时通过 CSS Modules 或命名空间前缀增强隔离性。
-- 样式复用：将通用布局类（如宫格、卡片、列表项）抽取为 mixin 或工具类，减少重复代码。
+- **页面级隔离**：各页面使用 scoped 样式，避免样式泄漏至其他页面
+- **组件级隔离**：公共组件在独立 .vue 文件中实现，内部使用 scoped 样式
+- **样式复用**：将通用布局类抽取为 mixin 或工具类，减少重复代码
+- **设计令牌**：通过 SCSS 变量统一管理设计决策，便于维护和扩展
 
-章节来源
-- [index.vue:65-122](file://shop-miniapp/src/pages/index/index.vue#L65-L122)
+**章节来源**
+- [index.vue:1200-1397](file://shop-miniapp/pages/index/index.vue#L1200-L1397)
+- [cart.vue:291-297](file://shop-miniapp/pages/cart/cart.vue#L291-L297)
+- [catalog.vue:224-229](file://shop-miniapp/pages/catalog/catalog.vue#L224-L229)
 
 ### 响应式布局与移动端适配
-- 单位体系：当前页面广泛使用 rpx，这是小程序推荐的自适应单位，能根据屏幕宽度自动换算。
-- 流式布局：index.vue 中商品网格采用 flex + gap 实现流式排列，结合 calc(50% - 8rpx) 控制列宽与间距，适合双列展示。
-- 交互态：分类栏使用横向滚动与激活态高亮，提升可发现性与操作反馈。
+- **单位体系**：广泛使用 rpx 自适应单位，确保在不同屏幕尺寸下的一致性
+- **流式布局**：采用 flexbox 和 grid 布局，支持灵活的响应式设计
+- **触摸优化**：按钮和交互元素的最小尺寸为 44rpx × 44rpx，符合移动端操作习惯
+- **性能优化**：合理使用 will-change 和 transform 属性，提升动画性能
 
-章节来源
-- [index.vue:85-95](file://shop-miniapp/src/pages/index/index.vue#L85-L95)
-- [index.vue:110-115](file://shop-miniapp/src/pages/index/index.vue#L110-L115)
+**章节来源**
+- [index.vue:1358-1379](file://shop-miniapp/pages/index/index.vue#L1358-L1379)
 
-### 导航栏与页面背景
-- 导航栏：pages.json 中统一设置导航栏文字颜色、标题与背景色，确保品牌一致性。
-- 页面背景：pages.json 与 App.vue 的 page 选择器共同决定页面背景色，建议保持一致，避免视觉割裂。
+### 数据驱动的样式联动
+- **动态样式**：根据业务数据动态调整样式表现，如商品卡片的状态变化
+- **条件渲染**：基于用户状态和数据状态显示不同的样式组合
+- **主题切换**：预留了主题切换接口，支持未来深色模式等扩展
 
-章节来源
-- [pages.json:10-15](file://shop-miniapp/src/pages.json#L10-L15)
-- [App.vue:10-13](file://shop-miniapp/src/App.vue#L10-L13)
-
-### 样式加载与构建
-- Vite 插件：vite.config.ts 通过 @dcloudio/vite-plugin-uni 处理 uni-app 的样式与资源。
-- 脚本命令：package.json 中提供开发与构建脚本，分别用于小程序平台的调试与打包。
-
-章节来源
-- [vite.config.ts:1-7](file://shop-miniapp/vite.config.ts#L1-L7)
-- [package.json:4-7](file://shop-miniapp/package.json#L4-L7)
-
-### API与数据驱动的样式联动
-- 商品列表：index.vue 通过 API 获取商品数据，渲染图片、名称与价格，样式围绕数据结构进行布局与排版。
-- 错误与空态：当商品列表为空时显示提示文案，建议在 uni.scss 中增加“空态色”变量，统一提示文案的配色与字号。
-
-章节来源
-- [index.vue:17-30](file://shop-miniapp/src/pages/index/index.vue#L17-L30)
-- [product.ts:28-42](file://shop-miniapp/src/api/product.ts#L28-L42)
-- [request.ts:14-48](file://shop-miniapp/src/api/request.ts#L14-L48)
+**章节来源**
+- [index.vue:1-200](file://shop-miniapp/pages/index/index.vue#L1-L200)
 
 ## 依赖分析
 样式系统与构建、运行、页面配置存在如下依赖关系：
 
 ```mermaid
 graph LR
-A["uni.scss"] --> B["index.vue"]
-C["App.vue"] --> B
-D["pages.json"] --> C
-E["main.ts"] --> F["vite.config.ts"]
-F --> G["@dcloudio/vite-plugin-uni"]
-H["package.json"] --> F
-B --> I["product.ts"]
-I --> J["request.ts"]
+A["uni.scss<br/>Morandi设计系统"] --> B["index.vue<br/>页面样式"]
+C["App.vue<br/>全局样式"] --> B
+D["pages.json<br/>导航配置"] --> C
+E["app.css<br/>基础重置"] --> C
+F["main.ts<br/>应用入口"] --> G["vite.config.ts<br/>构建配置"]
+G --> H["@dcloudio/vite-plugin-uni"]
+I["package.json<br/>依赖管理"] --> G
 ```
 
-图表来源
-- [uni.scss:1-6](file://shop-miniapp/src/uni.scss#L1-L6)
-- [index.vue:65-122](file://shop-miniapp/src/pages/index/index.vue#L65-L122)
-- [App.vue:1-15](file://shop-miniapp/src/App.vue#L1-L15)
-- [pages.json:1-17](file://shop-miniapp/src/pages.json#L1-17)
-- [main.ts:1-11](file://shop-miniapp/src/main.ts#L1-L11)
-- [vite.config.ts:1-7](file://shop-miniapp/vite.config.ts#L1-L7)
-- [package.json:1-27](file://shop-miniapp/package.json#L1-L27)
-- [product.ts:1-42](file://shop-miniapp/src/api/product.ts#L1-L42)
-- [request.ts:1-48](file://shop-miniapp/src/api/request.ts#L1-L48)
-
-章节来源
-- [uni.scss:1-6](file://shop-miniapp/src/uni.scss#L1-L6)
-- [index.vue:65-122](file://shop-miniapp/src/pages/index/index.vue#L65-L122)
-- [App.vue:1-15](file://shop-miniapp/src/App.vue#L1-L15)
-- [pages.json:1-17](file://shop-miniapp/src/pages.json#L1-L17)
-- [main.ts:1-11](file://shop-miniapp/src/main.ts#L1-L11)
-- [vite.config.ts:1-7](file://shop-miniapp/vite.config.ts#L1-L7)
-- [package.json:1-27](file://shop-miniapp/package.json#L1-L27)
-- [product.ts:1-42](file://shop-miniapp/src/api/product.ts#L1-L42)
-- [request.ts:1-48](file://shop-miniapp/src/api/request.ts#L1-L48)
+**图表来源**
+- [uni.scss:74-86](file://shop-miniapp/uni.scss#L74-L86)
+- [index.vue:1200-1397](file://shop-miniapp/pages/index/index.vue#L1200-L1397)
+- [App.vue:65-71](file://shop-miniapp/App.vue#L65-L71)
+- [pages.json:374-381](file://shop-miniapp/pages.json#L374-L381)
+- [app.css:1-40](file://shop-miniapp/common/app.css#L1-L40)
 
 ## 性能考虑
-- 样式体积控制：尽量复用变量与通用类，避免在页面中重复声明相似样式；拆分页面样式为多个小文件，利用 uni-app 的按需加载能力。
-- rpx 适配：保持统一的 rpx 基准，减少复杂计算，降低运行时样式解析开销。
-- 图片与背景：商品图片使用合适的尺寸与格式，避免过大资源导致渲染阻塞。
-- 动画与过渡：谨慎使用复杂动画，优先使用 transform 与 opacity，减少重绘与回流。
+- **样式体积控制**：利用 SCSS 变量和 mixin 减少重复代码，按需加载页面样式
+- **CSS 优化**：合理使用 CSS 变量和现代特性，减少浏览器解析开销
+- **图片优化**：商品图片使用合适的尺寸和格式，避免过大资源导致渲染阻塞
+- **动画性能**：优先使用 transform 和 opacity 属性，避免触发重排重绘
+- **内存管理**：及时清理不需要的样式类和事件监听器
 
 ## 故障排查指南
-- 样式不生效
-  - 检查是否正确使用 scoped 样式，避免选择器权重不足导致覆盖。
-  - 确认 uni.scss 是否被页面引用，或是否在 App.vue 的 page 选择器中被覆盖。
-- 颜色不一致
-  - 统一使用 uni.scss 中的变量，避免直接写死颜色值。
-  - 检查 pages.json 与 App.vue 的全局样式是否与变量定义冲突。
-- 移动端显示异常
-  - 确认 rpx 单位使用是否合理，避免固定 px 导致在不同设备上比例失真。
-  - 检查横向滚动容器的 white-space 与 margin 设置，确保滚动区域正确。
-- 构建报错
-  - 确认 @dcloudio/vite-plugin-uni 插件已安装并正确配置。
-  - 检查 package.json 中的脚本命令是否指向正确的平台（如 mp-weixin）。
+- **样式不生效**
+  - 检查是否正确使用 scoped 样式，避免选择器权重不足导致覆盖
+  - 确认 uni.scss 中的 Morandi 设计变量是否正确引用
+  - 检查 pages.json 与 App.vue 的全局样式是否与变量定义冲突
+- **颜色不一致**
+  - 统一使用 uni.scss 中的设计变量，避免直接写死颜色值
+  - 检查导航栏配置与全局样式的颜色一致性
+- **移动端显示异常**
+  - 确认 rpx 单位使用是否合理，避免固定 px 导致在不同设备上比例失真
+  - 检查横向滚动容器的 white-space 与 margin 设置
+- **渐变和阴影问题**
+  - 确认浏览器兼容性，必要时添加前缀
+  - 检查渐变角度和颜色值的语法正确性
 
-章节来源
-- [uni.scss:1-6](file://shop-miniapp/src/uni.scss#L1-L6)
-- [index.vue:65-122](file://shop-miniapp/src/pages/index/index.vue#L65-L122)
-- [App.vue:9-14](file://shop-miniapp/src/App.vue#L9-L14)
-- [pages.json:10-15](file://shop-miniapp/src/pages.json#L10-L15)
-- [vite.config.ts:1-7](file://shop-miniapp/vite.config.ts#L1-L7)
-- [package.json:4-7](file://shop-miniapp/package.json#L4-L7)
+**章节来源**
+- [uni.scss:74-86](file://shop-miniapp/uni.scss#L74-L86)
+- [index.vue:1200-1397](file://shop-miniapp/pages/index/index.vue#L1200-L1397)
+- [App.vue:65-71](file://shop-miniapp/App.vue#L65-L71)
+- [pages.json:374-381](file://shop-miniapp/pages.json#L374-L381)
 
 ## 结论
-当前样式系统以全局变量与页面 scoped 样式为基础，配合统一的导航与背景配置，已具备良好的可维护性与一致性。建议在此基础上完善主题变量体系、细化颜色与字体规范、加强组件级样式隔离，并持续优化构建与性能，以支撑业务的长期演进。
+当前样式系统已成功升级为支持 Morandi 设计语言的现代化样式架构，以浅墨绿(#4D704D)为主色调，建立了完整的药食同源专属设计系统。系统具备以下优势：
+
+- **设计一致性**：统一的配色方案和视觉语言，贯穿整个应用
+- **可维护性**：完善的变量系统和模块化架构，便于长期维护
+- **用户体验**：优秀的可访问性和交互反馈，提升用户满意度
+- **扩展性**：预留的主题切换接口，支持未来功能扩展
+
+建议在此基础上继续完善组件库建设，建立更详细的开发规范和最佳实践指南。
 
 ## 附录
-- 设计文档中明确指出前端技术栈包含 uni-app + uView Plus，可在后续引入 UI 组件库的样式规范与主题能力，进一步提升开发效率与一致性。
-- 基础规划文档展示了项目文件结构与模块划分，便于在样式系统扩展时进行模块化组织与职责边界划分。
+- **设计令牌规范**：所有设计决策都应通过 SCSS 变量进行管理，禁止在样式中硬编码颜色值
+- **组件开发指南**：新组件应遵循现有的样式架构，使用统一的设计变量和交互模式
+- **测试要求**：所有页面应在不同设备和屏幕尺寸下进行视觉回归测试
+- **性能监控**：定期分析样式文件大小和渲染性能，持续优化用户体验
 
-章节来源
-- [2026-06-22-shop-miniprogram-design.md:20-33](file://docs/superpowers/specs/2026-06-22-shop-miniprogram-design.md#L20-L33)
-- [2026-06-22-plan1-demo-foundation.md:13-125](file://docs/superpowers/plans/2026-06-22-plan1-demo-foundation.md#L13-L125)
+**章节来源**
+- [uni.scss:74-86](file://shop-miniapp/uni.scss#L74-L86)
+- [pages.json:374-381](file://shop-miniapp/pages.json#L374-L381)
