@@ -69,10 +69,11 @@ public class MockData {
 
     public static Map<String, Object> getGoodsById(long id) {
         for (Map<String, Object> g : GOODS_LIST) {
-            if (Long.valueOf(g.get("id").toString()) == id) {
+            if (Long.parseLong(g.get("id").toString()) == id) {
                 return g;
             }
         }
-        return GOODS_LIST.get(0);
+        // 如果未命中固定列表，按 id 动态生成商品数据，避免全都误展示为“东阿阿胶糕”
+        return makeGoodsMap(id, 1, "特色药食商品 #" + id, "道地食材，精选品质", "88.00", "https://images.unsplash.com/photo-1505252585461-04db1eb84625?w=400", 0, 0);
     }
 }

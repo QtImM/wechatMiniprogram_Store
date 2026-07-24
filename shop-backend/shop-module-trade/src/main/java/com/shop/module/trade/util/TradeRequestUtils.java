@@ -52,7 +52,18 @@ public final class TradeRequestUtils {
         if (value == null || value.toString().isBlank()) {
             return defaultValue;
         }
-        return Long.parseLong(value.toString());
+        try {
+            if (value instanceof Number number) {
+                return number.longValue();
+            }
+            String str = value.toString().trim();
+            if (str.contains(".")) {
+                return (long) Double.parseDouble(str);
+            }
+            return Long.parseLong(str);
+        } catch (Exception e) {
+            return defaultValue;
+        }
     }
 
     public static Integer getInt(Map<String, Object> body, String key, Integer defaultValue) {
@@ -60,7 +71,18 @@ public final class TradeRequestUtils {
         if (value == null || value.toString().isBlank()) {
             return defaultValue;
         }
-        return Integer.parseInt(value.toString());
+        try {
+            if (value instanceof Number number) {
+                return number.intValue();
+            }
+            String str = value.toString().trim();
+            if (str.contains(".")) {
+                return (int) Double.parseDouble(str);
+            }
+            return Integer.parseInt(str);
+        } catch (Exception e) {
+            return defaultValue;
+        }
     }
 
     public static String getString(Map<String, Object> body, String key, String defaultValue) {

@@ -189,6 +189,17 @@
 - 商品快照优先读取数据库商品，当前商品真实接口未完成时临时回退 `MockData`，保证交易链路可先跑通
 - 已验证：`cd shop-backend && mvn clean install -DskipTests` 构建通过
 
+## 2026-07-24 修复订单列表始终展示同款商品 Bug
+
+- 发现问题：无论购买何种商品，订单列表中始终展示为“东阿阿胶糕”。
+- 根因分析：
+  1. `MockData.getGoodsById` 中对 `id` 进行查找时使用了 `Long.valueOf(...) == id`，包装类对比导致比对为 `false`。查找失败后触发兜底逻辑 `return GOODS_LIST.get(0)`（东阿阿胶糕）。
+  2. `TradeRequestUtils` 解析请求参数时，浮点格式字符串（如 `"1.0"`）触发 `Long.parseLong` 格式异常，导致 `goodsId` 降级退回 `0`。
+- 修复措施：
+  - `MockData.java` 改用 `Long.parseLong` 数值比对，并动态生成未知 ID 的兜底展示，防止统一替换成东阿阿胶糕。
+  - `TradeRequestUtils.java` 增强数值容错解析，支持 `Number`、`Float/Double` 字符串格式转 `Long/Integer`。
+  - 重新构建 `shop-backend` 并验证成功。
+
 ## 2026-07-24 本项目独立开发数据库初始化
 
 - 发现本机 `3306` 已被非本项目 MySQL 占用，且 `root/root` 无法访问，为避免影响已有服务未做任何重置
