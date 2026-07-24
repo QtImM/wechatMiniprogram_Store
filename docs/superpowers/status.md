@@ -8,6 +8,7 @@
 
 **阶段**: Development Roadmap（后续开发路径规划）
 **计划文件**: [next-development-path.md](plans/2026-07-16-next-development-path.md)
+**后端分工**: [backend-three-person-division.md](plans/2026-07-24-backend-three-person-division.md)
 **设计规格**: [shop-miniprogram-design.md](specs/2026-06-22-shop-miniprogram-design.md)
 
 ## 进度概览
@@ -150,6 +151,22 @@
 - 微信开发者工具 AppID 配置：`project.config.json` 填入 `wx34175bfa441e4316`
 - 验证通过：后端日志确认用户登录成功，前端"我的"页面正确显示"微信用户"+"欢迎回来"
 - 关键经验：Maven 多模块项目修改子模块后需先 `mvn clean install -DskipTests` 再 `spring-boot:run`
+
+## 2026-07-24 后端完善范围评估
+
+- 已完成当前后端代码、SQL、前端接口清单与阶段计划的整体梳理
+- 结论：后端当前处于"登录真实可用 + 商品基础 CRUD + 大量 Mock 接口"阶段
+- 新增正式分工文档：`docs/superpowers/plans/2026-07-24-backend-three-person-division.md`
+- 建议按 3 条并行开发线推进：
+  1. 商品/内容真实化：商品分类、商品列表、商品详情、首页、搜索、收藏从 MockData 切到数据库
+  2. 交易闭环：购物车、地址、结算、订单、库存、Mock 支付/微信支付适配
+  3. 平台基础与运营能力：鉴权收口、管理后台接口、营销会员、课程、部署与可观测性
+
+## 2026-07-24 后端三人分工文档发布
+
+- 已将后端三人并行开发分工整理为正式计划文档
+- 文档覆盖当前后端基线、三人职责、接口替换顺序、数据表范围、验收标准和协作规则
+- 文档已挂载到状态仪表盘顶部，方便团队成员从 `status.md` 进入
 
 ## 决策记录
 
