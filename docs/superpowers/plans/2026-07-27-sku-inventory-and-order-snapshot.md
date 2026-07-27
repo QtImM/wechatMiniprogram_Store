@@ -18,10 +18,10 @@
 - 新建：`shop-backend/shop-module-product/src/test/java/com/shop/module/product/service/ProductInventoryServiceTest.java`
 - 修改：`shop-backend/shop-module-product/src/main/java/com/shop/module/product/dal/mysql/ProductSkuMapper.java`
 
-- [ ] 先编写失败测试：验证下架 SPU、SKU 归属不符和库存不足均拒绝；验证扣减只更新指定 SKU。
-- [ ] 运行 `mvn -pl shop-module-product -am -Dtest=ProductInventoryServiceTest test`，确认因缺少服务而失败。
-- [ ] 实现 `ProductInventoryService`：查询上架 SPU 与归属 SKU，解析规格 JSON，使用 `stock >= count` 条件更新扣减和按 SKU 回补。
-- [ ] 再次运行同一测试，确认通过。
+- [x] 先编写失败测试：验证下架 SPU、SKU 归属不符和库存不足均拒绝；验证扣减只更新指定 SKU。
+- [x] 运行 `mvn -pl shop-module-product -am -Dtest=ProductInventoryServiceTest test`，确认因缺少服务而失败。
+- [x] 实现 `ProductInventoryService`：查询上架 SPU 与归属 SKU，解析规格 JSON，使用 `stock >= count` 条件更新扣减和按 SKU 回补。
+- [x] 再次运行同一测试，确认通过。
 
 ### Task 2：交易模块切换真实 SKU 快照
 

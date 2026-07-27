@@ -367,6 +367,12 @@
 - 在 Temurin JDK 25 环境中，Maven 全模块测试通过，商品模块 `AppProductResponseAssemblerTest` 通过；完整打包生成可执行 JAR。
 - 本地联调确认 `goods/count`、`catalog/index`、`goods/list` 和 `goods/detail` 均返回 `code: 0`，列表总数为 4，关键词“阿胶”可命中商品。
 
+## 2026-07-27 SKU 库存服务基础完成
+
+- 新增商品模块 `ProductInventoryService`，集中提供真实 SKU 快照、商品上架与 SKU 归属校验、SKU 原子扣减和回补能力。
+- 本阶段仅完成商品模块库存能力；交易订单下单、取消与超时关闭调用会在下一最小提交中接入。
+- 售后退款仍不自动回补库存，等待未来“退货入库”流程按实际入库数量处理。
+
 ## 决策记录
 
 | 日期 | 决策 | 原因 |
