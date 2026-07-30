@@ -11,7 +11,7 @@
 **后端分工**: [backend-three-person-division.md](plans/2026-07-24-backend-three-person-division.md)
 **交易剩余工作**: [trade-remaining-work.md](plans/2026-07-26-trade-remaining-work.md)
 **下一 Epic 规格**: [product-real-api-and-migration-design.md](specs/2026-07-27-product-real-api-and-migration-design.md)
-**当前实施计划**: [database-incremental-migration.md](plans/2026-07-27-database-incremental-migration.md)
+**当前实施计划**: [2026-07-30-payment-state-machine.md](plans/2026-07-30-payment-state-machine.md)
 **设计规格**: [shop-miniprogram-design.md](specs/2026-06-22-shop-miniprogram-design.md)
 
 ## 进度概览
@@ -375,6 +375,18 @@
 - `shop-module-product` 单元测试已覆盖首页内容排序/过滤、评论响应契约和商品详情互动摘要，并通过 `mvn test -pl shop-module-product -am`。
 - 草稿 PR #13 汇总以上改动；Issue #11、#12 保持开放，关闭条件仍为 Docker 数据库迁移与真实接口联调通过。
 
+## 2026-07-30 Issue #14 支付状态机规划
+
+- 已创建 [Issue #14：支付状态机与异常幂等性](https://github.com/QtImM/wechatMiniprogram_Store/issues/14)，并新增对应规格与实施计划；范围聚焦支付单状态、订单支付状态、重复回调、关闭后回调、金额不一致及退款幂等。
+- 计划分支为 `feat/payment-state-machine`，仅涉及 `shop-module-trade`、独立增量迁移、测试和文档。
+- 明确不修改 Issue #13 的 `shop-module-product`、`shop-miniapp`、首页内容和用户互动范围，可并行开发。
+
+## 2026-07-30 Issue #14 支付状态机实现完成
+
+- 支付单状态已收敛为待支付、已支付、已关闭、已退款；订单支付状态以独立常量维护，避免与支付单的状态值混用。
+- 预支付、支付成功回调、用户取消、超时关闭和退款完成均采用条件更新；重复支付成功和重复退款不会重复写入订单日志。
+- 迁移使用 `V20260730_03__pay_order_state_machine.sql`，避开主干已占用的 `V20260730_02__user_interaction_schema.sql`；迁移校验脚本改为按实际迁移文件数断言历史记录。
+- 已通过 JDK 25 下的 `mvn test -pl shop-module-trade -am`（8 项测试）和 `mvn clean install -DskipTests`（11 个模块）。本机 Docker 守护进程不可用，隔离数据库迁移验收待具备 Docker 的环境执行。
 ## 决策记录
 
 | 日期 | 决策 | 原因 |
