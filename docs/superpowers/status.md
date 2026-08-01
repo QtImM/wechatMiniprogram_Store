@@ -11,8 +11,8 @@
 **后端分工**: [backend-three-person-division.md](plans/2026-07-24-backend-three-person-division.md)
 **交易剩余工作**: [trade-remaining-work.md](plans/2026-07-26-trade-remaining-work.md)
 **交易审计与兜底**: [trade-audit-and-fallback.md](plans/2026-07-31-trade-audit-and-fallback.md)
-**下一 Epic 规格**: [product-real-api-and-migration-design.md](specs/2026-07-27-product-real-api-and-migration-design.md)
-**当前实施计划**: [database-incremental-migration.md](plans/2026-07-27-database-incremental-migration.md)
+**下一 Epic 规格**: [2026-08-01-mock-contract-first-design.md](specs/2026-08-01-mock-contract-first-design.md)
+**当前实施计划**: [2026-08-01-mock-contract-first-roadmap.md](plans/2026-08-01-mock-contract-first-roadmap.md)
 **设计规格**: [shop-miniprogram-design.md](specs/2026-06-22-shop-miniprogram-design.md)
 
 ## 进度概览
@@ -376,6 +376,19 @@
 - `shop-module-product` 单元测试已覆盖首页内容排序/过滤、评论响应契约和商品详情互动摘要，并通过 `mvn test -pl shop-module-product -am`。
 - 草稿 PR #13 汇总以上改动；Issue #11、#12 保持开放，关闭条件仍为 Docker 数据库迁移与真实接口联调通过。
 
+## 2026-07-30 Issue #14 支付状态机规划
+
+- 已创建 [Issue #14：支付状态机与异常幂等性](https://github.com/QtImM/wechatMiniprogram_Store/issues/14)，并新增对应规格与实施计划；范围聚焦支付单状态、订单支付状态、重复回调、关闭后回调、金额不一致及退款幂等。
+- 计划分支为 `feat/payment-state-machine`，仅涉及 `shop-module-trade`、独立增量迁移、测试和文档。
+- 明确不修改 Issue #13 的 `shop-module-product`、`shop-miniapp`、首页内容和用户互动范围，可并行开发。
+
+## 2026-07-30 Issue #14 支付状态机实现完成
+
+- 支付单状态已收敛为待支付、已支付、已关闭、已退款；订单支付状态以独立常量维护，避免与支付单的状态值混用。
+- 预支付、支付成功回调、用户取消、超时关闭和退款完成均采用条件更新；重复支付成功和重复退款不会重复写入订单日志。
+- 迁移使用 `V20260730_03__pay_order_state_machine.sql`，避开主干已占用的 `V20260730_02__user_interaction_schema.sql`；迁移校验脚本改为按实际迁移文件数断言历史记录。
+- 已通过 JDK 25 下的 `mvn test -pl shop-module-trade -am`（8 项测试）和 `mvn clean install -DskipTests`（11 个模块）。本机 Docker 守护进程不可用，隔离数据库迁移验收待具备 Docker 的环境执行。
+
 ## 2026-07-31 交易环节二次自查
 
 - Java 25 容器内 Maven 构建与现有 7 个商品模块测试通过；交易模块当前没有单元测试，显示 `No tests to run`。
@@ -389,6 +402,24 @@
 - 本次审计测试数据已全部清理，临时后端已删除，MySQL/Redis 已恢复为停止状态。
 - 交易侧下一步应先处理安全止血和数据一致性，再继续微信支付、营销或物流扩展。
 
+## 2026-08-01 远端项目同步
+
+- 已将远端 `main` 的交易自查与兜底方案同步并合并至 `feat/payment-state-machine`；状态仪表盘冲突已保留双方记录。
+
+## 2026-08-01 商品与交易可交付化规划
+
+- 新增商品与交易可交付化实施计划，按“P0 安全止血 → 真实 SKU/库存 → 交易一致性 → 真实支付上线准备”推进。
+- 商品负责人优先负责真实 SKU、规格选择、商品快照和库存协作；在真实商品链路完成前，不再扩展基于 MockData 的交易功能。
+
+## 2026-08-01 Mock 契约优先决策与规划
+
+- 决定采用“先完整 Mock、后逐项替换真实数据源”模式；Mock 仅替代数据来源，鉴权、金额校验、库存幂等、状态机和订单日志从第一天按真实规则执行。
+- 新增对应设计规格和实施计划；首个开发任务为商品/SKU Mock Provider 与库存契约，后续以同一组自动验收逐项替换数据库、物流和微信支付实现。
+
+## 2026-08-01 Mock 契约优先首个 Issue
+
+- 已创建 [Issue #20：建立商品 SKU Mock Provider 与库存契约](https://github.com/QtImM/wechatMiniprogram_Store/issues/20)，建议分支为 `feat/mock-sku-inventory-contract`。
+- Issue 覆盖 Mock SKU/库存数据、商品与库存服务契约、交易调用切换及契约测试；不改变小程序 API，也不提前接入真实支付或物流。
 ## 决策记录
 
 | 日期 | 决策 | 原因 |
@@ -406,6 +437,7 @@
 | 2026-07-09 | 优化二级分类首屏体验 & 补全金刚区功能 | 解决首屏冗余和点击无交互的体验缺陷，提高 Demo 呈现的高保真度和完整性 |
 | 2026-07-16 | 后续阶段按“交易闭环优先”推进 | 当前项目已具备高保真 Demo，最大缺口是真实后端交易链路，先完成登录、商品、购物车、订单、支付适配，再推进会员营销和管理后台 |
 | 2026-07-24 | 后端 userInfo 字段名与前端对齐 | 后端返回 nickName/avatarUrl，前端期望 nickname/avatar，统一为小写 |
+| 2026-08-01 | 采用 Mock 契约优先、可替换数据源架构 | 先完整演示与验证流程，后续替换真实数据源时不重写前端、Controller 或核心交易规则 |
 
 ## 2026-07-24 Agent Loop Skill
 
@@ -415,10 +447,10 @@
 
 ## 下一步行动
 
-交易闭环 P0 企业验收项已完成并通过自动验收。下一步：
-1. 交易侧进入 P1：支付状态机文档化、库存边界与商品模块对接、订单搜索索引补强
-2. 等商品同事提供真实商品/SKU 接口后，交易侧对接 SKU 库存扣减与商品快照服务
-3. 等客户提供微信商户资料后，替换当前 Mock 支付为微信支付 V3 与真实退款
+下一步按 Mock 契约优先计划实施：
+1. 固化商品/SKU、库存、支付、物流服务契约，收紧管理端与 Mock 写操作安全边界。
+2. 用稳定 Mock SKU 数据跑通完整交易、异常与并发流程。
+3. 在同一契约和验收脚本下，逐项切换 MySQL、物流供应商和微信支付 V3。
 
 ---
 
