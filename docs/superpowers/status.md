@@ -10,6 +10,7 @@
 **计划文件**: [next-development-path.md](plans/2026-07-16-next-development-path.md)
 **后端分工**: [backend-three-person-division.md](plans/2026-07-24-backend-three-person-division.md)
 **交易剩余工作**: [trade-remaining-work.md](plans/2026-07-26-trade-remaining-work.md)
+**交易审计与兜底**: [trade-audit-and-fallback.md](plans/2026-07-31-trade-audit-and-fallback.md)
 **下一 Epic 规格**: [product-real-api-and-migration-design.md](specs/2026-07-27-product-real-api-and-migration-design.md)
 **当前实施计划**: [2026-07-30-payment-state-machine.md](plans/2026-07-30-payment-state-machine.md)
 **设计规格**: [shop-miniprogram-design.md](specs/2026-06-22-shop-miniprogram-design.md)
@@ -387,6 +388,23 @@
 - 预支付、支付成功回调、用户取消、超时关闭和退款完成均采用条件更新；重复支付成功和重复退款不会重复写入订单日志。
 - 迁移使用 `V20260730_03__pay_order_state_machine.sql`，避开主干已占用的 `V20260730_02__user_interaction_schema.sql`；迁移校验脚本改为按实际迁移文件数断言历史记录。
 - 已通过 JDK 25 下的 `mvn test -pl shop-module-trade -am`（8 项测试）和 `mvn clean install -DskipTests`（11 个模块）。本机 Docker 守护进程不可用，隔离数据库迁移验收待具备 Docker 的环境执行。
+
+## 2026-07-31 交易环节二次自查
+
+- Java 25 容器内 Maven 构建与现有 7 个商品模块测试通过；交易模块当前没有单元测试，显示 `No tests to run`。
+- 现有 `scripts/verify-trade-flow.ps1` 主流程验收通过，但未覆盖鉴权、真实 SKU、重复购买、支付单金额、退款库存和并发状态竞争。
+- 已确认 P0 安全问题：`/admin-api/**` 全部匿名放行；Mock 支付成功、模拟发货、模拟退款通过仅由前端隐藏，后端没有环境开关。
+- 已确认商品与库存问题：交易仍按 SPU 读取价格和扣库存，使用合成 SKU ID，商品不存在时仍回退 `MockData`；待发货退款不回补库存。
+- 已在隔离数据库复现购物车软删除唯一键冲突：同一用户第二次清理同一 SKU 时触发 `uk_user_sku` 重复键。
+- 已通过接口复现退款数据不一致：订单已退款后 `pay_order` 仍为已支付，库存未回补，支付查询错误显示“未支付”。
+- 数据库迁移验收脚本已被后续迁移破坏：临时基线缺少 `content_banner`，且历史记录数量断言仍固定为 1。
+- Docker Compose 默认 Mock 登录配置无效：Dockerfile 强制 `prod`，`application-prod.yml` 又将微信 Mock 写死为 `false`。
+- 本次审计测试数据已全部清理，临时后端已删除，MySQL/Redis 已恢复为停止状态。
+- 交易侧下一步应先处理安全止血和数据一致性，再继续微信支付、营销或物流扩展。
+
+## 2026-08-01 远端项目同步
+
+- 已将远端 `main` 的交易自查与兜底方案同步并合并至 `feat/payment-state-machine`；状态仪表盘冲突已保留双方记录。
 ## 决策记录
 
 | 日期 | 决策 | 原因 |
