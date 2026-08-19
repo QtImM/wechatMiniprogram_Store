@@ -403,6 +403,16 @@ export interface DashboardRecentOrder {
   item_count: number;
 }
 
+/** 会员用户 */
+export interface MemberUser {
+  id?: number;
+  nickname?: string;
+  avatar?: string;
+  mobile?: string;
+  status?: number;
+  createTime?: string;
+}
+
 /** 优惠券模板 */
 export interface CouponTemplate {
   id?: number;
