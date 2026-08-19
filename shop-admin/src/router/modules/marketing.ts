@@ -8,7 +8,7 @@ export default {
     meta: {
         icon: "ep/discount",
         title: "营销管理",
-        rank: 4,
+        rank: 5,
         permissions: ["marketing:manage", "marketing:read"]
     },
     children: [

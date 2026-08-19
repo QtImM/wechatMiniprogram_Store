@@ -8,7 +8,7 @@ export default {
   meta: {
     icon: "ep/setting",
     title: "系统管理",
-    rank: 5,
+    rank: 6,
     permissions: ["system:admin-user", "system:role", "system:audit"]
   },
   children: [
