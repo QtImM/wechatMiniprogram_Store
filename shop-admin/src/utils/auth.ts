@@ -29,10 +29,14 @@ export const TokenKey = "authorized-token";
 export const multipleTabsKey = "multiple-tabs";
 
 /** 获取`token` */
-export function getToken(): DataInfo<number> {
-  return Cookies.get(TokenKey)
-    ? JSON.parse(Cookies.get(TokenKey))
-    : storageLocal().getItem(userKey);
+export function getToken(): DataInfo<number> | null {
+  try {
+    return Cookies.get(TokenKey)
+      ? JSON.parse(Cookies.get(TokenKey))
+      : storageLocal().getItem(userKey);
+  } catch {
+    return null;
+  }
 }
 
 /** 设置`token`及用户信息 */
