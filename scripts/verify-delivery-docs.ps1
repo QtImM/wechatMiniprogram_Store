@@ -19,8 +19,10 @@ $report = Join-Path $root "docs/delivery/v1.0-final-acceptance-report.md"
 $miniapp = Join-Path $root "docs/acceptance/v1.0-miniapp-review-checklist.md"
 $payRefund = Join-Path $root "docs/acceptance/v1.0-wechat-pay-refund-acceptance.md"
 $logistics = Join-Path $root "docs/acceptance/v1.0-logistics-acceptance.md"
+$customerInfo = Join-Path $root "docs/delivery/v1.0-customer-info-collection-form.md"
+$stagingChecklist = Join-Path $root "docs/acceptance/v1.0-staging-real-channel-checklist.md"
 
-foreach ($file in @($guide, $report, $miniapp, $payRefund, $logistics)) {
+foreach ($file in @($guide, $report, $miniapp, $payRefund, $logistics, $customerInfo, $stagingChecklist)) {
     Require-File $file
 }
 
@@ -35,6 +37,8 @@ $guideChecks = @(
     "微信支付配置说明",
     "快递 100 配置说明",
     "小程序提审资料清单",
+    "客户资料收集",
+    "staging 验收",
     "客户验收清单",
     "CI 执行记录",
     "已知限制",
@@ -74,5 +78,11 @@ Assert-Contains $payRefund '退款重复通知幂等' "支付退款验收记录�
 Assert-Contains $logistics '查询失败回退缓存' "物流验收记录必须覆盖失败缓存回退"
 Assert-Contains $miniapp '体验版' "小程序提审清单必须覆盖体验版"
 Assert-Contains $report 'verify-dependency-audit.ps1 -RunOnlineAudit' "最终验收报告必须覆盖在线依赖漏洞扫描"
+Assert-Contains $customerInfo '微信支付商户号' "客户资料收集表必须覆盖微信支付资料"
+Assert-Contains $customerInfo '快递 100 customer' "客户资料收集表必须覆盖快递 100 资料"
+Assert-Contains $customerInfo 'RPO/RTO 要求' "客户资料收集表必须覆盖恢复目标"
+Assert-Contains $stagingChecklist '真实微信支付和退款验收' "staging 验收清单必须覆盖真实支付退款"
+Assert-Contains $stagingChecklist '真实物流验收' "staging 验收清单必须覆盖真实物流"
+Assert-Contains $stagingChecklist '生产演练和最终归档' "staging 验收清单必须覆盖生产演练"
 
 Write-Host "客户交付文档校验通过。"

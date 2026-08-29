@@ -26,12 +26,16 @@ $staging = Join-Path $root "shop-backend/shop-server/src/main/resources/applicat
 $adminProduction = Join-Path $root "shop-admin/.env.production"
 $adminStaging = Join-Path $root "shop-admin/.env.staging"
 $miniappEnv = Join-Path $root "shop-miniapp/config/env.js"
+$prodCompose = Join-Path $root "docker-compose.prod.yml"
+$prodEnvExample = Join-Path $root ".env.prod.example"
 
 Require-File $prod
 Require-File $staging
 Require-File $adminProduction
 Require-File $adminStaging
 Require-File $miniappEnv
+Require-File $prodCompose
+Require-File $prodEnvExample
 
 foreach ($file in @($prod, $staging)) {
     Assert-Contains $file 'mock-enabled:\s*false' "$file 必须关闭微信登录 Mock"
@@ -51,5 +55,7 @@ Assert-NotContains $adminProduction 'localhost|127\.0\.0\.1|VITE_PROXY_TARGET' "
 Assert-NotContains $adminStaging 'localhost|127\.0\.0\.1|VITE_PROXY_TARGET' "管理后台预发布环境不得包含本地代理目标"
 Assert-Contains $miniappEnv '正式环境 API 地址必须使用 HTTPS' "小程序正式环境必须校验 HTTPS API"
 Assert-Contains $miniappEnv '正式环境未配置 VUE_APP_API_BASE_URL' "小程序正式环境必须要求注入 API 地址"
+Assert-Contains $prodCompose 'WECHAT_PAY_REFUND_NOTIFY_URL:\s*\$\{WECHAT_PAY_REFUND_NOTIFY_URL\}' "生产 Docker 编排必须注入微信退款回调地址"
+Assert-Contains $prodEnvExample 'WECHAT_PAY_REFUND_NOTIFY_URL=https://[^\r\n]*/app-api/pay/wechat/refund-notify' "生产环境变量模板必须包含微信退款回调地址"
 
 Write-Host "生产/预发布配置静态校验通过。"
