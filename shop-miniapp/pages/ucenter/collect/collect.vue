@@ -7,7 +7,7 @@
 				<view class="item-info">
 					<text class="item-name">{{item.name||''}}</text>
 					<text class="item-brief">{{item.goodsBrief||''}}</text>
-					<text class="item-price">¥{{item.retailPrice||''}}</text>
+					<text class="item-price">￥{{item.retailPrice||''}}</text>
 				</view>
 			</view>
 		</view>

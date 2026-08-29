@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { ref, reactive, onMounted } from "vue";
+import { ref, reactive, onMounted, watch, onBeforeUnmount } from "vue";
+import { useRouter } from "vue-router";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { QuestionFilled } from "@element-plus/icons-vue";
 import {
@@ -12,9 +13,11 @@ import {
 import LinkSelector from "@/components/LinkSelector/index.vue";
 import type { ContentChannel } from "@/api/types";
 import { hasAnyPerms } from "@/utils/auth";
+import { clearPreviewDraft, notifyPreviewDataCommitted, setPreviewDraft } from "@/utils/preview-center";
 
 defineOptions({ name: "ContentChannel" });
 const canManageContent = hasAnyPerms(["content:manage"]);
+const router = useRouter();
 
 /* ---------- 数据 ---------- */
 const loading = ref(false);
@@ -72,6 +75,14 @@ function openEdit(row: ContentChannel) {
     dialogVisible.value = true;
 }
 
+function openPreviewCenter() {
+    const previewUrl = router.resolve({
+        path: "/content/preview-center",
+        query: { scene: "home" }
+    });
+    window.open(previewUrl.href, "_blank");
+}
+
 async function handleSubmit() {
     if (!form.name.trim()) {
         ElMessage.warning("请输入频道名称");
@@ -89,9 +100,11 @@ async function handleSubmit() {
         if (form.id) {
             (payload as any).id = form.id;
             await updateChannel(payload);
+            notifyPreviewDataCommitted("channel");
             ElMessage.success("更新成功");
         } else {
             await createChannel(payload);
+            notifyPreviewDataCommitted("channel");
             ElMessage.success("创建成功");
         }
         dialogVisible.value = false;
@@ -109,6 +122,7 @@ async function handleDelete(row: ContentChannel) {
         { type: "warning" }
     );
     await deleteChannel(row.id!);
+    notifyPreviewDataCommitted("channel");
     ElMessage.success("删除成功");
     fetchData();
 }
@@ -118,6 +132,7 @@ async function handleStatusChange(row: ContentChannel) {
     const prevStatus = row.status === 1 ? 0 : 1;
     try {
         await updateChannelStatus(row.id!, row.status);
+        notifyPreviewDataCommitted("channel");
         ElMessage.success(row.status === 1 ? "已启用" : "已禁用");
     } catch {
         row.status = prevStatus;
@@ -125,6 +140,29 @@ async function handleStatusChange(row: ContentChannel) {
 }
 
 onMounted(fetchData);
+
+watch(
+    () => [dialogVisible.value, form.id, form.name, form.iconUrl, form.url, form.sort, form.status],
+    () => {
+        if (!dialogVisible.value) {
+            clearPreviewDraft("channel");
+            return;
+        }
+        setPreviewDraft("channel", {
+            id: form.id,
+            name: form.name,
+            iconUrl: form.iconUrl,
+            url: form.url,
+            sort: form.sort,
+            status: form.status
+        });
+    },
+    { immediate: true }
+);
+
+onBeforeUnmount(() => {
+    clearPreviewDraft("channel");
+});
 </script>
 
 <template>
@@ -135,6 +173,7 @@ onMounted(fetchData);
                 <el-icon class="mr-1"><i class="ep-icon-plus" /></el-icon>
                 新增频道
             </el-button>
+            <el-button plain @click="openPreviewCenter">打开全站预览中心</el-button>
         </el-card>
 
         <!-- 表格 -->

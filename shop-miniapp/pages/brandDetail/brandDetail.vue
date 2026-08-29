@@ -17,7 +17,7 @@
 				<navigator class="goods-item" v-for="(item, index) in goodsList" :key="index" :url="'../goods/goods?id='+item.id">
 					<image class="goods-img" :src="$imageUrl(item.listPicUrl)" mode="aspectFill" @error="$setImageFallback(item, 'listPicUrl')"></image>
 					<text class="goods-name">{{item.name||''}}</text>
-					<text class="goods-price">¥{{item.retailPrice||0}}</text>
+					<text class="goods-price">￥{{item.retailPrice||0}}</text>
 				</navigator>
 			</view>
 		</view>

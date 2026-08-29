@@ -48,6 +48,15 @@ export default {
             }
         },
         {
+            path: "/content/preview-center",
+            name: "ContentPreviewCenter",
+            component: () => import("@/views/content/preview-center/index.vue"),
+            meta: {
+                title: "全站预览中心",
+                permissions: ["content:manage", "content:read", "product:manage", "product:read"]
+            }
+        },
+        {
             path: "/content/feedback",
             name: "ContentFeedback",
             component: () => import("@/views/content/feedback/index.vue"),

@@ -11,7 +11,7 @@
 			</view>
 			<view class="action-row">
 				<view class="actual-price">
-					实付：<text class="price-num">¥{{orderInfo.actualPrice}}</text>
+					实付：<text class="price-num">￥{{orderInfo.actualPrice}}</text>
 				</view>
 				<view class="action-btns">
 					<view class="action-btn" v-if="orderInfo.handleOption && orderInfo.handleOption.cancel" @tap="cancelOrder">取消订单</view>
@@ -37,7 +37,7 @@
 						<text class="goods-num">x{{item.number}}</text>
 					</view>
 					<text class="goods-spec">{{item.goodsSpecifitionNameValue||''}}</text>
-					<text class="goods-price">¥{{item.retailPrice}}</text>
+					<text class="goods-price">￥{{item.retailPrice}}</text>
 				</view>
 			</view>
 		</view>
@@ -110,7 +110,7 @@
 			</view>
 			<view class="after-row">
 				<text class="after-label">退款金额</text>
-				<text class="after-value price">¥{{afterSale.refundAmount}}</text>
+				<text class="after-value price">￥{{afterSale.refundAmount}}</text>
 			</view>
 			<view class="after-row">
 				<text class="after-label">申请原因</text>
@@ -135,19 +135,19 @@
 		<view class="order-total">
 			<view class="total-row">
 				<text class="total-label">商品合计</text>
-				<text class="total-value">¥{{orderInfo.goodsPrice}}</text>
+				<text class="total-value">￥{{orderInfo.goodsPrice}}</text>
 			</view>
 			<view class="total-row">
 				<text class="total-label">运费</text>
-				<text class="total-value">¥{{orderInfo.freightPrice}}</text>
+				<text class="total-value">￥{{orderInfo.freightPrice}}</text>
 			</view>
 			<view class="total-row" v-if="hasCouponPrice">
 				<text class="total-label">优惠</text>
-				<text class="total-value discount">-¥{{orderInfo.couponPrice}}</text>
+				<text class="total-value discount">-￥{{orderInfo.couponPrice}}</text>
 			</view>
 			<view class="total-row final">
 				<text class="total-label">实付金额</text>
-				<text class="total-value highlight">¥{{orderInfo.actualPrice}}</text>
+				<text class="total-value highlight">￥{{orderInfo.actualPrice}}</text>
 			</view>
 		</view>
 	</view>

@@ -20,7 +20,7 @@
 		<view class="shipping-bar" v-if="cartGoods.length > 0">
 			<view class="shipping-info" v-if="freeShippingDiff > 0">
 				<text class="shipping-text">再买</text>
-				<text class="shipping-amount">¥{{freeShippingDiff}}</text>
+				<text class="shipping-amount">￥{{freeShippingDiff}}</text>
 				<text class="shipping-text">即可享受包邮~</text>
 			</view>
 			<view class="shipping-info" v-else>
@@ -66,7 +66,7 @@
 						<text class="item-spec" v-if="item.goodsSpecifitionNameValue">{{item.goodsSpecifitionNameValue}}</text>
 						<text class="item-status" v-if="item.statusMessage">{{item.statusMessage}}</text>
 						<view class="item-bottom">
-							<text class="item-price">¥{{item.retailPrice}}</text>
+							<text class="item-price">￥{{item.retailPrice}}</text>
 							<view class="stepper" :class="{disabled: !item.available}">
 								<view class="stepper-btn minus" :class="{disabled: item.number <= 1}" @tap="cutNumber(index)">
 									<text>−</text>
@@ -85,7 +85,7 @@
 		<!-- 凑单助手 - 仅未满包邮时显示 -->
 		<view class="addon-section" v-if="freeShippingDiff > 0 && recommendList.length > 0">
 			<view class="addon-header">
-				<text class="addon-title">再凑¥{{freeShippingDiff}}即可包邮</text>
+				<text class="addon-title">再凑￥{{freeShippingDiff}}即可包邮</text>
 				<text class="addon-hint">左滑查看更多</text>
 			</view>
 			<scroll-view class="addon-scroll" scroll-x>
@@ -94,7 +94,7 @@
 					 :key="index" :url="'/pages/goods/goods?id='+item.id">
 						<image class="addon-img" :src="$imageUrl(item.listPicUrl)" mode="aspectFill" @error="$setImageFallback(item, 'listPicUrl')"></image>
 						<text class="addon-name">{{item.name}}</text>
-						<text class="addon-price">¥{{item.retailPrice}}</text>
+						<text class="addon-price">￥{{item.retailPrice}}</text>
 					</navigator>
 				</view>
 			</scroll-view>
@@ -111,7 +111,7 @@
 
 			<view class="bottom-center">
 				<text class="total-label">合计:</text>
-				<text class="total-price">¥{{cartTotal.checkedGoodsAmount}}</text>
+				<text class="total-price">￥{{cartTotal.checkedGoodsAmount}}</text>
 			</view>
 
 			<view class="bottom-right">

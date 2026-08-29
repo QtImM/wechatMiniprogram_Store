@@ -46,7 +46,7 @@
 							<text class="goods-brief">{{item.goodsBrief || ''}}</text>
 							<view class="goods-bottom">
 								<view class="goods-price-wrap">
-									<text class="goods-price">¥{{item.retailPrice}}</text>
+									<text class="goods-price">￥{{item.retailPrice}}</text>
 									<text class="goods-price-note">精选价</text>
 								</view>
 								<view class="goods-cart-btn" @tap.stop="goToGoods(item.id)">

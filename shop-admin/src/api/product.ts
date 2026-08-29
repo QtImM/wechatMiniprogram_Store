@@ -1,11 +1,12 @@
 import { http } from "@/utils/http";
-import type { PageParam, PageResult, ProductSpu } from "./types";
+import type { AdminOperationSnapshotItem, PageParam, PageResult, ProductSpu } from "./types";
 import type { ProductSku } from "./types";
 import type { ProductComment } from "./types";
 
 export interface ProductImportRow {
     rowNo: number;
     valid: boolean;
+    groupCode?: string;
     productName?: string;
     categoryName?: string;
     skuCode?: string;
@@ -18,14 +19,20 @@ export interface ProductImportRow {
 }
 
 export interface ProductImportPreview {
+    importMode?: ProductImportMode;
     totalRows: number;
     validRows: number;
     errorRows: number;
     createdProductCount: number;
     createdSkuCount: number;
+    updatedProductCount: number;
+    updatedSkuCount: number;
     dryRun: boolean;
+    affectedSpuIds?: number[];
     rows: ProductImportRow[];
 }
+
+export type ProductImportMode = "CREATE" | "UPDATE" | "UPSERT";
 
 export interface ProductBatchItemResult {
     id: number;
@@ -113,28 +120,31 @@ export const deleteProduct = (id: number) => {
 };
 
 /** 下载商品导入模板 */
-export const downloadProductImportTemplate = () => {
+export const downloadProductImportTemplate = (format: "xlsx" | "csv" = "xlsx") => {
     return http.request<Blob>("get", "/admin-api/product/spu/import-template", {
+        params: { format },
         responseType: "blob"
     });
 };
 
 /** 商品导入预校验，不写入数据库 */
-export const previewProductImport = (file: File) => {
+export const previewProductImport = (file: File, mode: ProductImportMode) => {
     const formData = new FormData();
     formData.append("file", file);
     return http.request<ProductImportPreview>("post", "/admin-api/product/spu/import-preview", {
         data: formData,
+        params: { mode },
         headers: { "Content-Type": "multipart/form-data" }
     });
 };
 
 /** 确认导入商品，成功后写入商品、SKU 和库存流水 */
-export const confirmProductImport = (file: File) => {
+export const confirmProductImport = (file: File, mode: ProductImportMode) => {
     const formData = new FormData();
     formData.append("file", file);
     return http.request<ProductImportPreview>("post", "/admin-api/product/spu/import-confirm", {
         data: formData,
+        params: { mode },
         headers: { "Content-Type": "multipart/form-data" }
     });
 };
@@ -188,6 +198,16 @@ export const batchUpdateProductStock = (data: ProductBatchOperationRequest) =>
         "/admin-api/product/spu/batch/stock",
         { data }
     );
+
+export const getProductRollbackList = (limit = 5) =>
+    http.get<AdminOperationSnapshotItem[], { limit: number }>("/admin-api/product/spu/rollback/latest", {
+        params: { limit }
+    });
+
+export const rollbackProductOperation = (snapshotId: number) =>
+    http.post<boolean, undefined>("/admin-api/product/spu/rollback", {
+        params: { snapshotId }
+    });
 
 export const getCommentPage = (params: {
     pageNo?: number;

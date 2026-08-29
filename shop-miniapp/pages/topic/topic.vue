@@ -7,7 +7,7 @@
 					<text class="topic-title">{{item.title}}</text>
 					<text class="topic-desc">{{item.subtitle}}</text>
 					<view class="topic-bottom">
-						<text class="topic-price">¥{{item.priceInfo}}起</text>
+						<text class="topic-price">{{formatTopicPrice(item.priceInfo)}}</text>
 						<text class="topic-tag">查看详情</text>
 					</view>
 				</view>
@@ -38,6 +38,14 @@
 			}
 		},
 		methods: {
+			formatTopicPrice(priceInfo) {
+				const value = String(priceInfo || '').trim();
+				if (!value) return '';
+				if (/[元￥¥]/.test(value)) {
+					return value.endsWith('起') ? value : value + '起';
+				}
+				return '￥' + value + '起';
+			},
 			nextPage: function() {
 				if (this.page + 1 > this.count / this.size) return;
 				this.page = parseInt(this.page) + 1;

@@ -88,9 +88,9 @@
 							<text class="promo-title">黄金会员卡</text>
 							<text class="promo-desc">专享折扣 · 优先发货 · 每月优惠券</text>
 							<view class="promo-price-row">
-								<text class="promo-price">¥99</text>
+								<text class="promo-price">￥99</text>
 								<text class="promo-price-unit">/年</text>
-								<text class="promo-original">¥199</text>
+								<text class="promo-original">￥199</text>
 							</view>
 						</view>
 						<view class="promo-btn">

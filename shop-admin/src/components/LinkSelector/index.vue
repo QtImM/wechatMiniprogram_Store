@@ -261,7 +261,7 @@ const previewUrl = computed(() => buildUrl());
                     <div class="selected-name">{{ selectedProduct.name }}</div>
                     <div class="selected-meta">
                         <el-tag size="small" type="warning">商品</el-tag>
-                        <span class="selected-price">¥{{ ((selectedProduct.price || 0) / 100).toFixed(2) }}</span>
+                        <span class="selected-price">￥{{ ((selectedProduct.price || 0) / 100).toFixed(2) }}</span>
                         <span class="selected-id">ID: {{ selectedProduct.id }}</span>
                     </div>
                 </div>
@@ -327,7 +327,7 @@ const previewUrl = computed(() => buildUrl());
                     <el-image :src="p.picUrl" style="width: 100%; height: 80px" fit="cover" />
                     <div class="picker-card-info">
                         <div class="picker-card-name">{{ p.name }}</div>
-                        <div class="picker-card-price">¥{{ ((p.price || 0) / 100).toFixed(2) }}</div>
+                        <div class="picker-card-price">￥{{ ((p.price || 0) / 100).toFixed(2) }}</div>
                     </div>
                 </div>
                 <el-empty v-if="filteredProducts.length === 0" description="暂无商品" />

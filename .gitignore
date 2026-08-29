@@ -25,6 +25,7 @@ unpackage/
 *.local
 
 # Environment
+.env
 .env.local
 .env.*.local
 .env.prod
@@ -46,3 +47,6 @@ deploy/secrets/
 # OS
 Thumbs.db
 Desktop.ini
+
+# Office temp files
+~$*

@@ -168,11 +168,11 @@ onMounted(fetchData);
                 <el-table-column prop="id" label="ID" width="60" align="center" />
                 <el-table-column prop="name" label="活动名称" min-width="140" show-overflow-tooltip />
                 <el-table-column label="满减门槛" width="120" align="right">
-                    <template #default="{ row }">¥{{ row.thresholdAmount }}</template>
+                    <template #default="{ row }">￥{{ row.thresholdAmount }}</template>
                 </el-table-column>
                 <el-table-column label="优惠金额" width="120" align="right">
                     <template #default="{ row }">
-                        <span class="text-red">-¥{{ row.discountAmount }}</span>
+                        <span class="text-red">-￥{{ row.discountAmount }}</span>
                     </template>
                 </el-table-column>
                 <el-table-column prop="priority" label="优先级" width="80" align="center" />

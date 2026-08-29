@@ -1,0 +1,21 @@
+CREATE TABLE IF NOT EXISTS `admin_operation_snapshot` (
+    `id` bigint NOT NULL AUTO_INCREMENT,
+    `scope_code` varchar(32) NOT NULL COMMENT '范围：PRODUCT/CONTENT',
+    `scene_code` varchar(32) NOT NULL COMMENT '场景：PRODUCT/BANNER/CHANNEL/BRAND/TOPIC/TOPIC_PRODUCTS',
+    `operation_label` varchar(64) NOT NULL COMMENT '操作名称',
+    `entity_name` varchar(128) NOT NULL DEFAULT '' COMMENT '实体名称摘要',
+    `entity_ids_json` varchar(1024) NOT NULL DEFAULT '[]' COMMENT '受影响实体ID列表(JSON)',
+    `item_count` int NOT NULL DEFAULT 0 COMMENT '受影响实体数量',
+    `operator_admin_id` bigint NOT NULL DEFAULT 0 COMMENT '原操作管理员ID',
+    `before_snapshot` longtext NULL COMMENT '变更前完整快照',
+    `after_snapshot` longtext NULL COMMENT '变更后完整快照',
+    `rolled_back` tinyint NOT NULL DEFAULT 0 COMMENT '是否已回退',
+    `rollback_time` datetime DEFAULT NULL COMMENT '回退时间',
+    `rollback_admin_id` bigint DEFAULT NULL COMMENT '执行回退的管理员ID',
+    `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    `deleted` bit(1) NOT NULL DEFAULT b'0',
+    PRIMARY KEY (`id`),
+    KEY `idx_scope_time` (`scope_code`, `rolled_back`, `create_time`, `id`),
+    KEY `idx_scene_time` (`scene_code`, `rolled_back`, `create_time`, `id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='管理后台可回退操作快照表';

@@ -1,5 +1,11 @@
 import { http } from "@/utils/http";
-import type { ContentBanner, ContentChannel, ContentBrand, ContentTopic } from "./types";
+import type {
+    AdminOperationSnapshotItem,
+    ContentBanner,
+    ContentBrand,
+    ContentChannel,
+    ContentTopic
+} from "./types";
 
 // ==================== Banner ====================
 export const getBannerList = () => {
@@ -75,4 +81,16 @@ export const getTopicProducts = (topicId: number) => {
 };
 export const setTopicProducts = (data: { topicId: number; spuIds: number[] }) => {
     return http.post<boolean, typeof data>("/admin-api/content/topic/products", { data });
+};
+
+export const getContentRollbackList = (limit = 5) => {
+    return http.get<AdminOperationSnapshotItem[], { limit: number }>("/admin-api/content/rollback/latest", {
+        params: { limit }
+    });
+};
+
+export const rollbackContentOperation = (snapshotId: number) => {
+    return http.post<boolean, undefined>("/admin-api/content/rollback", {
+        params: { snapshotId }
+    });
 };

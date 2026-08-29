@@ -8,11 +8,15 @@ import java.util.List;
 @Data
 public class ProductImportPreviewRespVO {
 
+    private String importMode;
     private int totalRows;
     private int validRows;
     private int errorRows;
     private int createdProductCount;
     private int createdSkuCount;
+    private int updatedProductCount;
+    private int updatedSkuCount;
+    private List<Long> affectedSpuIds = new ArrayList<>();
     private boolean dryRun;
     private List<ProductImportRowRespVO> rows = new ArrayList<>();
 }

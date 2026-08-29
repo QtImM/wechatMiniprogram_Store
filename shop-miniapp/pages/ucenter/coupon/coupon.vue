@@ -12,8 +12,8 @@
 			<view v-if="claimableList.length === 0" class="empty-tip">暂无可领取的优惠券</view>
 			<view v-for="item in claimableList" :key="item.id" class="coupon-card coupon-claimable">
 				<view class="coupon-left">
-					<text class="coupon-amount">¥{{item.discountAmount}}</text>
-					<text class="coupon-threshold" v-if="item.thresholdAmount > 0">满¥{{item.thresholdAmount}}可用</text>
+					<text class="coupon-amount">￥{{item.discountAmount}}</text>
+					<text class="coupon-threshold" v-if="item.thresholdAmount > 0">满￥{{item.thresholdAmount}}可用</text>
 					<text class="coupon-threshold" v-else>无门槛</text>
 				</view>
 				<view class="coupon-right">
@@ -29,8 +29,8 @@
 			<view v-if="unusedList.length === 0" class="empty-tip">暂无未使用的优惠券</view>
 			<view v-for="item in unusedList" :key="item.id" class="coupon-card coupon-unused">
 				<view class="coupon-left">
-					<text class="coupon-amount">¥{{item.discountAmount}}</text>
-					<text class="coupon-threshold" v-if="item.thresholdAmount > 0">满¥{{item.thresholdAmount}}可用</text>
+					<text class="coupon-amount">￥{{item.discountAmount}}</text>
+					<text class="coupon-threshold" v-if="item.thresholdAmount > 0">满￥{{item.thresholdAmount}}可用</text>
 					<text class="coupon-threshold" v-else>无门槛</text>
 				</view>
 				<view class="coupon-right">
@@ -45,7 +45,7 @@
 			<view v-if="usedList.length === 0" class="empty-tip">暂无已使用的优惠券</view>
 			<view v-for="item in usedList" :key="item.id" class="coupon-card coupon-disabled">
 				<view class="coupon-left">
-					<text class="coupon-amount">¥{{item.discountAmount}}</text>
+					<text class="coupon-amount">￥{{item.discountAmount}}</text>
 					<text class="coupon-threshold">已使用</text>
 				</view>
 				<view class="coupon-right">
@@ -60,7 +60,7 @@
 			<view v-if="expiredList.length === 0" class="empty-tip">暂无已过期的优惠券</view>
 			<view v-for="item in expiredList" :key="item.id" class="coupon-card coupon-disabled">
 				<view class="coupon-left">
-					<text class="coupon-amount">¥{{item.discountAmount}}</text>
+					<text class="coupon-amount">￥{{item.discountAmount}}</text>
 					<text class="coupon-threshold">已过期</text>
 				</view>
 				<view class="coupon-right">

@@ -35,7 +35,7 @@
 
 				<!-- 底部：金额 + 操作按钮 -->
 				<view class="order-footer">
-					<text class="order-total">实付：<text class="order-price">¥{{item.actualPrice||'0'}}</text></text>
+					<text class="order-total">实付：<text class="order-price">￥{{item.actualPrice||'0'}}</text></text>
 					<view class="order-actions">
 						<!-- 取消 -->
 						<view class="action-btn ghost" v-if="item.handleOption && item.handleOption.cancel"

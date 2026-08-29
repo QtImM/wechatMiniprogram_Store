@@ -146,7 +146,7 @@ function handledType(handled?: number) {
 
 function money(value?: string | number) {
   const amount = Number(value ?? 0);
-  return Number.isFinite(amount) ? `¥${amount.toFixed(2)}` : "—";
+  return Number.isFinite(amount) ? `￥${amount.toFixed(2)}` : "—";
 }
 
 onMounted(fetchData);

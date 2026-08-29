@@ -71,7 +71,7 @@ function handlePageChange(page: number) {
 }
 
 function money(cents?: number) {
-  return cents == null ? "—" : `¥${(cents / 100).toFixed(2)}`;
+  return cents == null ? "—" : `￥${(cents / 100).toFixed(2)}`;
 }
 
 function statusType(status: string) {

@@ -8,6 +8,8 @@ import com.shop.module.product.service.ProductBatchOperationService;
 import com.shop.module.product.service.ProductImportExportService;
 import com.shop.module.product.service.ProductSpuService;
 import com.shop.module.product.service.ProductAdminService;
+import com.shop.module.product.service.AdminOperationSnapshotService;
+import com.shop.module.product.vo.AdminOperationSnapshotRespVO;
 import com.shop.module.product.vo.ProductBatchOperationReqVO;
 import com.shop.module.product.vo.ProductBatchOperationRespVO;
 import com.shop.module.product.vo.ProductImportPreviewRespVO;
@@ -23,6 +25,7 @@ import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @RestController
 @RequestMapping("/admin-api/product/spu")
@@ -33,12 +36,18 @@ public class AdminProductController {
     private final ProductAdminService productAdminService;
     private final ProductImportExportService productImportExportService;
     private final ProductBatchOperationService productBatchOperationService;
+    private final AdminOperationSnapshotService operationSnapshotService;
 
     @PostMapping("/save")
     public CommonResult<Long> save(@RequestBody ProductSaveReqVO request) {
-        return CommonResult.success(productAdminService.saveProduct(
-                request.getSpu(), request.getSkus(), SecurityUtils.getRequiredAdminId(),
-                request.getStockAdjustReason()));
+        Long adminId = SecurityUtils.getRequiredAdminId();
+        Long spuId = request == null || request.getSpu() == null ? null : request.getSpu().getId();
+        var before = operationSnapshotService.captureProducts(spuId == null ? List.of() : List.of(spuId));
+        Long savedId = productAdminService.saveProduct(
+                request.getSpu(), request.getSkus(), adminId, request.getStockAdjustReason());
+        var after = operationSnapshotService.captureProducts(List.of(savedId));
+        operationSnapshotService.recordProductOperation(spuId == null ? "新建商品" : "保存商品", adminId, before, after);
+        return CommonResult.success(savedId);
     }
 
     @GetMapping("/page")
@@ -50,19 +59,34 @@ public class AdminProductController {
     }
 
     @GetMapping("/import-template")
-    public void importTemplate(HttpServletResponse response) throws IOException {
-        writeCsv(response, "商品导入模板.csv", productImportExportService.templateCsv());
+    public void importTemplate(HttpServletResponse response,
+                               @RequestParam(defaultValue = "xlsx") String format) throws IOException {
+        if ("csv".equalsIgnoreCase(format)) {
+            writeAttachment(response, "商品导入模板.csv", "text/csv;charset=UTF-8",
+                    productImportExportService.templateCsv());
+            return;
+        }
+        writeAttachment(response, "商品导入模板.xlsx",
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                productImportExportService.templateWorkbook());
     }
 
     @PostMapping("/import-preview")
-    public CommonResult<ProductImportPreviewRespVO> importPreview(@RequestParam("file") MultipartFile file) {
-        return CommonResult.success(productImportExportService.preview(file));
+    public CommonResult<ProductImportPreviewRespVO> importPreview(@RequestParam("file") MultipartFile file,
+                                                                 @RequestParam(defaultValue = "CREATE") String mode) {
+        return CommonResult.success(productImportExportService.preview(file, mode));
     }
 
     @PostMapping("/import-confirm")
-    public CommonResult<ProductImportPreviewRespVO> importConfirm(@RequestParam("file") MultipartFile file) {
-        return CommonResult.success(productImportExportService.importProducts(
-                file, SecurityUtils.getRequiredAdminId()));
+    public CommonResult<ProductImportPreviewRespVO> importConfirm(@RequestParam("file") MultipartFile file,
+                                                                 @RequestParam(defaultValue = "CREATE") String mode) {
+        Long adminId = SecurityUtils.getRequiredAdminId();
+        ProductImportPreviewRespVO preview = productImportExportService.preview(file, mode);
+        var before = operationSnapshotService.captureProducts(preview.getAffectedSpuIds());
+        ProductImportPreviewRespVO result = productImportExportService.importProducts(file, mode, adminId);
+        var after = operationSnapshotService.captureProducts(result.getAffectedSpuIds());
+        operationSnapshotService.recordProductOperation("导入商品", adminId, before, after);
+        return CommonResult.success(result);
     }
 
     @GetMapping("/export")
@@ -74,23 +98,29 @@ public class AdminProductController {
                        @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime startTime,
                        @RequestParam(required = false)
                        @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime endTime) throws IOException {
-        writeCsv(response, "商品导出.csv",
+        writeAttachment(response, "商品导出.csv", "text/csv;charset=UTF-8",
                 productImportExportService.exportCsv(name, categoryId, status, startTime, endTime));
     }
 
     @PostMapping("/batch/status")
     public CommonResult<ProductBatchOperationRespVO> batchStatus(@RequestBody ProductBatchOperationReqVO request) {
-        return CommonResult.success(productBatchOperationService.updateStatus(request));
+        var before = operationSnapshotService.captureProducts(request == null ? List.of() : request.getIds());
+        return CommonResult.success(recordBatchOperation("批量上下架", before,
+                productBatchOperationService.updateStatus(request)));
     }
 
     @PostMapping("/batch/category")
     public CommonResult<ProductBatchOperationRespVO> batchCategory(@RequestBody ProductBatchOperationReqVO request) {
-        return CommonResult.success(productBatchOperationService.updateCategory(request));
+        var before = operationSnapshotService.captureProducts(request == null ? List.of() : request.getIds());
+        return CommonResult.success(recordBatchOperation("批量调整分类", before,
+                productBatchOperationService.updateCategory(request)));
     }
 
     @PostMapping("/batch/sort")
     public CommonResult<ProductBatchOperationRespVO> batchSort(@RequestBody ProductBatchOperationReqVO request) {
-        return CommonResult.success(productBatchOperationService.updateSort(request));
+        var before = operationSnapshotService.captureProducts(request == null ? List.of() : request.getIds());
+        return CommonResult.success(recordBatchOperation("批量调整排序", before,
+                productBatchOperationService.updateSort(request)));
     }
 
     @PostMapping("/batch/price-preview")
@@ -100,14 +130,16 @@ public class AdminProductController {
 
     @PostMapping("/batch/price")
     public CommonResult<ProductBatchOperationRespVO> batchPrice(@RequestBody ProductBatchOperationReqVO request) {
-        return CommonResult.success(productBatchOperationService.updatePrice(
-                request, SecurityUtils.getRequiredAdminId()));
+        var before = operationSnapshotService.captureProducts(request == null ? List.of() : request.getIds());
+        return CommonResult.success(recordBatchOperation("批量调价", before,
+                productBatchOperationService.updatePrice(request, SecurityUtils.getRequiredAdminId())));
     }
 
     @PostMapping("/batch/stock")
     public CommonResult<ProductBatchOperationRespVO> batchStock(@RequestBody ProductBatchOperationReqVO request) {
-        return CommonResult.success(productBatchOperationService.updateStock(
-                request, SecurityUtils.getRequiredAdminId()));
+        var before = operationSnapshotService.captureProducts(request == null ? List.of() : request.getIds());
+        return CommonResult.success(recordBatchOperation("批量调库存", before,
+                productBatchOperationService.updateStock(request, SecurityUtils.getRequiredAdminId())));
     }
 
     @GetMapping("/detail")
@@ -117,26 +149,68 @@ public class AdminProductController {
 
     @PostMapping("/create")
     public CommonResult<Boolean> create(@RequestBody ProductSpuDO spu) {
-        productSpuService.createSpu(spu, SecurityUtils.getRequiredAdminId());
+        Long adminId = SecurityUtils.getRequiredAdminId();
+        productSpuService.createSpu(spu, adminId);
+        operationSnapshotService.recordProductOperation("新建商品", adminId,
+                operationSnapshotService.captureProducts(List.of()),
+                operationSnapshotService.captureProducts(List.of(spu.getId())));
         return CommonResult.success(true);
     }
 
     @PutMapping("/update")
     public CommonResult<Boolean> update(@RequestBody ProductSpuDO spu) {
+        Long adminId = SecurityUtils.getRequiredAdminId();
+        var before = operationSnapshotService.captureProducts(spu == null || spu.getId() == null ? List.of() : List.of(spu.getId()));
         productSpuService.updateSpu(spu);
+        operationSnapshotService.recordProductOperation("更新商品基础信息", adminId, before,
+                operationSnapshotService.captureProducts(spu == null || spu.getId() == null ? List.of() : List.of(spu.getId())));
         return CommonResult.success(true);
     }
 
     @DeleteMapping("/delete")
     public CommonResult<Boolean> delete(@RequestParam Long id) {
+        Long adminId = SecurityUtils.getRequiredAdminId();
+        var before = operationSnapshotService.captureProducts(List.of(id));
         productSpuService.deleteSpu(id);
+        operationSnapshotService.recordProductOperation("删除商品", adminId, before,
+                operationSnapshotService.captureProducts(List.of(id)));
         return CommonResult.success(true);
     }
 
-    private void writeCsv(HttpServletResponse response, String filename, byte[] content) throws IOException {
+    @GetMapping("/rollback/latest")
+    public CommonResult<List<AdminOperationSnapshotRespVO>> latestRollbacks(
+            @RequestParam(defaultValue = "5") Integer limit) {
+        return CommonResult.success(operationSnapshotService.listRecentProductSnapshots(limit == null ? 5 : limit));
+    }
+
+    @PostMapping("/rollback")
+    public CommonResult<Boolean> rollback(@RequestParam Long snapshotId) {
+        operationSnapshotService.rollbackProductSnapshot(snapshotId, SecurityUtils.getRequiredAdminId());
+        return CommonResult.success(true);
+    }
+
+    private ProductBatchOperationRespVO recordBatchOperation(
+            String operationLabel,
+            AdminOperationSnapshotService.OperationCapture before,
+            ProductBatchOperationRespVO response
+    ) {
+        List<Long> successIds = response.getRows().stream()
+                .filter(row -> row.isSuccess())
+                .map(row -> row.getId())
+                .toList();
+        if (!successIds.isEmpty()) {
+            operationSnapshotService.recordProductOperation(operationLabel, SecurityUtils.getRequiredAdminId(),
+                    operationSnapshotService.filterProducts(before, successIds),
+                    operationSnapshotService.captureProducts(successIds));
+        }
+        return response;
+    }
+
+    private void writeAttachment(HttpServletResponse response, String filename, String contentType,
+                                 byte[] content) throws IOException {
         String encoded = URLEncoder.encode(filename, StandardCharsets.UTF_8).replace("+", "%20");
         response.setCharacterEncoding(StandardCharsets.UTF_8.name());
-        response.setContentType("text/csv;charset=UTF-8");
+        response.setContentType(contentType);
         response.setHeader("Content-Disposition", "attachment; filename*=UTF-8''" + encoded);
         response.getOutputStream().write(content);
     }

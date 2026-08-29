@@ -210,7 +210,7 @@ function downloadBlob(blob: Blob, filename: string) {
 
 function money(value?: string | number) {
   const amount = Number(value ?? 0);
-  return Number.isFinite(amount) ? `¥${amount.toFixed(2)}` : "—";
+  return Number.isFinite(amount) ? `￥${amount.toFixed(2)}` : "—";
 }
 
 function statusType(status?: number) {

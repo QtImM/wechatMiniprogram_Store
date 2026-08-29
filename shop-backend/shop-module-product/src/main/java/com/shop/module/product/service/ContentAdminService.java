@@ -34,9 +34,10 @@ public class ContentAdminService {
                 .orderByAsc(ContentBannerDO::getId));
     }
 
-    public void createBanner(ContentBannerDO banner) {
+    public Long createBanner(ContentBannerDO banner) {
         validateBanner(banner, null);
         bannerMapper.insert(banner);
+        return banner.getId();
     }
 
     public void updateBanner(ContentBannerDO banner) {
@@ -62,9 +63,10 @@ public class ContentAdminService {
                 .orderByAsc(ContentChannelDO::getId));
     }
 
-    public void createChannel(ContentChannelDO channel) {
+    public Long createChannel(ContentChannelDO channel) {
         validateChannel(channel, null);
         channelMapper.insert(channel);
+        return channel.getId();
     }
 
     public void updateChannel(ContentChannelDO channel) {
@@ -90,9 +92,10 @@ public class ContentAdminService {
                 .orderByAsc(ContentBrandDO::getId));
     }
 
-    public void createBrand(ContentBrandDO brand) {
+    public Long createBrand(ContentBrandDO brand) {
         validateBrand(brand, null);
         brandMapper.insert(brand);
+        return brand.getId();
     }
 
     public void updateBrand(ContentBrandDO brand) {
@@ -118,9 +121,10 @@ public class ContentAdminService {
                 .orderByAsc(ContentTopicDO::getId));
     }
 
-    public void createTopic(ContentTopicDO topic) {
+    public Long createTopic(ContentTopicDO topic) {
         validateTopic(topic, null);
         topicMapper.insert(topic);
+        return topic.getId();
     }
 
     public void updateTopic(ContentTopicDO topic) {
@@ -139,6 +143,82 @@ public class ContentAdminService {
 
     public void updateTopicStatus(Long id, Integer status) {
         updateContentStatus(id, status, topicMapper, "专题");
+    }
+
+    @Transactional
+    public void restoreBannerSnapshot(ContentBannerDO snapshot) {
+        if (snapshot == null || snapshot.getId() == null) throw new ServerException(400, "Banner 回退快照不存在");
+        validateBanner(snapshot, snapshot.getId());
+        snapshot.setDeleted(Boolean.FALSE);
+        if (bannerMapper.selectById(snapshot.getId()) == null) {
+            bannerMapper.insert(snapshot);
+            return;
+        }
+        ensureUpdated(bannerMapper.updateById(snapshot));
+    }
+
+    public void deleteBannerForRollback(Long id) {
+        requireId(id, id == null ? null : bannerMapper.selectById(id));
+        bannerMapper.deleteById(id);
+    }
+
+    @Transactional
+    public void restoreChannelSnapshot(ContentChannelDO snapshot) {
+        if (snapshot == null || snapshot.getId() == null) throw new ServerException(400, "频道回退快照不存在");
+        validateChannel(snapshot, snapshot.getId());
+        snapshot.setDeleted(Boolean.FALSE);
+        if (channelMapper.selectById(snapshot.getId()) == null) {
+            channelMapper.insert(snapshot);
+            return;
+        }
+        ensureUpdated(channelMapper.updateById(snapshot));
+    }
+
+    public void deleteChannelForRollback(Long id) {
+        requireId(id, id == null ? null : channelMapper.selectById(id));
+        channelMapper.deleteById(id);
+    }
+
+    @Transactional
+    public void restoreBrandSnapshot(ContentBrandDO snapshot) {
+        if (snapshot == null || snapshot.getId() == null) throw new ServerException(400, "品牌回退快照不存在");
+        validateBrand(snapshot, snapshot.getId());
+        snapshot.setDeleted(Boolean.FALSE);
+        if (brandMapper.selectById(snapshot.getId()) == null) {
+            brandMapper.insert(snapshot);
+            return;
+        }
+        ensureUpdated(brandMapper.updateById(snapshot));
+    }
+
+    public void deleteBrandForRollback(Long id) {
+        requireId(id, id == null ? null : brandMapper.selectById(id));
+        brandMapper.deleteById(id);
+    }
+
+    @Transactional
+    public void restoreTopicSnapshot(ContentTopicDO snapshot) {
+        if (snapshot == null || snapshot.getId() == null) throw new ServerException(400, "专题回退快照不存在");
+        validateTopic(snapshot, snapshot.getId());
+        snapshot.setDeleted(Boolean.FALSE);
+        if (topicMapper.selectById(snapshot.getId()) == null) {
+            topicMapper.insert(snapshot);
+            return;
+        }
+        ensureUpdated(topicMapper.updateById(snapshot));
+    }
+
+    @Transactional
+    public void deleteTopicForRollback(Long id) {
+        requireId(id, id == null ? null : topicMapper.selectById(id));
+        topicProductMapper.delete(new LambdaQueryWrapper<ContentTopicProductDO>()
+                .eq(ContentTopicProductDO::getTopicId, id));
+        topicMapper.deleteById(id);
+    }
+
+    @Transactional
+    public void restoreTopicProductsSnapshot(Long topicId, List<Long> spuIds) {
+        setTopicProducts(topicId, spuIds == null ? List.of() : spuIds);
     }
 
     // ==================== 专题关联商品 ====================

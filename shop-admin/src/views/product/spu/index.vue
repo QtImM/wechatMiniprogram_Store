@@ -25,14 +25,24 @@ import type {
     ProductImportPreview,
     ProductImportRow,
     ProductBatchOperationResult,
-    ProductBatchItemResult
+    ProductBatchItemResult,
+    ProductImportMode
 } from "@/api/product";
 import { hasAnyPerms } from "@/utils/auth";
+import { notifyPreviewDataCommitted } from "@/utils/preview-center";
 
 defineOptions({ name: "ProductList" });
 
 const router = useRouter();
 const canManageProduct = hasAnyPerms(["product:manage"]);
+
+function openPreviewCenter() {
+    const previewUrl = router.resolve({
+        path: "/content/preview-center",
+        query: { scene: "product" }
+    });
+    window.open(previewUrl.href, "_blank");
+}
 
 /* ---------- 分类字典 ---------- */
 const categoryList = ref<Category[]>([]);
@@ -101,6 +111,7 @@ async function handleStatusChange(row: ProductSpu) {
     );
     await updateProduct({ id: row.id, status: newStatus } as ProductSpu);
     row.status = newStatus;
+    notifyPreviewDataCommitted("product");
     ElMessage.success(`${label}成功`);
 }
 
@@ -112,6 +123,7 @@ async function handleDelete(row: ProductSpu) {
         { type: "warning" }
     );
     await deleteProduct(row.id!);
+    notifyPreviewDataCommitted("product");
     ElMessage.success("删除成功");
     fetchData();
 }
@@ -136,6 +148,24 @@ const exportLoading = ref(false);
 const importUploadRef = ref<UploadInstance>();
 const importFile = ref<File | null>(null);
 const importPreview = ref<ProductImportPreview | null>(null);
+const importMode = ref<ProductImportMode>("CREATE");
+const importModeOptions: { label: string; value: ProductImportMode; description: string }[] = [
+    {
+        label: "新增商品",
+        value: "CREATE",
+        description: "适合首次铺货，文件里的 SKU 编码必须是全新的。"
+    },
+    {
+        label: "更新已有商品",
+        value: "UPDATE",
+        description: "适合改价、改库存、上下架，建议先导出现有商品后整组修改再导入。"
+    },
+    {
+        label: "新增并补充规格",
+        value: "UPSERT",
+        description: "允许在已有商品基础上补新 SKU，也支持导入全新商品。"
+    }
+];
 
 function saveBlob(blob: Blob, filename: string) {
     const url = URL.createObjectURL(blob);
@@ -149,14 +179,15 @@ function saveBlob(blob: Blob, filename: string) {
 }
 
 async function handleDownloadTemplate() {
-    const blob = await downloadProductImportTemplate();
-    saveBlob(blob, "商品导入模板.csv");
+    const blob = await downloadProductImportTemplate("xlsx");
+    saveBlob(blob, "商品导入模板.xlsx");
 }
 
 function handleOpenImport() {
     importDialogVisible.value = true;
     importPreview.value = null;
     importFile.value = null;
+    importMode.value = "CREATE";
     importUploadRef.value?.clearFiles();
 }
 
@@ -172,12 +203,12 @@ function handleImportFileRemove() {
 
 async function handlePreviewImport() {
     if (!importFile.value) {
-        ElMessage.warning("请先选择 CSV 文件");
+        ElMessage.warning("请先选择 Excel 或 CSV 文件");
         return;
     }
     importLoading.value = true;
     try {
-        importPreview.value = await previewProductImport(importFile.value);
+        importPreview.value = await previewProductImport(importFile.value, importMode.value);
         if (importPreview.value.errorRows > 0) {
             ElMessage.warning("预校验发现错误，请修正后重新上传");
         } else {
@@ -190,7 +221,7 @@ async function handlePreviewImport() {
 
 async function handleConfirmImport() {
     if (!importFile.value) {
-        ElMessage.warning("请先选择 CSV 文件");
+        ElMessage.warning("请先选择 Excel 或 CSV 文件");
         return;
     }
     if (!importPreview.value) {
@@ -208,10 +239,11 @@ async function handleConfirmImport() {
     );
     importLoading.value = true;
     try {
-        importPreview.value = await confirmProductImport(importFile.value);
+        importPreview.value = await confirmProductImport(importFile.value, importMode.value);
         ElMessage.success(
-            `导入完成：新增 ${importPreview.value.createdProductCount} 个商品、${importPreview.value.createdSkuCount} 个 SKU`
+            `导入完成：新增 ${importPreview.value.createdProductCount} 个商品、更新 ${importPreview.value.updatedProductCount} 个商品`
         );
+        notifyPreviewDataCommitted("product");
         importDialogVisible.value = false;
         fetchData();
     } finally {
@@ -290,6 +322,9 @@ function showBatchResult(title: string, result: ProductBatchOperationResult, ref
         ElMessage.warning(`${title}完成：成功 ${result.successCount}，失败 ${result.failureCount}`);
     } else {
         ElMessage.success(`${title}完成：成功 ${result.successCount}`);
+    }
+    if (result.successCount > 0) {
+        notifyPreviewDataCommitted("product");
     }
     if (refresh) fetchData();
 }
@@ -458,7 +493,7 @@ function handlePageChange(page: number) {
 /* ---------- 价格格式化（分→元） ---------- */
 function formatPrice(cents?: number) {
     if (cents == null) return "—";
-    return `¥${(cents / 100).toFixed(2)}`;
+    return `￥${(cents / 100).toFixed(2)}`;
 }
 
 /* ---------- 状态标签 ---------- */
@@ -544,6 +579,9 @@ onMounted(async () => {
                 <div class="toolbar-actions">
                     <el-button v-if="canManageProduct" type="primary" @click="goCreate">
                         新增商品
+                    </el-button>
+                    <el-button plain @click="openPreviewCenter">
+                        打开全站预览中心
                     </el-button>
                     <el-button :icon="Download" @click="handleDownloadTemplate">
                         下载模板
@@ -674,17 +712,41 @@ onMounted(async () => {
             width="920px"
             destroy-on-close
         >
+            <el-alert
+                title="建议客户始终先下载模板，在 Excel 中按下拉选项填写后再导入。更新已有商品时，请先导出现有商品后整组修改。"
+                type="info"
+                :closable="false"
+                show-icon
+            />
+
+            <el-form label-width="90px" style="margin-top: 16px">
+                <el-form-item label="导入模式">
+                    <el-radio-group v-model="importMode">
+                        <el-radio-button
+                            v-for="item in importModeOptions"
+                            :key="item.value"
+                            :value="item.value"
+                        >
+                            {{ item.label }}
+                        </el-radio-button>
+                    </el-radio-group>
+                    <div class="import-mode-tip">
+                        {{ importModeOptions.find(item => item.value === importMode)?.description }}
+                    </div>
+                </el-form-item>
+            </el-form>
+
             <el-upload
                 ref="importUploadRef"
                 drag
-                accept=".csv"
+                accept=".xlsx,.xls,.csv"
                 :auto-upload="false"
                 :limit="1"
                 :on-change="handleImportFileChange"
                 :on-remove="handleImportFileRemove"
             >
                 <el-icon class="el-icon--upload"><UploadFilled /></el-icon>
-                <div class="el-upload__text">拖拽 CSV 文件到此处，或点击选择文件</div>
+                <div class="el-upload__text">拖拽 Excel / CSV 文件到此处，或点击选择文件</div>
             </el-upload>
 
             <div v-if="importPreview" class="import-summary">
@@ -694,7 +756,10 @@ onMounted(async () => {
                     错误 {{ importPreview.errorRows }}
                 </el-tag>
                 <el-tag v-if="!importPreview.dryRun" type="success">
-                    已创建商品 {{ importPreview.createdProductCount }} 个，SKU {{ importPreview.createdSkuCount }} 个
+                    已新增商品 {{ importPreview.createdProductCount }} 个，新增 SKU {{ importPreview.createdSkuCount }} 个
+                </el-tag>
+                <el-tag v-if="!importPreview.dryRun" type="warning">
+                    已更新商品 {{ importPreview.updatedProductCount }} 个，更新 SKU {{ importPreview.updatedSkuCount }} 个
                 </el-tag>
             </div>
 
@@ -706,6 +771,7 @@ onMounted(async () => {
                 style="width: 100%; margin-top: 12px"
             >
                 <el-table-column prop="rowNo" label="行号" width="70" align="center" />
+                <el-table-column prop="groupCode" label="商品组编码" width="120" show-overflow-tooltip />
                 <el-table-column label="状态" width="80" align="center">
                     <template #default="{ row }">
                         <el-tag :type="importRowStatus(row)" size="small">
@@ -728,7 +794,7 @@ onMounted(async () => {
 
             <template #footer>
                 <el-button @click="importDialogVisible = false">关闭</el-button>
-                <el-button @click="handleDownloadTemplate">下载模板</el-button>
+                <el-button @click="handleDownloadTemplate">下载 Excel 模板</el-button>
                 <el-button type="primary" :loading="importLoading" @click="handlePreviewImport">
                     预校验
                 </el-button>
@@ -940,5 +1006,11 @@ onMounted(async () => {
 .field-unit {
     margin-left: 8px;
     color: #606266;
+}
+.import-mode-tip {
+    margin-top: 8px;
+    color: #606266;
+    font-size: 13px;
+    line-height: 20px;
 }
 </style>

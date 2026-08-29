@@ -124,7 +124,7 @@ function handlePageChange(page: number) {
 
 function money(value?: string | number) {
   const amount = Number(value ?? 0);
-  return Number.isFinite(amount) ? `¥${amount.toFixed(2)}` : "—";
+  return Number.isFinite(amount) ? `￥${amount.toFixed(2)}` : "—";
 }
 
 function orderStatusType(status?: number, payStatus?: number) {
@@ -404,8 +404,8 @@ async function printPicking() {
 }
 
 function deliveryNoteHtml(note: DeliveryNote) {
-  const rows = note.items.map(item => `<tr><td>${escapeHtml(item.goodsName)}</td><td>${escapeHtml(item.specName || "默认规格")}</td><td>${escapeHtml(item.skuId)}</td><td class="right">${escapeHtml(item.count)}</td><td class="right">¥${escapeHtml(item.retailPrice)}</td><td class="right">¥${escapeHtml(item.totalPrice)}</td></tr>`).join("");
-  return `<h1>发货单</h1><div class="meta"><strong>订单号</strong><span>${escapeHtml(note.orderSn)}</span><strong>收货人</strong><span>${escapeHtml(note.consignee)} ${escapeHtml(note.mobile)}</span><strong>收货地址</strong><span>${escapeHtml(note.fullAddress)}</span><strong>物流</strong><span>${escapeHtml(note.logisticsCompany || "")} ${escapeHtml(note.logisticsNo || "")}</span><strong>实付金额</strong><span>¥${escapeHtml(note.actualPrice)}</span></div><table><thead><tr><th>商品</th><th>规格</th><th>SKU</th><th>数量</th><th>单价</th><th>小计</th></tr></thead><tbody>${rows}</tbody></table><div class="remark"><strong>内部备注：</strong>${escapeHtml(note.adminRemark || "")}</div>`;
+  const rows = note.items.map(item => `<tr><td>${escapeHtml(item.goodsName)}</td><td>${escapeHtml(item.specName || "默认规格")}</td><td>${escapeHtml(item.skuId)}</td><td class="right">${escapeHtml(item.count)}</td><td class="right">￥${escapeHtml(item.retailPrice)}</td><td class="right">￥${escapeHtml(item.totalPrice)}</td></tr>`).join("");
+  return `<h1>发货单</h1><div class="meta"><strong>订单号</strong><span>${escapeHtml(note.orderSn)}</span><strong>收货人</strong><span>${escapeHtml(note.consignee)} ${escapeHtml(note.mobile)}</span><strong>收货地址</strong><span>${escapeHtml(note.fullAddress)}</span><strong>物流</strong><span>${escapeHtml(note.logisticsCompany || "")} ${escapeHtml(note.logisticsNo || "")}</span><strong>实付金额</strong><span>￥${escapeHtml(note.actualPrice)}</span></div><table><thead><tr><th>商品</th><th>规格</th><th>SKU</th><th>数量</th><th>单价</th><th>小计</th></tr></thead><tbody>${rows}</tbody></table><div class="remark"><strong>内部备注：</strong>${escapeHtml(note.adminRemark || "")}</div>`;
 }
 
 function pickingListHtml(list: PickingList) {

@@ -17,21 +17,23 @@ export function getPluginsList(
   VITE_COMPRESSION: ViteCompression
 ): PluginOption[] {
   const lifecycle = process.env.npm_lifecycle_event;
+  const enableCodeInspector =
+    process.platform !== "win32" && process.env.VITE_CODE_INSPECTOR !== "false";
   return [
     tailwindcss(),
     vue(),
     // jsx、tsx语法支持
     vueJsx(),
     /**
-     * 在页面上按住组合键时，鼠标在页面移动即会在 DOM 上出现遮罩层并显示相关信息，点击一下将自动打开 IDE 并将光标定位到元素对应的代码位置
-     * Mac 默认组合键 Option + Shift
-     * Windows 默认组合键 Alt + Shift
-     * 更多用法看 https://inspector.fe-dev.cn/guide/start.html
+     * Windows 本地环境下该插件会尝试写入 node_modules 缓存文件，容易触发 EPERM。
+     * 默认仅在非 Windows 环境启用，避免阻塞本地开发启动。
      */
-    codeInspectorPlugin({
-      bundler: "vite",
-      hideConsole: true
-    }),
+    enableCodeInspector
+      ? codeInspectorPlugin({
+          bundler: "vite",
+          hideConsole: true
+        })
+      : null,
     viteBuildInfo(),
     /**
      * 开发环境下移除非必要的vue-router动态路由警告No match found for location with path

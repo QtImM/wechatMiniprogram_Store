@@ -43,7 +43,7 @@
 						<text class="goods-name">{{item.name}}</text>
 						<text class="goods-brief">{{item.goodsBrief}}</text>
 						<view class="goods-bottom">
-							<text class="goods-price">¥{{item.retailPrice}}</text>
+							<text class="goods-price">￥{{item.retailPrice}}</text>
 							<view class="goods-btn">去看看</view>
 						</view>
 					</view>

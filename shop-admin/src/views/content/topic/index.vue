@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { ref, reactive, onMounted } from "vue";
+import { ref, reactive, onMounted, watch, onBeforeUnmount } from "vue";
+import { useRouter } from "vue-router";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { QuestionFilled } from "@element-plus/icons-vue";
 import {
@@ -14,9 +15,11 @@ import {
 import { getProductPage } from "@/api/product";
 import type { ContentTopic, ProductSpu } from "@/api/types";
 import { hasAnyPerms } from "@/utils/auth";
+import { clearPreviewDraft, notifyPreviewDataCommitted, setPreviewDraft } from "@/utils/preview-center";
 
 defineOptions({ name: "ContentTopic" });
 const canManageContent = hasAnyPerms(["content:manage"]);
+const router = useRouter();
 
 /* ---------- 数据 ---------- */
 const loading = ref(false);
@@ -74,6 +77,14 @@ function openEdit(row: ContentTopic) {
     dialogVisible.value = true;
 }
 
+function openPreviewCenter() {
+    const previewUrl = router.resolve({
+        path: "/content/preview-center",
+        query: { scene: "content" }
+    });
+    window.open(previewUrl.href, "_blank");
+}
+
 async function handleSubmit() {
     if (!form.title.trim()) {
         ElMessage.warning("请输入专题标题");
@@ -92,9 +103,11 @@ async function handleSubmit() {
         if (form.id) {
             (payload as any).id = form.id;
             await updateTopic(payload);
+            notifyPreviewDataCommitted("topic");
             ElMessage.success("更新成功");
         } else {
             await createTopic(payload);
+            notifyPreviewDataCommitted("topic");
             ElMessage.success("创建成功");
         }
         dialogVisible.value = false;
@@ -112,6 +125,7 @@ async function handleDelete(row: ContentTopic) {
         { type: "warning" }
     );
     await deleteTopic(row.id!);
+    notifyPreviewDataCommitted("topic");
     ElMessage.success("删除成功");
     fetchData();
 }
@@ -121,6 +135,7 @@ async function handleStatusChange(row: ContentTopic) {
     const prevStatus = row.status === 1 ? 0 : 1;
     try {
         await updateTopicStatus(row.id!, row.status);
+        notifyPreviewDataCommitted("topic");
         ElMessage.success(row.status === 1 ? "已启用" : "已禁用");
     } catch {
         row.status = prevStatus;
@@ -177,6 +192,7 @@ async function handleSaveProducts() {
             topicId: currentTopicId.value,
             spuIds: selectedSpuIds.value
         });
+        notifyPreviewDataCommitted("topic");
         ElMessage.success("关联商品已保存");
         productDialogVisible.value = false;
     } finally {
@@ -186,10 +202,34 @@ async function handleSaveProducts() {
 
 function formatPrice(fen: number | undefined) {
     if (fen == null) return "—";
-    return "¥" + (fen / 100).toFixed(2);
+    return "￥" + (fen / 100).toFixed(2);
 }
 
 onMounted(fetchData);
+
+watch(
+    () => [dialogVisible.value, form.id, form.title, form.subtitle, form.picUrl, form.priceInfo, form.sort, form.status],
+    () => {
+        if (!dialogVisible.value) {
+            clearPreviewDraft("topic");
+            return;
+        }
+        setPreviewDraft("topic", {
+            id: form.id,
+            title: form.title,
+            subtitle: form.subtitle,
+            picUrl: form.picUrl,
+            priceInfo: form.priceInfo,
+            sort: form.sort,
+            status: form.status
+        });
+    },
+    { immediate: true }
+);
+
+onBeforeUnmount(() => {
+    clearPreviewDraft("topic");
+});
 </script>
 
 <template>
@@ -200,6 +240,7 @@ onMounted(fetchData);
                 <el-icon class="mr-1"><i class="ep-icon-plus" /></el-icon>
                 新增专题
             </el-button>
+            <el-button plain @click="openPreviewCenter">打开全站预览中心</el-button>
         </el-card>
 
         <!-- 表格 -->

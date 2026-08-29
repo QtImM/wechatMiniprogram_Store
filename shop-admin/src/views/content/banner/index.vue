@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { ref, reactive, onMounted } from "vue";
+import { ref, reactive, onMounted, watch, onBeforeUnmount } from "vue";
+import { useRouter } from "vue-router";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { QuestionFilled } from "@element-plus/icons-vue";
 import {
@@ -12,9 +13,11 @@ import {
 import LinkSelector from "@/components/LinkSelector/index.vue";
 import type { ContentBanner } from "@/api/types";
 import { hasAnyPerms } from "@/utils/auth";
+import { clearPreviewDraft, notifyPreviewDataCommitted, setPreviewDraft } from "@/utils/preview-center";
 
 defineOptions({ name: "ContentBanner" });
 const canManageContent = hasAnyPerms(["content:manage"]);
+const router = useRouter();
 
 /* ---------- 数据 ---------- */
 const loading = ref(false);
@@ -72,6 +75,14 @@ function openEdit(row: ContentBanner) {
     dialogVisible.value = true;
 }
 
+function openPreviewCenter() {
+    const previewUrl = router.resolve({
+        path: "/content/preview-center",
+        query: { scene: "home" }
+    });
+    window.open(previewUrl.href, "_blank");
+}
+
 async function handleSubmit() {
     if (!form.title.trim()) {
         ElMessage.warning("请输入标题");
@@ -93,9 +104,11 @@ async function handleSubmit() {
         if (form.id) {
             (payload as any).id = form.id;
             await updateBanner(payload);
+            notifyPreviewDataCommitted("banner");
             ElMessage.success("更新成功");
         } else {
             await createBanner(payload);
+            notifyPreviewDataCommitted("banner");
             ElMessage.success("创建成功");
         }
         dialogVisible.value = false;
@@ -113,6 +126,7 @@ async function handleDelete(row: ContentBanner) {
         { type: "warning" }
     );
     await deleteBanner(row.id!);
+    notifyPreviewDataCommitted("banner");
     ElMessage.success("删除成功");
     fetchData();
 }
@@ -122,6 +136,7 @@ async function handleStatusChange(row: ContentBanner) {
     const prevStatus = row.status === 1 ? 0 : 1;
     try {
         await updateBannerStatus(row.id!, row.status);
+        notifyPreviewDataCommitted("banner");
         ElMessage.success(row.status === 1 ? "已启用" : "已禁用");
     } catch {
         row.status = prevStatus;
@@ -129,6 +144,29 @@ async function handleStatusChange(row: ContentBanner) {
 }
 
 onMounted(fetchData);
+
+watch(
+    () => [dialogVisible.value, form.id, form.title, form.picUrl, form.url, form.sort, form.status],
+    () => {
+        if (!dialogVisible.value) {
+            clearPreviewDraft("banner");
+            return;
+        }
+        setPreviewDraft("banner", {
+            id: form.id,
+            title: form.title,
+            picUrl: form.picUrl,
+            url: form.url,
+            sort: form.sort,
+            status: form.status
+        });
+    },
+    { immediate: true }
+);
+
+onBeforeUnmount(() => {
+    clearPreviewDraft("banner");
+});
 </script>
 
 <template>
@@ -139,6 +177,7 @@ onMounted(fetchData);
                 <el-icon class="mr-1"><i class="ep-icon-plus" /></el-icon>
                 新增 Banner
             </el-button>
+            <el-button plain @click="openPreviewCenter">打开全站预览中心</el-button>
         </el-card>
 
         <!-- 表格 -->

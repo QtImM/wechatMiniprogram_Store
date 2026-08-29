@@ -48,7 +48,7 @@ async function fetchData() {
 
 const currentRuleText = computed(() => {
   if (!currentRule.value) return "暂无启用且在有效期内的运费规则";
-  return `${currentRule.value.name}：未满 ¥${currentRule.value.freeThreshold} 收取 ¥${currentRule.value.baseFee}`;
+  return `${currentRule.value.name}：未满 ￥${currentRule.value.freeThreshold} 收取 ￥${currentRule.value.baseFee}`;
 });
 
 const dialogVisible = ref(false);
@@ -182,10 +182,10 @@ onMounted(fetchData);
       <el-table-column prop="id" label="ID" width="70" align="center" />
       <el-table-column prop="name" label="规则名称" min-width="150" show-overflow-tooltip />
       <el-table-column label="基础运费" width="120" align="right">
-        <template #default="{ row }">¥{{ row.baseFee }}</template>
+        <template #default="{ row }">￥{{ row.baseFee }}</template>
       </el-table-column>
       <el-table-column label="免邮门槛" width="140" align="right">
-        <template #default="{ row }">¥{{ row.freeThreshold }}</template>
+        <template #default="{ row }">￥{{ row.freeThreshold }}</template>
       </el-table-column>
       <el-table-column prop="startTime" label="生效时间" width="170" align="center">
         <template #default="{ row }">{{ row.startTime || "立即" }}</template>

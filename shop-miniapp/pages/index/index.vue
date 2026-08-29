@@ -76,7 +76,7 @@
 				<view class="dual-products">
 					<view class="dual-product" v-for="(item, index) in hotGoods.slice(0,2)" :key="index">
 						<image class="dual-product-img" :src="imageUrl(item.listPicUrl)" mode="aspectFill" @error="setImageFallback(item, 'listPicUrl')"></image>
-						<text class="dual-product-price">¥{{item.retailPrice}}</text>
+						<text class="dual-product-price">￥{{item.retailPrice}}</text>
 					</view>
 				</view>
 			</view>
@@ -119,7 +119,7 @@
 						<view class="topic-card-info">
 							<text class="topic-card-title">{{item.title}}</text>
 							<text class="topic-card-sub">{{item.subtitle}}</text>
-							<text class="topic-card-price" v-if="item.priceInfo">¥{{item.priceInfo}}起</text>
+							<text class="topic-card-price" v-if="item.priceInfo">{{formatTopicPrice(item.priceInfo)}}</text>
 						</view>
 					</view>
 				</view>
@@ -156,7 +156,7 @@
 					<view class="goods-info">
 						<text class="goods-name">{{item.name}}</text>
 						<view class="goods-price-row">
-							<text class="goods-price">¥{{item.retailPrice}}</text>
+							<text class="goods-price">￥{{item.retailPrice}}</text>
 							<view class="goods-cart-btn" @tap.stop="goToGoods(item.id)">
 								<text class="goods-cart-btn-icon">选</text>
 							</view>
@@ -170,7 +170,7 @@
 					<view class="goods-info">
 						<text class="goods-name">{{item.name}}</text>
 						<view class="goods-price-row">
-							<text class="goods-price">¥{{item.retailPrice}}</text>
+							<text class="goods-price">￥{{item.retailPrice}}</text>
 							<view class="goods-cart-btn" @tap.stop="goToGoods(item.id)">
 								<text class="goods-cart-btn-icon">选</text>
 							</view>
@@ -327,6 +327,14 @@ export default {
 			};
 			const fallback = fallbackIcons[item.url] || '/static/tabbar/category.png';
 			if (item.iconUrl !== fallback) this.$set(item, 'iconUrl', fallback);
+		},
+		formatTopicPrice(priceInfo) {
+			const value = String(priceInfo || '').trim();
+			if (!value) return '';
+			if (/[元￥¥]/.test(value)) {
+				return value.endsWith('起') ? value : value + '起';
+			}
+			return '￥' + value + '起';
 		},
 		goToGoods(id) {
 			uni.navigateTo({ url: '/pages/goods/goods?id=' + id });

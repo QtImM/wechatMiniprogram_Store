@@ -24,7 +24,7 @@
 				<image class="goods-img" :src="imageUrl(item.listPicUrl)" mode="aspectFill" @error="setImageFallback(item, 'listPicUrl')"></image>
 				<view class="goods-info">
 					<text class="goods-name">{{item.name||''}}</text>
-					<text class="goods-price">¥{{item.retailPrice||''}}</text>
+					<text class="goods-price">￥{{item.retailPrice||''}}</text>
 				</view>
 			</navigator>
 		</view>

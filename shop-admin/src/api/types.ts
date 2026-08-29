@@ -458,6 +458,18 @@ export interface ShippingRule {
   createTime?: string;
 }
 
+/** 后台可回退操作快照 */
+export interface AdminOperationSnapshotItem {
+  id: number;
+  scopeCode: string;
+  sceneCode: string;
+  operationLabel: string;
+  entityName?: string;
+  itemCount: number;
+  rolledBack: number;
+  createTime?: string;
+}
+
 export interface MarketingShippingAuditLog {
   id: number;
   adminUserId: number;

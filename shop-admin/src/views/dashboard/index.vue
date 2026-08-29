@@ -70,7 +70,7 @@ const statCards = [
     icon: "ep/money",
     color: "#e6a23c",
     bg: "#fdf6ec",
-    prefix: "¥",
+    prefix: "￥",
     format: (v: number) => (v / 100).toFixed(2)
   },
   {
@@ -79,7 +79,7 @@ const statCards = [
     icon: "ep/refresh-left",
     color: "#f56c6c",
     bg: "#fef0f0",
-    prefix: "¥",
+    prefix: "￥",
     format: (v: number) => (v / 100).toFixed(2)
   },
   {
@@ -88,7 +88,7 @@ const statCards = [
     icon: "ep/wallet",
     color: "#00a870",
     bg: "#e8f8f2",
-    prefix: "¥",
+    prefix: "￥",
     format: (v: number) => (v / 100).toFixed(2)
   },
   {
@@ -263,7 +263,7 @@ function renderBarChart(data: TopProduct[]) {
       formatter: (params: any) => {
         const p = Array.isArray(params) ? params[0] : params;
         const item = reversed[p.dataIndex];
-        return `${item.name}<br/>销量: ${item.sales_count}<br/>销售额: ¥${(item.sales_amount / 100).toFixed(2)}`;
+        return `${item.name}<br/>销量: ${item.sales_count}<br/>销售额: ￥${(item.sales_amount / 100).toFixed(2)}`;
       }
     },
     grid: { left: 120, right: 40, top: 8, bottom: 8 },
@@ -322,7 +322,7 @@ async function onTrendDaysChange() {
 
 /* ========== 格式化 ========== */
 function formatPrice(v: number) {
-  return "¥" + (v / 100).toFixed(2);
+  return "￥" + (v / 100).toFixed(2);
 }
 function getStatusLabel(s: number) {
   return orderStatusMap[s]?.label ?? "未知";

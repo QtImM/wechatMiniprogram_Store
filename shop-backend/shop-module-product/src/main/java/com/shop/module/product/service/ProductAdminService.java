@@ -147,6 +147,53 @@ public class ProductAdminService {
         materialAssetService.refreshAllReferenceCounts();
     }
 
+    @Transactional(rollbackFor = Exception.class)
+    public void deleteProductForRollback(Long spuId) {
+        requireSpu(spuId);
+        if (hasTradeReferenceBySpu(spuId)) {
+            throw new ServerException(400, "商品仍被购物车或未结束订单引用，不能回退删除");
+        }
+        List<ProductSkuDO> currentSkus = productSkuMapper.selectList(new LambdaQueryWrapper<ProductSkuDO>()
+                .eq(ProductSkuDO::getSpuId, spuId));
+        for (ProductSkuDO sku : currentSkus) {
+            if (hasTradeReferenceBySku(sku.getId())) {
+                throw new ServerException(400, "商品规格仍被购物车或未结束订单引用，不能回退删除");
+            }
+        }
+        productSkuMapper.delete(new LambdaQueryWrapper<ProductSkuDO>()
+                .eq(ProductSkuDO::getSpuId, spuId));
+        productSpuMapper.deleteById(spuId);
+        materialAssetService.refreshAllReferenceCounts();
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public void restoreProductSnapshot(ProductSpuDO snapshotSpu, List<ProductSkuDO> snapshotSkus,
+                                       Long adminId, String stockAdjustReason) {
+        if (snapshotSpu == null || snapshotSpu.getId() == null) {
+            throw new ServerException(400, "商品回退快照不存在");
+        }
+        ProductSpuDO current = productSpuMapper.selectById(snapshotSpu.getId());
+        ProductSpuDO target = copySpuForRestore(snapshotSpu);
+        if (current == null) {
+            if (target.getSalesCount() == null) {
+                target.setSalesCount(0);
+            }
+            productSpuMapper.insert(target);
+        } else {
+            target.setSalesCount(current.getSalesCount());
+            if (productSpuMapper.updateById(target) != 1) {
+                throw new ServerException(409, "商品信息已变化，请刷新后重试");
+            }
+        }
+        List<ProductSkuDO> requestedSkus = snapshotSkus == null ? List.of() : snapshotSkus.stream()
+                .map(this::copySkuForRestore)
+                .toList();
+        saveSkusInternal(target.getId(), normalizeRequestedSkus(target, requestedSkus), adminStockBizNo(),
+                adminId == null ? 0L : adminId, stockAdjustReason);
+        syncSpuSummary(target.getId());
+        materialAssetService.refreshAllReferenceCounts();
+    }
+
     private void saveSkusInternal(Long spuId, List<ProductSkuDO> requestedSkus, String stockBizNo,
                                   Long adminId, String stockAdjustReason) {
         List<ProductSkuDO> existingSkus = productSkuMapper.selectList(
@@ -527,5 +574,44 @@ public class ProductAdminService {
                      after_stock, operator_type, operator_id, remark)
                 VALUES (?, ?, 'ADMIN_ADJUST', ?, ?, ?, ?, 'admin', ?, ?)
                 """, skuId, spuId, bizNo, change, beforeStock, afterStock, adminId, reason);
+    }
+
+    private ProductSpuDO copySpuForRestore(ProductSpuDO source) {
+        ProductSpuDO target = new ProductSpuDO();
+        target.setId(source.getId());
+        target.setCategoryId(source.getCategoryId());
+        target.setName(source.getName());
+        target.setKeyword(source.getKeyword());
+        target.setIntroduction(source.getIntroduction());
+        target.setDescription(source.getDescription());
+        target.setPicUrl(source.getPicUrl());
+        target.setSliderPicUrls(source.getSliderPicUrls());
+        target.setVideoUrl(source.getVideoUrl());
+        target.setType(source.getType());
+        target.setPrice(source.getPrice());
+        target.setMarketPrice(source.getMarketPrice());
+        target.setStock(source.getStock());
+        target.setSalesCount(source.getSalesCount());
+        target.setSort(source.getSort());
+        target.setStatus(source.getStatus());
+        target.setDeleted(Boolean.FALSE);
+        return target;
+    }
+
+    private ProductSkuDO copySkuForRestore(ProductSkuDO source) {
+        ProductSkuDO target = new ProductSkuDO();
+        target.setId(source.getId());
+        target.setSpuId(source.getSpuId());
+        target.setSkuCode(source.getSkuCode());
+        target.setProperties(source.getProperties());
+        target.setPrice(source.getPrice());
+        target.setMarketPrice(source.getMarketPrice());
+        target.setStock(source.getStock());
+        target.setWarningStock(source.getWarningStock());
+        target.setPicUrl(source.getPicUrl());
+        target.setWeight(source.getWeight());
+        target.setVolume(source.getVolume());
+        target.setDeleted(Boolean.FALSE);
+        return target;
     }
 }

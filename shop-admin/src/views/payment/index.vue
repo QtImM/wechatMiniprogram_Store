@@ -182,7 +182,7 @@ function handledType(handled?: number) {
 
 function money(value?: string | number) {
   const numberValue = Number(value ?? 0);
-  return Number.isFinite(numberValue) ? `¥${numberValue.toFixed(2)}` : "—";
+  return Number.isFinite(numberValue) ? `￥${numberValue.toFixed(2)}` : "—";
 }
 
 onMounted(fetchData);

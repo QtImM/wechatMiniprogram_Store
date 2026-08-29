@@ -18,9 +18,9 @@
 				<!-- 价格信息区 -->
 				<view class="price-section">
 					<view class="price-row">
-						<text class="price-symbol">¥</text>
+						<text class="price-symbol">￥</text>
 						<text class="price-value">{{goods.retailPrice || '0'}}</text>
-						<text class="price-market" v-if="goods.counterPrice">¥{{goods.counterPrice}}</text>
+						<text class="price-market" v-if="goods.counterPrice">￥{{goods.counterPrice}}</text>
 					</view>
 					<view class="sales-info" v-if="goods.sellVolume">
 						<text>已售 {{goods.sellVolume}}</text>
@@ -129,7 +129,7 @@
 						<navigator class="related-item" v-for="(item, index) in relatedGoods" :key="item.id" :url="'/pages/goods/goods?id='+item.id">
 							<image class="related-img" :src="imageUrl(item.listPicUrl)" mode="aspectFill" @error="onRelatedImageError(index)"></image>
 							<text class="related-name">{{item.name}}</text>
-							<text class="related-price">¥{{item.retailPrice}}</text>
+							<text class="related-price">￥{{item.retailPrice}}</text>
 						</navigator>
 					</view>
 				</view>
@@ -140,7 +140,7 @@
 				<view class="sku-header">
 					<image class="sku-img" :src="imageUrl(goods.listPicUrl)" mode="aspectFill" @error="onSkuImageError"></image>
 					<view class="sku-meta">
-						<text class="sku-price">¥{{goods.retailPrice}}</text>
+						<text class="sku-price">￥{{goods.retailPrice}}</text>
 						<text class="sku-selected">{{checkedSpecText}}</text>
 						<text class="sku-stock">库存 {{ selectedSku ? selectedSku.stock : '-' }}</text>
 					</view>

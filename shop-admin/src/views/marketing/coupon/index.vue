@@ -212,12 +212,12 @@ onMounted(fetchData);
                 </el-table-column>
                 <el-table-column label="门槛" width="100" align="right">
                     <template #default="{ row }">
-                        ¥{{ row.thresholdAmount }}
+                        ￥{{ row.thresholdAmount }}
                     </template>
                 </el-table-column>
                 <el-table-column label="优惠" width="100" align="right">
                     <template #default="{ row }">
-                        <span class="text-red">-¥{{ row.discountAmount }}</span>
+                        <span class="text-red">-￥{{ row.discountAmount }}</span>
                     </template>
                 </el-table-column>
                 <el-table-column label="发行/已领" width="120" align="center">
@@ -326,7 +326,7 @@ onMounted(fetchData);
                 <el-table-column prop="id" label="ID" width="60" />
                 <el-table-column prop="userId" label="用户ID" width="80" />
                 <el-table-column label="优惠" width="80">
-                    <template #default="{ row }">{{ row.discountAmount ? `¥${row.discountAmount}` : "-" }}</template>
+                    <template #default="{ row }">{{ row.discountAmount ? `￥${row.discountAmount}` : "-" }}</template>
                 </el-table-column>
                 <el-table-column label="状态" width="80">
                     <template #default="{ row }">

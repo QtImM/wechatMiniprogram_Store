@@ -26,11 +26,11 @@
 						<text class="hero-title">黄金会员卡</text>
 						<text class="hero-sub">{{ purchaseEnabled ? '尊享五大权益 · 全年无忧购物' : purchaseMessage }}</text>
 						<view class="hero-price-row" v-if="purchaseEnabled">
-							<text class="hero-price">¥99</text>
+							<text class="hero-price">￥99</text>
 							<text class="hero-price-unit">/年</text>
-							<text class="hero-original">¥199</text>
+							<text class="hero-original">￥199</text>
 							<view class="hero-save-badge">
-								<text class="hero-save-text">省¥100</text>
+								<text class="hero-save-text">省￥100</text>
 							</view>
 						</view>
 						<text class="hero-daily">{{ dailyPrice }}</text>
@@ -112,7 +112,7 @@
 				<view class="bottom-card">
 					<view class="bottom-price-info">
 						<text class="bottom-label">限时特惠</text>
-						<text class="bottom-price">¥99<text class="bottom-price-unit">/年</text></text>
+						<text class="bottom-price">￥99<text class="bottom-price-unit">/年</text></text>
 					</view>
 					<view class="bottom-btn" @tap="handleSubscribe" :class="{ 'btn-loading': subscribing }">
 						<text class="bottom-btn-text">{{ subscribing ? '开通中...' : '立即开通黄金会员' }}</text>

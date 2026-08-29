@@ -25,7 +25,7 @@
 					<text class="goods-name">{{item.goodsName||''}}</text>
 					<text class="goods-spec" v-if="item.goodsSpecifitionNameValue">{{item.goodsSpecifitionNameValue}}</text>
 					<view class="goods-bottom">
-						<text class="goods-price">¥{{item.retailPrice||''}}</text>
+						<text class="goods-price">￥{{item.retailPrice||''}}</text>
 						<text class="goods-num">x{{item.number||''}}</text>
 					</view>
 				</view>
@@ -37,7 +37,7 @@
 			<text class="option-label">优惠券</text>
 			<view class="option-right">
 				<text class="option-value" :class="{ 'has-coupon': selectedCouponId }">
-					{{selectedCouponId ? '-¥' + couponPrice : (couponList.length > 0 ? couponList.length + '张可用' : '暂无可用')}}
+					{{selectedCouponId ? '-￥' + couponPrice : (couponList.length > 0 ? couponList.length + '张可用' : '暂无可用')}}
 				</text>
 				<text class="option-arrow">›</text>
 			</view>
@@ -45,7 +45,7 @@
 
 		<!-- 满减提示条 -->
 		<view v-if="promotion && !selectedCouponId" class="promo-bar">
-			<text v-if="promotionGap" class="promo-text">再买 ¥{{promotionGap}} 可享「{{promotion.name}}」</text>
+			<text v-if="promotionGap" class="promo-text">再买 ￥{{promotionGap}} 可享「{{promotion.name}}」</text>
 			<text v-else class="promo-text">已享「{{promotion.name}}」优惠</text>
 		</view>
 
@@ -53,15 +53,15 @@
 		<view class="amount-card">
 			<view class="amount-row">
 				<text class="amount-label">商品合计</text>
-				<text class="amount-value">¥{{goodsTotalPrice}}</text>
+				<text class="amount-value">￥{{goodsTotalPrice}}</text>
 			</view>
 			<view class="amount-row">
 				<text class="amount-label">运费</text>
-				<text class="amount-value">¥{{freightPrice}}</text>
+				<text class="amount-value">￥{{freightPrice}}</text>
 			</view>
 			<view class="amount-row" v-if="couponPrice > 0">
 				<text class="amount-label">优惠{{discountSource === 'promotion' ? '(满减)' : '(优惠券)'}}</text>
-				<text class="amount-value discount">-¥{{couponPrice}}</text>
+				<text class="amount-value discount">-￥{{couponPrice}}</text>
 			</view>
 		</view>
 
@@ -79,7 +79,7 @@
 					</view>
 					<view v-for="c in couponList" :key="c.id" class="popup-option" :class="{ selected: selectedCouponId === c.id }" @tap="selectCoupon(c)">
 						<view class="popup-option-info">
-							<text class="popup-option-name">{{c.name}} -¥{{c.discountAmount}}</text>
+							<text class="popup-option-name">{{c.name}} -￥{{c.discountAmount}}</text>
 							<text class="popup-option-expire">有效期至 {{c.expireTime}}</text>
 						</view>
 						<text v-if="selectedCouponId === c.id" class="popup-check">✓</text>
@@ -93,7 +93,7 @@
 		<view class="submit-bar">
 			<view class="submit-left">
 				<text class="submit-label">实付</text>
-				<text class="submit-price">¥{{actualPrice}}</text>
+				<text class="submit-price">￥{{actualPrice}}</text>
 			</view>
 			<view class="submit-btn" :class="{ disabled: submitting }" @tap="submitOrder">
 				<text>{{submitting ? '正在提交...' : '提交订单'}}</text>

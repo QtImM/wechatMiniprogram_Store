@@ -10,6 +10,7 @@ public class ProductImportRowRespVO {
 
     private int rowNo;
     private boolean valid;
+    private String groupCode;
     private String productName;
     private String categoryName;
     private String skuCode;

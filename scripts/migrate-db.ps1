@@ -41,7 +41,7 @@ function Invoke-MigrationSql {
         if ($LASTEXITCODE -ne 0) {
             throw "迁移文件复制失败：$MigrationName"
         }
-        $mysqlCommand = 'mysql --default-character-set=utf8mb4 -u"$1" -p"$2" "$3" < "$4"'
+        $mysqlCommand = 'mysql --default-character-set=utf8mb4 -u"$1" -p"$2" "$3" -e "source $4"'
         & docker exec $MysqlContainer sh -c $mysqlCommand migration $MysqlUser $MysqlPassword $Database $containerFile 2>$null
         if ($LASTEXITCODE -ne 0) {
             throw "迁移执行失败：$MigrationName"
