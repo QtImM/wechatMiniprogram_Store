@@ -56,7 +56,7 @@ public class AppMockController {
             @RequestParam(value = "sort", defaultValue = "default") String sort,
             @RequestParam(value = "order", defaultValue = "desc") String order) {
         
-        return ok(productCatalogProvider.list(categoryId, keyword, isHot, isNew, page, size));
+        return ok(productCatalogProvider.list(categoryId, keyword, isHot, isNew, page, size, sort, order));
     }
 
     // =========== 商品详情 ===========

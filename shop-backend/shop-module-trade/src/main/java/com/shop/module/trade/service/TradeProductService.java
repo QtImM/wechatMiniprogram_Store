@@ -6,6 +6,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 public class TradeProductService {
@@ -65,12 +67,13 @@ public class TradeProductService {
 
     private void recordStockChange(Long skuId, int change, String bizType, String bizNo,
                                    String operatorType, Long operatorId, String remark) {
-        MapRow row = jdbcTemplate.queryForObject(
+        List<MapRow> rows = jdbcTemplate.query(
                 "SELECT spu_id, stock FROM product_sku WHERE id = ? AND deleted = b'0'",
                 (rs, index) -> new MapRow(rs.getLong("spu_id"), rs.getInt("stock")), skuId);
-        if (row == null) {
+        if (rows.isEmpty()) {
             throw new com.shop.common.exception.ServerException(1101, "商品规格不存在");
         }
+        MapRow row = rows.get(0);
         int beforeStock = Math.subtractExact(row.stock(), change);
         jdbcTemplate.update("""
                 INSERT INTO product_stock_log

@@ -14,12 +14,12 @@ class ProductCatalogProviderContractTest {
     void mockAndDatabaseProvidersFollowSameCoreContract() {
         MockProductCatalogProvider mockProvider = new MockProductCatalogProvider();
         AppProductQueryService queryService = mock(AppProductQueryService.class);
-        when(queryService.list(0L, "", 0, 0, 1, 10)).thenReturn(mockProvider.list(0L, "", 0, 0, 1, 10));
+        when(queryService.list(0L, "", 0, 0, 1, 10, "", "")).thenReturn(mockProvider.list(0L, "", 0, 0, 1, 10, "", ""));
         when(queryService.detail(1L)).thenReturn(mockProvider.detail(1L));
         DatabaseProductCatalogProvider databaseProvider = new DatabaseProductCatalogProvider(queryService);
 
-        assertListContract(mockProvider.list(0L, "", 0, 0, 1, 10));
-        assertListContract(databaseProvider.list(0L, "", 0, 0, 1, 10));
+        assertListContract(mockProvider.list(0L, "", 0, 0, 1, 10, "", ""));
+        assertListContract(databaseProvider.list(0L, "", 0, 0, 1, 10, "", ""));
         assertDetailContract(mockProvider.detail(1L));
         assertDetailContract(databaseProvider.detail(1L));
     }
@@ -27,7 +27,7 @@ class ProductCatalogProviderContractTest {
     @Test
     void mockProviderFiltersAndRejectsUnknownGoods() {
         MockProductCatalogProvider provider = new MockProductCatalogProvider();
-        Map<String, Object> result = provider.list(1L, "枸杞", 1, 0, 1, 10);
+        Map<String, Object> result = provider.list(1L, "枸杞", 1, 0, 1, 10, "", "");
         Map<String, Object> page = castMap(result.get("goodsList"));
         assertEquals(1, ((List<?>) page.get("records")).size());
         assertThrows(RuntimeException.class, () -> provider.detail(999L));

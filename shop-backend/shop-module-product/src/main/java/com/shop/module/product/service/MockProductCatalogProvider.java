@@ -43,7 +43,7 @@ public class MockProductCatalogProvider implements ProductCatalogProvider {
     @Override public Map<String, Object> count() { return Map.of("goodsCount", ProductMockFixture.GOODS.size()); }
 
     @Override
-    public Map<String, Object> list(Long categoryId, String keyword, int isHot, int isNew, int page, int size) {
+    public Map<String, Object> list(Long categoryId, String keyword, int isHot, int isNew, int page, int size, String sort, String order) {
         String normalizedKeyword = keyword == null ? "" : keyword.trim();
         List<Map<String, Object>> filtered = ProductMockFixture.GOODS.stream()
                 .filter(item -> categoryId == null || categoryId == 0 || ((Number) item.get("categoryId")).longValue() == categoryId)

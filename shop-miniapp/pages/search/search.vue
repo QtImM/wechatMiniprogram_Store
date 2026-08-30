@@ -18,9 +18,7 @@
 			<view class="keyword-section" v-if="!keyword && historyKeyword.length">
 				<view class="keyword-header">
 					<text class="keyword-title">搜索历史</text>
-					<view class="keyword-clear" @tap="clearHistory">
-						<text>清空</text>
-					</view>
+					<text class="keyword-clear" @tap="clearHistory">清空</text>
 				</view>
 				<view class="keyword-tags">
 					<view class="keyword-tag" v-for="(item, index) in historyKeyword" :key="index"
@@ -88,6 +86,9 @@
 			<text class="empty-icon">🔍</text>
 			<text class="empty-text">未找到相关商品</text>
 			<text class="empty-hint">换个关键词试试吧</text>
+			<view class="empty-reset" v-if="categoryId" @tap="resetFilter">
+				<text>清除筛选</text>
+			</view>
 		</view>
 	</view>
 </template>
@@ -156,7 +157,17 @@ export default {
 		},
 		clearHistory() {
 			this.historyKeyword = [];
-			util.request(api.SearchClearHistory);
+			util.request(api.SearchClearHistory, {}, 'POST', 'application/x-www-form-urlencoded', false, true).then(() => {
+				this.getSearchKeyword();
+			});
+		},
+		resetFilter() {
+			this.categoryId = 0;
+			this.currentSortType = 'id';
+			this.currentSortOrder = 'desc';
+			this.page = 1;
+			this.goodsList = [];
+			this.getGoodsList();
 		},
 		getGoodsList() {
 			util.request(api.GoodsList, {
@@ -514,5 +525,17 @@ page {
 	font-size: 26rpx;
 	color: $text-hint;
 	margin-top: 12rpx;
+}
+
+.empty-reset {
+	margin-top: 32rpx;
+	height: 64rpx;
+	line-height: 64rpx;
+	padding: 0 48rpx;
+	background: $green;
+	color: #fff;
+	font-size: 28rpx;
+	border-radius: 32rpx;
+	text-align: center;
 }
 </style>

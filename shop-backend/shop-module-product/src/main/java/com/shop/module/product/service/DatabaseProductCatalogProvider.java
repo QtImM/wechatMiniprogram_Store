@@ -16,7 +16,7 @@ public class DatabaseProductCatalogProvider implements ProductCatalogProvider {
     @Override public Map<String, Object> catalog(Long id) { return queryService.catalog(id); }
     @Override public Map<String, Object> goodsCategory(Long id) { return queryService.goodsCategory(id); }
     @Override public Map<String, Object> count() { return queryService.count(); }
-    @Override public Map<String, Object> list(Long categoryId, String keyword, int isHot, int isNew, int page, int size) { return queryService.list(categoryId, keyword, isHot, isNew, page, size); }
+    @Override public Map<String, Object> list(Long categoryId, String keyword, int isHot, int isNew, int page, int size, String sort, String order) { return queryService.list(categoryId, keyword, isHot, isNew, page, size, sort, order); }
     @Override public Map<String, Object> detail(Long id) { return queryService.detail(id); }
     @Override public Map<String, Object> related(Long id) { return Map.of("goodsList", queryService.related(id)); }
 }

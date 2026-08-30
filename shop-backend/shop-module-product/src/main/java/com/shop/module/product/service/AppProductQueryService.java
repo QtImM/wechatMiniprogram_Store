@@ -43,7 +43,7 @@ public class AppProductQueryService {
     }
     public Map<String, Object> goodsCategory(Long id) { return Map.of("brotherCategory", categories().stream().filter(c -> c.getParentId() == 0).map(this::categoryBrief).toList(), "currentCategory", categoryBrief(category(id))); }
     public Map<String, Object> count() { return Map.of("goodsCount", productSpuMapper.selectCount(available())); }
-    public Map<String, Object> list(Long categoryId, String keyword, int isHot, int isNew, int page, int size) {
+    public Map<String, Object> list(Long categoryId, String keyword, int isHot, int isNew, int page, int size, String sort, String order) {
         Set<Long> ids = categoryIds(categoryId);
         int finalPage = Math.max(page, 1);
         int finalSize = Math.min(Math.max(size, 1), 100);
@@ -55,7 +55,10 @@ public class AppProductQueryService {
                         .like(ProductSpuDO::getName, normalizedKeyword)
                         .or().like(ProductSpuDO::getKeyword, normalizedKeyword)
                         .or().like(ProductSpuDO::getIntroduction, normalizedKeyword));
-        if (isNew == 1) {
+        if ("price".equals(sort)) {
+            boolean asc = "asc".equalsIgnoreCase(order);
+            wrapper.orderBy(true, asc, ProductSpuDO::getPrice);
+        } else if (isNew == 1) {
             wrapper.orderByDesc(ProductSpuDO::getCreateTime);
         } else if (isHot == 1) {
             wrapper.orderByDesc(ProductSpuDO::getSalesCount);
@@ -98,7 +101,22 @@ public class AppProductQueryService {
         result.put("info", goods(s)); result.put("gallery", gallery(s)); result.put("specificationList", specifications); result.put("productList",skuModels.stream().map(this::product).toList()); result.put("attribute",List.of()); result.put("issue",List.of()); result.put("comment",comment); result.put("brand",Map.of()); result.put("userHasCollect",userHasCollect);
         return result;
     }
-    public List<Map<String,Object>> related(Long id) { ProductSpuDO s=productSpuMapper.selectById(id); return s==null?List.of():productSpuMapper.selectList(available().eq(ProductSpuDO::getCategoryId,s.getCategoryId()).ne(ProductSpuDO::getId,id).last("LIMIT 4")).stream().map(this::goods).toList(); }
+    public List<Map<String,Object>> related(Long id) {
+        ProductSpuDO s = productSpuMapper.selectById(id);
+        if (s == null) return List.of();
+        List<Map<String,Object>> result = new ArrayList<>(productSpuMapper.selectList(available().eq(ProductSpuDO::getCategoryId, s.getCategoryId()).ne(ProductSpuDO::getId, id).last("LIMIT 4")).stream().map(this::goods).toList());
+        if (result.size() < 4) {
+            Set<Long> siblingIds = categoryIds(s.getCategoryId());
+            if (!siblingIds.isEmpty()) {
+                List<Map<String,Object>> more = productSpuMapper.selectList(available().in(ProductSpuDO::getCategoryId, siblingIds).ne(ProductSpuDO::getId, id).last("LIMIT " + (4 - result.size()))).stream().map(this::goods).toList();
+                Set<Long> existingIds = result.stream().map(m -> ((Number) m.get("id")).longValue()).collect(java.util.stream.Collectors.toSet());
+                for (Map<String,Object> item : more) {
+                    if (!existingIds.contains(((Number) item.get("id")).longValue())) result.add(item);
+                }
+            }
+        }
+        return result;
+    }
     private LambdaQueryWrapper<ProductSpuDO> available(){return new LambdaQueryWrapper<ProductSpuDO>().eq(ProductSpuDO::getStatus,1).orderByDesc(ProductSpuDO::getSort);}
     private List<CategoryDO> categories(){return categoryMapper.selectList(new LambdaQueryWrapper<CategoryDO>().eq(CategoryDO::getStatus,1).orderByDesc(CategoryDO::getSort));}
     private CategoryDO category(Long id){return categories().stream().filter(c->Objects.equals(c.getId(),id)).findFirst().orElseThrow(()->new ServerException(ErrorCode.PRODUCT_NOT_EXISTS));}
