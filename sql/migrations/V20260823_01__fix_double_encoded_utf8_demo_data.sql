@@ -9,7 +9,8 @@
 UPDATE product_spu
 SET name        = CONVERT(CONVERT(CONVERT(name USING latin1) USING binary) USING utf8mb4),
     keyword     = CONVERT(CONVERT(CONVERT(keyword USING latin1) USING binary) USING utf8mb4),
-    introduction = CONVERT(CONVERT(CONVERT(introduction USING latin1) USING binary) USING utf8mb4)
+    introduction = CONVERT(CONVERT(CONVERT(introduction USING latin1) USING binary) USING utf8mb4),
+    description  = CONVERT(CONVERT(CONVERT(description USING latin1) USING binary) USING utf8mb4)
 WHERE id BETWEEN 240001 AND 240099
   AND deleted = 0;
 
@@ -80,7 +81,18 @@ WHERE id = 240301
   AND deleted = 0;
 
 -- ============================================================
--- 10. content_channel 240211-240213 补充修复
+-- 10b. product_spu description 240001-240006 补充修复
+--     CONVERT 方式对部分记录无效，改用直接赋值
+-- ============================================================
+UPDATE product_spu SET description = '<p>玫瑰阿胶糕，红蓝礼盒与两种净含量可选。</p>' WHERE id = 240001 AND deleted = 0;
+UPDATE product_spu SET description = '<p>长白山西洋参切片，当前批次售罄。</p>' WHERE id = 240002 AND deleted = 0;
+UPDATE product_spu SET description = '<p>花果茶独立袋装，杯泡方便。</p>' WHERE id = 240003 AND deleted = 0;
+UPDATE product_spu SET description = '<p>每日两丸，独立包装。</p>' WHERE id = 240004 AND deleted = 0;
+UPDATE product_spu SET description = '<p>道地药膳食材，建议每周煲汤一至两次。</p>' WHERE id = 240005 AND deleted = 0;
+UPDATE product_spu SET description = '<p>该商品仅用于验证下架过滤。</p>' WHERE id = 240006 AND deleted = 0;
+
+-- ============================================================
+-- 10c. content_channel 240211-240213 补充修复
 --     CONVERT 方式对部分记录无效，改用直接赋值
 -- ============================================================
 UPDATE content_channel SET name = '演示新品' WHERE id = 240211 AND deleted = 0;

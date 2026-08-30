@@ -9,7 +9,7 @@ public interface ProductCatalogProvider {
     Map<String, Object> catalog(Long id);
     Map<String, Object> goodsCategory(Long id);
     Map<String, Object> count();
-    Map<String, Object> list(Long categoryId, String keyword, int isHot, int isNew, int page, int size);
+    Map<String, Object> list(Long categoryId, String keyword, int isHot, int isNew, int page, int size, String sort, String order);
     Map<String, Object> detail(Long id);
     Map<String, Object> related(Long id);
 }

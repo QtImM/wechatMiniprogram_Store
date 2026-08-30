@@ -11,10 +11,11 @@
 		<!-- 分类主体 -->
 		<view class="catalog-body">
 			<!-- 左侧一级分类 -->
-			<scroll-view class="side-nav" scroll-y :style="{height: scrollHeight + 'px'}">
+			<scroll-view class="side-nav" scroll-y :style="{height: scrollHeight + 'px'}" :scroll-into-view="'nav-' + currentId">
 				<view
 					class="nav-item"
 					:class="{active: currentId === item.id}"
+					:id="'nav-' + item.id"
 					v-for="(item, index) in navList"
 					:key="index"
 					@tap="switchCate(item.id)"

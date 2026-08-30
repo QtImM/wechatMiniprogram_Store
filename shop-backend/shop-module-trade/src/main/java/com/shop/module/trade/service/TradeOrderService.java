@@ -413,8 +413,13 @@ public class TradeOrderService {
         tradeOrderLogService.recordStatusChanged(closedOrder, operatorType, operatorId, action,
                 0, 4, closeReason);
         for (TradeOrderItemDO item : getOrderItems(orderId)) {
-            tradeProductService.recoverStock(item.getSkuId(), item.getCount(), "ORDER_CANCEL",
-                    closedOrder.getOrderSn(), operatorType, operatorId);
+            try {
+                tradeProductService.recoverStock(item.getSkuId(), item.getCount(), "ORDER_CANCEL",
+                        closedOrder.getOrderSn(), operatorType, operatorId);
+            } catch (Exception e) {
+                log.warn("[关单] 回补库存跳过 skuId={} orderId={} orderSn={}: {}",
+                        item.getSkuId(), orderId, closedOrder.getOrderSn(), e.getMessage());
+            }
         }
         payOrderMapper.update(null, new LambdaUpdateWrapper<PayOrderDO>()
                 .eq(PayOrderDO::getOrderId, orderId)

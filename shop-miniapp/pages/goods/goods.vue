@@ -1,12 +1,19 @@
 <template>
 	<view class="page">
-		<scroll-view class="scroll-area" :style="'height:' + winHeight + 'rpx'" :scroll-y="true">
+		<!-- 加载中 -->
+		<view class="loading-state" v-if="loading">
+			<text class="loading-text">加载中...</text>
+		</view>
+		<!-- 加载失败 -->
+		<view class="error-state" v-else-if="loadingFailed">
+			<text class="error-text">商品加载失败</text>
+			<text class="error-sub">{{errorMsg}}</text>
+			<button class="error-retry" @tap="getGoodsInfo">重新加载</button>
+		</view>
+		<!-- 正常内容 -->
+		<scroll-view v-else class="scroll-area" :style="'height:' + winHeight + 'rpx'" :scroll-y="true">
 			<!-- 正常展示模式 -->
 			<view v-if="!openAttr">
-				<view class="detail-error" v-if="loadingFailed">
-					<text>商品加载失败，请检查网络后重试</text>
-					<button class="detail-retry" @tap="getGoodsInfo">重新加载</button>
-				</view>
 				<!-- 商品轮播图 -->
 				<swiper class="gallery-swiper" indicator-dots circular autoplay :interval="3000"
 					indicator-color="rgba(255,255,255,0.4)" indicator-active-color="#FEFEFC">
@@ -171,7 +178,7 @@
 		</scroll-view>
 
 		<!-- 底部操作栏 -->
-		<view class="action-bar">
+		<view class="action-bar" v-if="!loading && !loadingFailed">
 			<view class="action-icon" @tap="closeAttrOrCollect">
 				<image class="action-icon-img" :src="collectBackImage" mode="aspectFit"></image>
 				<text class="action-icon-text">{{openAttr ? '返回' : '收藏'}}</text>
@@ -224,7 +231,9 @@ export default {
 			noCollectImage: '/static/images/icon_collect.png',
 			hasCollectImage: '/static/images/icon_collect_checked.png',
 			collectBackImage: '/static/images/icon_collect.png',
-			loadingFailed: false
+			loading: true,
+			loadingFailed: false,
+			errorMsg: ''
 		}
 	},
 	methods: {
@@ -238,7 +247,15 @@ export default {
 			});
 		},
 		getGoodsInfo() {
+			if (!this.id || isNaN(this.id)) {
+				this.loading = false;
+				this.loadingFailed = true;
+				this.errorMsg = '商品参数无效';
+				return;
+			}
+			this.loading = true;
 			this.loadingFailed = false;
+			this.errorMsg = '';
 			util.request(api.GoodsDetail, { id: this.id }).then(res => {
 				if (res.code === 0) {
 					const info = Object.assign({}, res.data.info || {});
@@ -267,9 +284,13 @@ export default {
 					this.getGoodsRelated();
 				} else {
 					this.loadingFailed = true;
+					this.errorMsg = res.msg || '商品不存在或已下架';
 				}
 			}).catch(() => {
 				this.loadingFailed = true;
+				this.errorMsg = '网络请求失败';
+			}).then(() => {
+				this.loading = false;
 			});
 		},
 		getGoodsRelated() {
@@ -482,18 +503,18 @@ export default {
 	onLoad(options) {
 		this.id = parseInt(options.id);
 		let that = this;
-		this.getGoodsInfo();
-		util.request(api.CartGoodsCount).then(res => {
-			if (res.code === 0) {
-				that.cartGoodsCount = res.data.cartTotal.goodsCount;
-			}
-		});
 		uni.getSystemInfo({
 			success: function(res) {
 				var clientHeight = res.windowHeight,
 					clientWidth = res.windowWidth,
 					rpxR = 750 / clientWidth;
 				that.winHeight = clientHeight * rpxR - 110;
+			}
+		});
+		this.getGoodsInfo();
+		util.request(api.CartGoodsCount).then(res => {
+			if (res.code === 0) {
+				that.cartGoodsCount = res.data.cartTotal.goodsCount;
 			}
 		});
 	},
@@ -1183,18 +1204,50 @@ export default {
 	color: #4F6854;
 }
 
-.detail-error {
-	margin: 28rpx;
-	padding: 36rpx;
-	text-align: center;
-	color: $text-secondary;
+.loading-state {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	height: 80vh;
 }
 
-.detail-retry {
-	margin-top: 20rpx;
-	width: 220rpx;
+.loading-text {
+	font-size: 28rpx;
+	color: $text-hint;
+}
+
+.error-state {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	height: 80vh;
+	padding: 60rpx;
+}
+
+.error-text {
+	font-size: 32rpx;
+	color: $text-primary;
+	font-weight: 600;
+	margin-bottom: 16rpx;
+}
+
+.error-sub {
 	font-size: 26rpx;
+	color: $text-hint;
+	margin-bottom: 40rpx;
+	text-align: center;
+}
+
+.error-retry {
+	width: 280rpx;
+	height: 76rpx;
+	line-height: 76rpx;
+	font-size: 28rpx;
 	color: #FEFEFC;
 	background: $green;
+	border-radius: 38rpx;
+	border: none;
 }
 </style>
