@@ -26,6 +26,7 @@ public class ContentAdminService {
     private final ContentTopicMapper topicMapper;
     private final ContentTopicProductMapper topicProductMapper;
     private final ProductSpuMapper productSpuMapper;
+    private final MaterialAssetService materialAssetService;
 
     // ==================== Banner ====================
 
@@ -344,8 +345,8 @@ public class ContentAdminService {
 
     private String requireResourceUrl(String value, String label) {
         String normalized = requireText(value, label, 512);
-        if (!normalized.startsWith("https://") && !normalized.startsWith("/static/")) {
-            throw new ServerException(400, label + "必须使用 HTTPS 或小程序静态资源路径");
+        if (!normalized.startsWith("https://")) {
+            materialAssetService.validateBusinessImageUrl(normalized, label, true);
         }
         return normalized;
     }

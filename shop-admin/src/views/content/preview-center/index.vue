@@ -133,6 +133,17 @@ const productOriginalSingleStock = ref(0);
 const productStockAdjustReason = ref("");
 const editorInitialSnapshot = ref("");
 const isEditorInitializing = ref(false);
+const showAdvancedFields = ref(false);
+const contentNavigatorVisible = ref(false);
+const contentNavigatorScene = ref<VisualEditorScene>("banner");
+const publishCheckVisible = ref(false);
+const lastPublishedLabel = ref("");
+const imageQualityHint = ref("");
+
+interface EditorCheckResult {
+  errors: string[];
+  warnings: string[];
+}
 
 const typeOptions = [
   { label: "实物商品", value: 1 },
@@ -142,6 +153,62 @@ const statusOptions = [
   { label: "上架", value: 1 },
   { label: "下架", value: 0 }
 ] ;
+
+const contentNavigatorItems = computed(() => {
+  const normalize = (items: Array<any>, useIcon = false) => items.map(item => ({
+    id: item.id,
+    title: item.title || item.name || "未命名内容",
+    imageUrl: useIcon ? item.iconUrl || "" : item.picUrl || "",
+    isDraft: !!item.__draft
+  }));
+  switch (contentNavigatorScene.value) {
+    case "banner": return normalize(mergedBanners.value);
+    case "channel": return normalize(mergedChannels.value, true);
+    case "brand": return normalize(mergedBrands.value);
+    case "topic": return normalize(mergedTopics.value);
+    case "product": return normalize(mergedHomeProducts.value);
+  }
+});
+
+const currentEditorLink = computed(() => {
+  if (visualEditorScene.value === "banner") return bannerEditor.url.trim();
+  if (visualEditorScene.value === "channel") return channelEditor.url.trim();
+  return "";
+});
+
+const currentEditorLinkLabel = computed(() => describeLink(currentEditorLink.value));
+
+const changeSummary = computed(() => {
+  if (!hasUnsavedChanges.value || !editorInitialSnapshot.value) return [] as string[];
+  try {
+    const before = JSON.parse(editorInitialSnapshot.value);
+    const after = JSON.parse(buildEditorSnapshot());
+    const labels: Record<string, string> = {
+      title: "标题", name: "名称", picUrl: "图片", iconUrl: "图标", url: "跳转目标",
+      subtitle: "副标题", priceInfo: "价格说明", floorPriceYuan: "起售价", categoryId: "商品分类",
+      type: "商品类型", introduction: "商品简介", description: "详情文案", sliderPicUrls: "轮播图",
+      detailImageUrls: "详情图", price: "售价", marketPrice: "市场价", stock: "库存", status: "上架状态",
+      sort: "排序权重", keywordTags: "关键词标签", stockAdjustReason: "库存调整原因", skus: "规格价格或库存"
+    };
+    const changes: string[] = [];
+    const compare = (oldValue: Record<string, any>, newValue: Record<string, any>) => {
+      Object.keys(newValue).forEach(key => {
+        if (JSON.stringify(oldValue?.[key]) !== JSON.stringify(newValue?.[key]) && labels[key]) {
+          changes.push(labels[key]);
+        }
+      });
+    };
+    if (visualEditorScene.value === "product") {
+      compare(before.productEditor || {}, after.productEditor || {});
+      compare(before, after);
+    } else {
+      compare(before, after);
+    }
+    return [...new Set(changes)];
+  } catch {
+    return ["当前编辑内容"];
+  }
+});
 const keywordOptions = [
   "药食同源",
   "滋补养生",
@@ -745,6 +812,107 @@ function formatSceneLabel(sceneCode: string) {
   }
 }
 
+function describeLink(url: string) {
+  if (!url) return "不跳转";
+  const pageLabels: Record<string, string> = {
+    "/pages/index/index": "首页",
+    "/pages/newGoods/newGoods": "新品上市",
+    "/pages/hotGoods/hotGoods": "热销商品",
+    "/pages/catalog/catalog": "商品分类",
+    "/pages/cart/cart": "购物车",
+    "/pages/search/search": "搜索页",
+    "/pages/topic/topic": "专题列表"
+  };
+  if (pageLabels[url]) return `固定页面：${pageLabels[url]}`;
+  const productId = url.match(/^\/pages\/goods\/goods\?id=(\d+)$/)?.[1];
+  if (productId) {
+    const product = products.value.find(item => String(item.id) === productId);
+    return `商品：${product?.name || `商品 #${productId}`}`;
+  }
+  const topicId = url.match(/^\/pages\/topic\/topic\?id=(\d+)$/)?.[1];
+  if (topicId) {
+    const topic = topics.value.find(item => String(item.id) === topicId);
+    return `专题：${topic?.title || `专题 #${topicId}`}`;
+  }
+  return "自定义页面";
+}
+
+async function testCurrentLink() {
+  const url = currentEditorLink.value;
+  if (!url) {
+    ElMessage.info("当前设置为不跳转，客户点击后会停留在原页面");
+    return;
+  }
+  const productId = Number(url.match(/^\/pages\/goods\/goods\?id=(\d+)$/)?.[1]);
+  if (productId) {
+    if (!products.value.some(item => item.id === productId)) {
+      ElMessage.warning("这个商品已下架、删除或不在当前预览范围内，请重新选择跳转目标");
+      return;
+    }
+    activeTab.value = "product";
+    selectedProductId.value = productId;
+    ElMessage.success(`已打开“${describeLink(url)}”的前端预览`);
+    return;
+  }
+  const topicId = Number(url.match(/^\/pages\/topic\/topic\?id=(\d+)$/)?.[1]);
+  if (topicId) {
+    if (!topics.value.some(item => item.id === topicId)) {
+      ElMessage.warning("这个专题已删除或不在当前预览范围内，请重新选择跳转目标");
+      return;
+    }
+    activeTab.value = "content";
+    await openVisualEditor("topic", topicId, "content");
+    ElMessage.success(`已定位到“${describeLink(url)}”`);
+    return;
+  }
+  if (url === "/pages/index/index") {
+    activeTab.value = "home";
+    ElMessage.success("已打开首页预览");
+    return;
+  }
+  ElMessage.info(`已确认跳转到“${describeLink(url)}”。该页面可在小程序中继续验收。`);
+}
+
+function openContentNavigator(scene: VisualEditorScene) {
+  contentNavigatorScene.value = scene;
+  contentNavigatorVisible.value = true;
+}
+
+async function chooseNavigatorItem(item: { id?: number }) {
+  if (!item.id) return;
+  contentNavigatorVisible.value = false;
+  const tab = contentNavigatorScene.value === "product" ? "product" : "content";
+  await openVisualEditor(contentNavigatorScene.value, item.id, tab);
+}
+
+function getCurrentImageRule() {
+  switch (visualEditorScene.value) {
+    case "banner": return { url: bannerEditor.picUrl, label: "Banner 图片", ratio: 2 };
+    case "channel": return { url: channelEditor.iconUrl, label: "频道图标", ratio: 1 };
+    case "brand": return { url: brandEditor.picUrl, label: "品牌图片", ratio: 1 };
+    case "topic": return { url: topicEditor.picUrl, label: "专题图片", ratio: 2 };
+    case "product": return { url: productEditor.picUrl, label: "商品主图", ratio: 1 };
+    default: return undefined;
+  }
+}
+
+function inspectCurrentImageRatio() {
+  const rule = getCurrentImageRule();
+  imageQualityHint.value = "";
+  if (!rule?.url) return;
+  const image = new Image();
+  image.onload = () => {
+    const actualRatio = image.naturalWidth / image.naturalHeight;
+    if (Math.abs(actualRatio - rule.ratio) / rule.ratio > 0.25) {
+      imageQualityHint.value = `${rule.label}当前比例约为 ${actualRatio.toFixed(2)}:1，建议接近 ${rule.ratio}:1，前端可能会裁掉边缘内容。`;
+    }
+  };
+  image.onerror = () => {
+    imageQualityHint.value = "暂时无法读取图片比例，请在左侧预览确认主体没有被裁切。";
+  };
+  image.src = rule.url;
+}
+
 function sceneDraftCode(sceneCode: string): PreviewCenterScene | undefined {
   switch (sceneCode) {
     case "PRODUCT":
@@ -897,6 +1065,7 @@ async function loadVisualEditor(scene: VisualEditorScene, entityId: number, swit
   }
   visualEditorLoading.value = true;
   isEditorInitializing.value = true;
+  showAdvancedFields.value = false;
   try {
     visualEditorScene.value = scene;
     visualEditorEntityId.value = entityId;
@@ -972,6 +1141,7 @@ async function closeVisualEditor() {
   visualEditorScene.value = "";
   visualEditorEntityId.value = undefined;
   editorInitialSnapshot.value = "";
+  showAdvancedFields.value = false;
 }
 
 async function resetVisualEditor() {
@@ -1072,6 +1242,28 @@ function validateVisualEditor() {
   return "";
 }
 
+function buildEditorCheckResult(): EditorCheckResult {
+  const validationMessage = validateVisualEditor();
+  const warnings: string[] = [];
+  if (imageQualityHint.value) warnings.push(imageQualityHint.value);
+  if ((visualEditorScene.value === "banner" || visualEditorScene.value === "channel") && currentEditorLink.value) {
+    warnings.push(`客户点击后将进入“${currentEditorLinkLabel.value}”，请在下方点击“在预览中测试跳转”确认。`);
+  }
+  if (visualEditorScene.value === "product" && productEditor.status === 1 && previewProductStock.value <= 0) {
+    warnings.push("商品已上架但库存为 0，客户可以看到商品但暂时无法购买。");
+  }
+  return { errors: validationMessage ? [validationMessage] : [], warnings };
+}
+
+function openPublishCheck() {
+  if (!visualEditorScene.value || !hasUnsavedChanges.value) {
+    ElMessage.info("请先在右侧修改内容，左侧会同步显示草稿效果");
+    return;
+  }
+  inspectCurrentImageRatio();
+  publishCheckVisible.value = true;
+}
+
 function buildProductSavePayload() {
   const hasSkuRows = productEditorSkus.value.length > 0;
   const prices = hasSkuRows
@@ -1121,9 +1313,9 @@ function buildProductSavePayload() {
 
 async function handleVisualSave() {
   if (!visualEditorScene.value || !visualEditorEntityId.value) return;
-  const validationMessage = validateVisualEditor();
-  if (validationMessage) {
-    ElMessage.warning(validationMessage);
+  const checkResult = buildEditorCheckResult();
+  if (checkResult.errors.length > 0) {
+    ElMessage.warning(checkResult.errors[0]);
     return;
   }
   visualSaving.value = true;
@@ -1191,15 +1383,36 @@ async function handleVisualSave() {
     }
     await Promise.all([fetchData(), fetchRollbackData()]);
     await loadVisualEditor(visualEditorScene.value, visualEditorEntityId.value, false);
-    ElMessage.success("已保存并同步到正式预览");
+    lastPublishedLabel.value = editorSelectionLabel.value || formatSceneLabel(visualEditorScene.value.toUpperCase());
+    ElMessage.success("已发布到正式小程序预览，可随时一键回退");
   } finally {
     visualSaving.value = false;
   }
 }
 
+async function confirmPublish() {
+  const checkResult = buildEditorCheckResult();
+  if (checkResult.errors.length > 0) return;
+  publishCheckVisible.value = false;
+  await handleVisualSave();
+}
+
 onBeforeRouteLeave(async () => {
   return await confirmDiscardChanges("离开当前页面");
 });
+
+watch(
+  () => [
+    visualEditorScene.value,
+    bannerEditor.picUrl,
+    channelEditor.iconUrl,
+    brandEditor.picUrl,
+    topicEditor.picUrl,
+    productEditor.picUrl
+  ],
+  () => inspectCurrentImageRatio(),
+  { flush: "post" }
+);
 
 function openFullEditor() {
   if (!visualEditorScene.value || !visualEditorEntityId.value) return;
@@ -1428,7 +1641,7 @@ onBeforeUnmount(() => {
       </div>
       <el-button @click="refreshOfficialData">
         <el-icon><RefreshRight /></el-icon>
-        刷新正式数据
+        回到已发布版本
       </el-button>
     </div>
 
@@ -1455,6 +1668,20 @@ onBeforeUnmount(() => {
       </div>
     </div>
 
+    <div class="editor-legend" aria-label="可视化装修说明">
+      <span class="legend-marker">可编辑</span>
+      <span>左侧带绿色边框或“点此编辑”的内容可以直接修改；没有标记的页面结构暂不支持装修。</span>
+      <span>左侧只展示部分内容时，可点“查看全部”选择其他内容。</span>
+    </div>
+
+    <div v-if="lastPublishedLabel" class="published-notice">
+      <div>
+        <strong>“{{ lastPublishedLabel }}”已发布</strong>
+        <span>发现不合适时，可在右侧“商品一键回退 / 内容一键回退”恢复最近一次操作。</span>
+      </div>
+      <el-button size="small" text @click="lastPublishedLabel = ''">知道了</el-button>
+    </div>
+
     <div class="page-grid">
       <div class="page-main">
         <el-tabs v-model="activeTab">
@@ -1472,7 +1699,7 @@ onBeforeUnmount(() => {
                 <div class="section-block">
                   <div class="section-head-row">
                     <div class="section-title">首页 Banner</div>
-                    <span class="section-tip">点击卡片直接编辑</span>
+                    <el-button text size="small" @click="openContentNavigator('banner')">查看全部 {{ mergedBanners.length }} 个</el-button>
                   </div>
                   <div class="banner-stack">
                     <button
@@ -1497,7 +1724,7 @@ onBeforeUnmount(() => {
                 <div class="section-block">
                   <div class="section-head-row">
                     <div class="section-title">频道入口</div>
-                    <span class="section-tip">点图标即可编辑</span>
+                    <el-button text size="small" @click="openContentNavigator('channel')">查看全部 {{ mergedChannels.length }} 个</el-button>
                   </div>
                   <div class="channel-grid">
                     <button
@@ -1521,7 +1748,7 @@ onBeforeUnmount(() => {
                 <div class="section-block">
                   <div class="section-head-row">
                     <div class="section-title">品牌推荐</div>
-                    <span class="section-tip">点击品牌卡编辑</span>
+                    <el-button text size="small" @click="openContentNavigator('brand')">查看全部 {{ mergedBrands.length }} 个</el-button>
                   </div>
                   <div class="brand-list">
                     <button
@@ -1547,7 +1774,7 @@ onBeforeUnmount(() => {
                 <div class="section-block">
                   <div class="section-head-row">
                     <div class="section-title">专题卡片</div>
-                    <span class="section-tip">点击专题卡编辑</span>
+                    <el-button text size="small" @click="openContentNavigator('topic')">查看全部 {{ mergedTopics.length }} 个</el-button>
                   </div>
                   <div class="topic-list">
                     <button
@@ -1574,7 +1801,7 @@ onBeforeUnmount(() => {
                 <div class="section-block">
                   <div class="section-head-row">
                     <div class="section-title">推荐商品</div>
-                    <span class="section-tip">点击商品卡编辑</span>
+                    <el-button text size="small" @click="openContentNavigator('product')">查看全部 {{ mergedHomeProducts.length }} 个</el-button>
                   </div>
                   <div class="home-product-list">
                     <button
@@ -1803,8 +2030,19 @@ onBeforeUnmount(() => {
             <div class="editor-actions">
               <el-button plain size="small" @click="openFullEditor">打开原后台页</el-button>
               <el-button plain size="small" :disabled="!hasUnsavedChanges" @click="resetVisualEditor">放弃本次修改</el-button>
+              <el-button v-if="currentEditorLink" plain size="small" @click="testCurrentLink">在预览中测试跳转</el-button>
+              <el-button plain size="small" @click="showAdvancedFields = !showAdvancedFields">
+                {{ showAdvancedFields ? "收起更多设置" : "更多设置" }}
+              </el-button>
               <el-button plain size="small" @click="closeVisualEditor">关闭编辑</el-button>
             </div>
+            <el-alert
+              v-if="imageQualityHint"
+              :title="imageQualityHint"
+              type="warning"
+              :closable="false"
+              show-icon
+            />
 
             <el-form v-if="visualEditorScene === 'banner'" label-position="top">
               <el-form-item label="Banner 标题" required>
@@ -1817,9 +2055,9 @@ onBeforeUnmount(() => {
               </el-form-item>
               <el-form-item label="跳转目标">
                 <LinkSelector :key="editorLinkKey" v-model="bannerEditor.url" />
-                <div class="field-hint">可不选；选择后客户点击图片会进入对应商品或页面。</div>
+                <div class="field-hint">{{ currentEditorLink ? `客户点击后会进入：${currentEditorLinkLabel}` : "可不选；客户点击后会停留在当前页面。" }}</div>
               </el-form-item>
-              <el-form-item label="排序权重">
+              <el-form-item v-if="showAdvancedFields" label="排序权重">
                 <el-input-number v-model="bannerEditor.sort" :min="0" :max="9999" controls-position="right" />
                 <div class="field-hint">数字越大越靠前；不确定时保持原数字。</div>
               </el-form-item>
@@ -1842,9 +2080,9 @@ onBeforeUnmount(() => {
               </el-form-item>
               <el-form-item label="跳转目标">
                 <LinkSelector :key="editorLinkKey" v-model="channelEditor.url" />
-                <div class="field-hint">选择客户点此频道后要进入的商品或页面。</div>
+                <div class="field-hint">{{ currentEditorLink ? `客户点击后会进入：${currentEditorLinkLabel}` : "可不选；客户点击后会停留在当前页面。" }}</div>
               </el-form-item>
-              <el-form-item label="排序权重">
+              <el-form-item v-if="showAdvancedFields" label="排序权重">
                 <el-input-number v-model="channelEditor.sort" :min="0" :max="9999" controls-position="right" />
               </el-form-item>
               <el-form-item label="状态">
@@ -1874,7 +2112,7 @@ onBeforeUnmount(() => {
                 />
                 <div class="field-hint">单位是人民币元，例如 99.90；不能填写负数。</div>
               </el-form-item>
-              <el-form-item label="排序权重">
+              <el-form-item v-if="showAdvancedFields" label="排序权重">
                 <el-input-number v-model="brandEditor.sort" :min="0" :max="9999" controls-position="right" />
               </el-form-item>
               <el-form-item label="状态">
@@ -1901,7 +2139,7 @@ onBeforeUnmount(() => {
                 <el-input v-model="topicEditor.priceInfo" placeholder="如 39.9 或 39元起" maxlength="30" />
                 <div class="field-hint">可留空；填写数字时系统会自动按“元起”展示。</div>
               </el-form-item>
-              <el-form-item label="排序权重">
+              <el-form-item v-if="showAdvancedFields" label="排序权重">
                 <el-input-number v-model="topicEditor.sort" :min="0" :max="9999" controls-position="right" />
               </el-form-item>
               <el-form-item label="状态">
@@ -2031,7 +2269,7 @@ onBeforeUnmount(() => {
                 </div>
               </div>
 
-              <el-form-item label="排序权重">
+              <el-form-item v-if="showAdvancedFields" label="排序权重">
                 <el-input-number v-model="productEditor.sort" :min="0" :max="9999" controls-position="right" />
               </el-form-item>
               <el-form-item label="状态">
@@ -2062,9 +2300,9 @@ onBeforeUnmount(() => {
 
             <div class="editor-footer">
               <el-button @click="closeVisualEditor">取消</el-button>
-              <el-button type="primary" :loading="visualSaving" @click="handleVisualSave">
+              <el-button type="primary" :loading="visualSaving" :disabled="!hasUnsavedChanges" @click="openPublishCheck">
                 <el-icon><CircleCheck /></el-icon>
-                保存并正式生效
+                检查并发布
               </el-button>
             </div>
           </div>
@@ -2125,6 +2363,77 @@ onBeforeUnmount(() => {
         </el-card>
       </div>
     </div>
+
+    <transition name="editor-action-bar">
+      <div v-if="hasUnsavedChanges" class="editor-action-bar">
+        <div>
+          <strong>本次已修改 {{ changeSummary.length || 1 }} 项</strong>
+          <span>{{ changeSummary.length ? changeSummary.join("、") : "当前编辑内容" }}。左侧显示的是草稿，不会影响客户。</span>
+        </div>
+        <div class="editor-action-buttons">
+          <el-button @click="resetVisualEditor">放弃本次修改</el-button>
+          <el-button type="primary" @click="openPublishCheck">检查并发布</el-button>
+        </div>
+      </div>
+    </transition>
+
+    <el-dialog v-model="contentNavigatorVisible" :title="`选择要编辑的${formatSceneLabel(contentNavigatorScene.toUpperCase())}`" width="680px" append-to-body>
+      <div class="navigator-tip">这里列出全部正式内容。点击任意一项即可回到预览并打开右侧编辑面板。</div>
+      <div class="navigator-list">
+        <button
+          v-for="item in contentNavigatorItems"
+          :key="`${contentNavigatorScene}-${item.id}`"
+          type="button"
+          class="navigator-item"
+          @click="chooseNavigatorItem(item)"
+        >
+          <img v-if="item.imageUrl" :src="item.imageUrl" alt="" />
+          <div v-else class="navigator-image-placeholder">{{ item.title.slice(0, 1) || "无图" }}</div>
+          <div class="navigator-item-info">
+            <strong>{{ item.title }}</strong>
+            <span>{{ item.isDraft ? "当前草稿" : "正式内容" }}</span>
+          </div>
+          <span class="navigator-select">编辑</span>
+        </button>
+      </div>
+      <el-empty v-if="contentNavigatorItems.length === 0" description="当前没有可编辑内容" />
+    </el-dialog>
+
+    <el-dialog v-model="publishCheckVisible" title="发布前检查" width="560px" append-to-body :close-on-click-modal="false">
+      <div class="publish-summary">
+        <strong>本次将正式发布 {{ changeSummary.length || 1 }} 项修改</strong>
+        <span>{{ changeSummary.length ? changeSummary.join("、") : "当前编辑内容" }}</span>
+      </div>
+      <el-alert
+        v-for="message in buildEditorCheckResult().errors"
+        :key="`error-${message}`"
+        :title="message"
+        type="error"
+        :closable="false"
+        show-icon
+        class="publish-check-item"
+      />
+      <el-alert
+        v-for="message in buildEditorCheckResult().warnings"
+        :key="`warning-${message}`"
+        :title="message"
+        type="warning"
+        :closable="false"
+        show-icon
+        class="publish-check-item"
+      />
+      <el-alert
+        v-if="buildEditorCheckResult().errors.length === 0 && buildEditorCheckResult().warnings.length === 0"
+        title="检查通过。发布后客户小程序会使用当前内容，最近一次操作仍可一键回退。"
+        type="success"
+        :closable="false"
+        show-icon
+      />
+      <template #footer>
+        <el-button @click="publishCheckVisible = false">继续修改</el-button>
+        <el-button type="primary" :disabled="buildEditorCheckResult().errors.length > 0" :loading="visualSaving" @click="confirmPublish">确认发布</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -2156,6 +2465,50 @@ onBeforeUnmount(() => {
 
 .page-alert {
   margin-bottom: 16px;
+}
+
+.editor-legend,
+.published-notice {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+  padding: 10px 14px;
+  border: 1px solid #dbe9d8;
+  border-radius: 8px;
+  background: #fbfdf9;
+  color: #657267;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.legend-marker {
+  flex: 0 0 auto;
+  padding: 2px 8px;
+  border: 1px solid #5f8f74;
+  border-radius: 999px;
+  color: #3f7b4c;
+  font-weight: 700;
+}
+
+.published-notice {
+  justify-content: space-between;
+  border-color: #b8d7bf;
+  background: #f0f9ef;
+}
+
+.published-notice strong,
+.published-notice span {
+  display: block;
+}
+
+.published-notice strong {
+  color: #327142;
+  font-size: 13px;
+}
+
+.published-notice span {
+  margin-top: 2px;
 }
 
 .beginner-guide {
@@ -2795,6 +3148,157 @@ onBeforeUnmount(() => {
   gap: 8px;
 }
 
+.editor-action-bar {
+  position: fixed;
+  z-index: 100;
+  right: 32px;
+  bottom: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: min(760px, calc(100vw - 64px));
+  gap: 16px;
+  padding: 14px 16px;
+  border: 1px solid #8ab496;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 12px 30px rgba(49, 91, 60, 0.2);
+}
+
+.editor-action-bar strong,
+.editor-action-bar span {
+  display: block;
+}
+
+.editor-action-bar strong {
+  color: #2d3a2e;
+  font-size: 14px;
+}
+
+.editor-action-bar span {
+  margin-top: 3px;
+  color: #6b746d;
+  font-size: 12px;
+}
+
+.editor-action-buttons {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 8px;
+}
+
+.editor-action-bar-enter-active,
+.editor-action-bar-leave-active {
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.editor-action-bar-enter-from,
+.editor-action-bar-leave-to {
+  opacity: 0;
+  transform: translateY(12px);
+}
+
+.navigator-tip {
+  margin-bottom: 12px;
+  color: #7f8d82;
+  font-size: 13px;
+}
+
+.navigator-list {
+  display: grid;
+  gap: 10px;
+  max-height: 480px;
+  overflow-y: auto;
+}
+
+.navigator-item {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  gap: 12px;
+  padding: 10px;
+  border: 1px solid #e4e9e3;
+  border-radius: 8px;
+  background: #fff;
+  text-align: left;
+  cursor: pointer;
+}
+
+.navigator-item:hover {
+  border-color: #5f8f74;
+  background: #f7fbf5;
+}
+
+.navigator-item img,
+.navigator-image-placeholder {
+  flex: 0 0 auto;
+  width: 52px;
+  height: 52px;
+  border-radius: 6px;
+  object-fit: cover;
+}
+
+.navigator-image-placeholder {
+  display: grid;
+  place-items: center;
+  background: #edf3eb;
+  color: #758278;
+  font-size: 12px;
+}
+
+.navigator-item-info {
+  min-width: 0;
+  flex: 1;
+}
+
+.navigator-item-info strong,
+.navigator-item-info span {
+  display: block;
+}
+
+.navigator-item-info strong {
+  overflow: hidden;
+  color: #2d3a2e;
+  font-size: 14px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.navigator-item-info span {
+  margin-top: 4px;
+  color: #909399;
+  font-size: 12px;
+}
+
+.navigator-select {
+  color: #4f7e50;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.publish-summary {
+  display: grid;
+  gap: 4px;
+  margin-bottom: 14px;
+  padding: 12px;
+  border-radius: 8px;
+  background: #f5f9f3;
+}
+
+.publish-summary strong {
+  color: #2d3a2e;
+  font-size: 14px;
+}
+
+.publish-summary span {
+  color: #68766b;
+  font-size: 13px;
+}
+
+.publish-check-item {
+  margin-bottom: 10px;
+}
+
 .sku-editor-block {
   display: grid;
   gap: 12px;
@@ -2940,6 +3444,19 @@ onBeforeUnmount(() => {
   .editor-card-header {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .editor-legend,
+  .published-notice,
+  .editor-action-bar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .editor-action-bar {
+    right: 12px;
+    bottom: 12px;
+    width: calc(100vw - 24px);
   }
 }
 </style>

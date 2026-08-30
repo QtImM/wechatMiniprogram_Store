@@ -152,8 +152,8 @@
 						<text class="sku-stock">库存 {{ selectedSku ? selectedSku.stock : '-' }}</text>
 					</view>
 				</view>
-				<view class="sku-body">
-					<view class="sku-group" v-for="(item, index) in specificationList" :key="item.specificationId">
+				<view class="sku-body" :class="{ 'is-guided': specGuideActive }">
+					<view class="sku-group" :class="{ 'is-guided': specGuideActive && !hasSelectedSpec(item) }" v-for="(item, index) in specificationList" :key="item.specificationId">
 						<text class="sku-group-name">{{item.name}}</text>
 						<view class="sku-values">
 							<view
@@ -233,7 +233,8 @@ export default {
 			collectBackImage: '/static/images/icon_collect.png',
 			loading: true,
 			loadingFailed: false,
-			errorMsg: ''
+			errorMsg: '',
+			specGuideActive: false
 		}
 	},
 	methods: {
@@ -304,6 +305,7 @@ export default {
 		},
 		clickSkuValue(specNameId, specValueId) {
 			if (this.isValueDisabled(specNameId, specValueId)) return;
+			this.specGuideActive = false;
 			let _specificationList = this.specificationList;
 			for (let i = 0; i < _specificationList.length; i++) {
 				if (_specificationList[i].specificationId == specNameId) {
@@ -339,6 +341,18 @@ export default {
 		},
 		isCheckedAllSpec() {
 			return !this.getCheckedSpecValue().some(v => v.valueId == 0);
+		},
+		hasSelectedSpec(specification) {
+			return (specification.valueList || []).some(item => item.checked);
+		},
+		guideSpecificationSelection() {
+			this.openAttr = true;
+			this.collectBackImage = '/static/images/detail_back.png';
+			this.$nextTick(() => {
+				this.specGuideActive = true;
+				uni.showToast({ title: '请先选择高亮的规格', icon: 'none' });
+				setTimeout(() => { this.specGuideActive = false; }, 1800);
+			});
 		},
 		changeSpecInfo() {
 			let checkedNameValue = this.getCheckedSpecValue();
@@ -418,7 +432,7 @@ export default {
 				that.collectBackImage = "/static/images/detail_back.png";
 			} else {
 				if (!that.isCheckedAllSpec()) {
-					uni.showToast({ title: '请选择规格数量', icon: 'none' });
+					that.guideSpecificationSelection();
 					return false;
 				}
 				let checkedProduct = that.getCheckedProductItem();
@@ -443,7 +457,7 @@ export default {
 				that.collectBackImage = "/static/images/detail_back.png";
 			} else {
 				if (!that.isCheckedAllSpec()) {
-					uni.showToast({ title: '请选择完整规格', icon: 'none' });
+					that.guideSpecificationSelection();
 					return false;
 				}
 				let checkedProduct = that.getCheckedProductItem();
@@ -1027,6 +1041,16 @@ export default {
 
 .sku-group {
 	margin-bottom: 36rpx;
+	border: 2rpx solid transparent;
+	border-radius: 16rpx;
+	padding: 12rpx;
+	transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.sku-group.is-guided {
+	border-color: #5B8C5A;
+	background: #EEF6ED;
+	box-shadow: 0 0 0 6rpx rgba(91, 140, 90, 0.12);
 }
 
 .sku-group-name {

@@ -191,7 +191,34 @@ export default {
 			});
 		},
 		isCheckedAll() {
-			return this.cartGoods.length > 0 && this.cartGoods.every(item => item.checked === true);
+			const availableGoods = this.cartGoods.filter(item => item.available);
+			return availableGoods.length > 0 && availableGoods.every(item => item.checked === true);
+		},
+		guideUnavailableGoods() {
+			const unavailableCount = this.cartGoods.filter(item => !item.available).length;
+			if (!unavailableCount) return;
+			uni.showModal({
+				title: '商品暂时无法购买',
+				content: `有 ${unavailableCount} 件商品已下架或库存不足，不能参与结算。可以现在一键清理。`,
+				confirmText: '一键清理',
+				cancelText: '暂不清理',
+				confirmColor: '#5B8C5A',
+				success: (res) => {
+					if (res.confirm) this.cleanupUnavailableGoods();
+				}
+			});
+		},
+		cleanupUnavailableGoods() {
+			const productIds = this.cartGoods.filter(item => !item.available).map(item => item.productId);
+			if (!productIds.length) return;
+			util.request(api.CartDelete, { productIds: productIds.join(',') }, 'POST', 'application/json').then(res => {
+				if (res.code === 0) {
+					this.cartGoods = (res.data.cartList || []).map(item => ({ ...item, swipeOffset: 0 }));
+					this.cartTotal = res.data.cartTotal;
+					this.checkedAllStatus = this.isCheckedAll();
+					uni.showToast({ title: '已清理失效商品', icon: 'success' });
+				}
+			});
 		},
 		closeSwipe(exceptIndex) {
 			this.cartGoods.forEach((item, index) => {
@@ -232,7 +259,8 @@ export default {
 		},
 		checkedItem(index) {
 			if (!this.cartGoods[index].available && !this.isEditCart) {
-				return util.toast(this.cartGoods[index].statusMessage || '商品当前不可购买');
+				this.guideUnavailableGoods();
+				return;
 			}
 			if (!this.isEditCart) {
 				util.request(api.CartChecked, {
@@ -255,7 +283,10 @@ export default {
 		checkedAll() {
 			if (!this.isEditCart) {
 				const productIds = this.cartGoods.filter(v => v.available).map(v => v.productId);
-				if (!productIds.length) return util.toast('没有可结算商品');
+				if (!productIds.length) {
+					this.guideUnavailableGoods();
+					return;
+				}
 				util.request(api.CartChecked, {
 					productIds: productIds.join(','),
 					isChecked: this.isCheckedAll() ? 0 : 1
@@ -294,7 +325,10 @@ export default {
 		},
 		addNumber(index) {
 			const item = this.cartGoods[index];
-			if (!item.available) return util.toast(item.statusMessage || '商品当前不可购买');
+			if (!item.available) {
+				this.guideUnavailableGoods();
+				return;
+			}
 			if (item.updating) return;
 			const expectedCount = item.number;
 			item.number += 1;
@@ -345,9 +379,13 @@ export default {
 			});
 		},
 		checkoutOrder() {
-			const checked = this.cartGoods.filter(v => v.checked);
+			const checked = this.cartGoods.filter(v => v.checked && v.available);
 			if (checked.length <= 0) {
-				uni.showToast({ title: '请选择商品', icon: 'none' });
+				if (this.cartGoods.some(item => !item.available)) {
+					this.guideUnavailableGoods();
+				} else {
+					uni.showToast({ title: '请勾选要结算的商品', icon: 'none' });
+				}
 				return;
 			}
 			uni.navigateTo({ url: '/pages/shopping/checkout/checkout' });

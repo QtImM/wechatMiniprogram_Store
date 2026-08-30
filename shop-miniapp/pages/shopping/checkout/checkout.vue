@@ -12,8 +12,12 @@
 			</view>
 			<text class="address-arrow">›</text>
 		</view>
-		<view class="address-card address-empty" @tap="addAddress" v-if="checkedAddress.id <= 0">
-			<text class="empty-add">+ 添加收货地址</text>
+		<view class="address-card address-empty" @tap="addAddress" v-else>
+			<view class="address-empty-copy">
+				<text class="empty-title">请先添加收货地址</text>
+				<text class="empty-hint">下单前需要填写收货信息</text>
+			</view>
+			<text class="empty-add">去添加</text>
 			<text class="address-arrow">›</text>
 		</view>
 
@@ -111,7 +115,7 @@ export default {
 	data() {
 		return {
 			checkedGoodsList: [],
-			checkedAddress: {},
+			checkedAddress: { id: 0 },
 			goodsTotalPrice: 0.00,
 			freightPrice: 0.00,
 			orderTotalPrice: 0.00,
@@ -127,7 +131,8 @@ export default {
 			selectedCouponId: null,
 			showCouponPopup: false,
 			promotion: null,
-			promotionGap: ''
+			promotionGap: '',
+			addressGuideShown: false
 		}
 	},
 	methods: {
@@ -143,7 +148,7 @@ export default {
 			util.request(api.CartCheckout, params).then(res => {
 				if (res.code === 0) {
 					this.checkedGoodsList = res.data.checkedGoodsList;
-					this.checkedAddress = res.data.checkedAddress;
+					this.checkedAddress = res.data.checkedAddress || { id: 0 };
 					this.actualPrice = res.data.actualPrice;
 					this.freightPrice = res.data.freightPrice;
 					this.goodsTotalPrice = res.data.goodsTotalPrice;
@@ -156,15 +161,9 @@ export default {
 					this.promotionGap = res.data.promotionGap || '';
 					if (this.checkedAddress.id) {
 						this.addressId = this.checkedAddress.id;
-					} else {
-						uni.showModal({
-							title: '',
-							content: '请添加默认收货地址!',
-							confirmColor: '#5B8C5A',
-							success: (res) => {
-								if (res.confirm) this.selectAddress();
-							}
-						});
+					} else if (!this.addressGuideShown) {
+						this.addressGuideShown = true;
+						this.showAddressGuide();
 					}
 				}
 			});
@@ -175,12 +174,72 @@ export default {
 		addAddress() {
 			uni.navigateTo({ url: '/pages/shopping/addressAdd/addressAdd' });
 		},
+		showAddressGuide() {
+			uni.showModal({
+				title: '还差一步',
+				content: '下单前需要添加收货地址。现在去添加吗？',
+				confirmText: '去添加',
+				cancelText: '暂不添加',
+				confirmColor: '#5B8C5A',
+				success: (res) => {
+					if (res.confirm) this.addAddress();
+				}
+			});
+		},
+		showOrderSubmitGuide(message) {
+			const reason = String(message || '订单信息发生变化，请重新确认后再提交');
+			if (/地址|收货人/.test(reason)) {
+				this.showAddressGuide();
+				return;
+			}
+			if (/商品|库存|下架|失效|规格/.test(reason)) {
+				uni.showModal({
+					title: '商品状态有变化',
+					content: `${reason}。请返回检查商品后再下单。`,
+					confirmText: this.isBuy ? '返回商品' : '查看购物车',
+					cancelText: '留在此页',
+					confirmColor: '#5B8C5A',
+					success: (res) => {
+						if (!res.confirm) return;
+						if (this.isBuy) uni.navigateBack();
+						else uni.switchTab({ url: '/pages/cart/cart' });
+					}
+				});
+				return;
+			}
+			if (/优惠券/.test(reason)) {
+				uni.showModal({
+					title: '优惠券不可用',
+					content: `${reason}。请重新选择优惠券或不使用优惠券继续下单。`,
+					confirmText: '重新选择',
+					cancelText: '稍后处理',
+					confirmColor: '#5B8C5A',
+					success: (res) => {
+						if (!res.confirm) return;
+						this.selectedCouponId = null;
+						this.showCouponPopup = true;
+						this.getCheckoutInfo();
+					}
+				});
+				return;
+			}
+			uni.showModal({
+				title: '暂时无法下单',
+				content: `${reason}。请重新检查订单信息后再试。`,
+				confirmText: '重新检查',
+				cancelText: '稍后再试',
+				confirmColor: '#5B8C5A',
+				success: (res) => {
+					if (res.confirm) this.getCheckoutInfo();
+				}
+			});
+		},
 		submitOrder() {
 			if (this.submitting) {
 				return;
 			}
 			if (this.addressId <= 0) {
-				util.toast('请选择收货地址');
+				this.showAddressGuide();
 				return;
 			}
 			this.submitting = true;
@@ -203,10 +262,11 @@ export default {
 					});
 				} else {
 					this.submitting = false;
-					util.toast('下单失败');
+					this.showOrderSubmitGuide(res.msg);
 				}
 			}).catch(() => {
 				this.submitting = false;
+				this.showOrderSubmitGuide('网络连接异常');
 			});
 		},
 		openCouponPopup() {
@@ -314,15 +374,33 @@ page {
 }
 
 .address-empty {
-	justify-content: center;
+	border: 2rpx dashed #A9C6AA;
 	padding: 40rpx 28rpx;
 }
 
-.empty-add {
+.address-empty-copy {
 	flex: 1;
+	display: flex;
+	flex-direction: column;
+	gap: 8rpx;
+}
+
+.empty-title {
+	font-size: 30rpx;
+	font-weight: 600;
+	color: $text-primary;
+}
+
+.empty-hint {
+	font-size: 24rpx;
+	color: $text-hint;
+}
+
+.empty-add {
 	font-size: 28rpx;
 	color: $green;
 	font-weight: 600;
+	margin-left: 20rpx;
 }
 
 /* 商品卡片 */

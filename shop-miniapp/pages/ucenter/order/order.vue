@@ -199,7 +199,13 @@ export default {
 		viewLogistics(item) {
 			util.request(api.OrderLogistics, { orderId: item.id }).then(res => {
 				if (res.code !== 0 || !res.data || !res.data.hasLogistics) {
-					util.toast('暂无物流信息');
+					uni.showModal({
+						title: '物流状态',
+						content: this.getNoLogisticsMessage(item.status),
+						showCancel: false,
+						confirmText: '我知道了',
+						confirmColor: '#5B8C5A'
+					});
 					return;
 				}
 				uni.showModal({
@@ -209,6 +215,11 @@ export default {
 					confirmColor: '#5B8C5A'
 				});
 			});
+		},
+		getNoLogisticsMessage(status) {
+			if (status === 1) return '商家正在备货，暂未发货，请耐心等待。';
+			if (status === 2) return '商家已发货，物流信息正在同步，请稍后再查看。';
+			return '当前订单暂时没有可查询的物流信息。';
 		},
 		formatLogisticsModal(data) {
 			let content = '物流单号：' + data.logisticsNo + '\n发货时间：' + data.deliveryTime;
