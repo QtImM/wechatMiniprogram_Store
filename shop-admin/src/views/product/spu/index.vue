@@ -38,8 +38,8 @@ const canManageProduct = hasAnyPerms(["product:manage"]);
 
 function openPreviewCenter() {
     const previewUrl = router.resolve({
-        path: "/content/preview-center",
-        query: { scene: "product" }
+        path: "/visual-editor/home",
+        query: { scene: "product", fresh: "1" }
     });
     window.open(previewUrl.href, "_blank");
 }
@@ -581,7 +581,7 @@ onMounted(async () => {
                         新增商品
                     </el-button>
                     <el-button plain @click="openPreviewCenter">
-                        打开全站预览中心
+                        打开可视化装修
                     </el-button>
                     <el-button :icon="Download" @click="handleDownloadTemplate">
                         下载模板
@@ -617,7 +617,7 @@ onMounted(async () => {
                 </span>
             </div>
 
-            <el-table
+            <el-table scrollbar-always-on
                 :data="tableData"
                 v-loading="loading"
                 border
@@ -763,7 +763,7 @@ onMounted(async () => {
                 </el-tag>
             </div>
 
-            <el-table
+            <el-table scrollbar-always-on
                 v-if="importPreview"
                 :data="importPreview.rows"
                 border
@@ -922,7 +922,7 @@ onMounted(async () => {
                     失败 {{ batchResult.failureCount }}
                 </el-tag>
             </div>
-            <el-table
+            <el-table scrollbar-always-on
                 v-if="batchResult"
                 :data="batchResult.rows"
                 border

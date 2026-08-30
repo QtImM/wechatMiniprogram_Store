@@ -223,7 +223,7 @@ onMounted(fetchData);
     </el-card>
 
     <el-card shadow="never">
-      <el-table :data="list" v-loading="loading" border>
+      <el-table scrollbar-always-on :data="list" v-loading="loading" border>
         <el-table-column label="图片" width="120" align="center">
           <template #default="{ row }">
             <el-image

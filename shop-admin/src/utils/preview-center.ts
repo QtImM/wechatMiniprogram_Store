@@ -14,6 +14,8 @@ export interface PreviewDraftEnvelope<T = Record<string, any>> {
 
 const PREVIEW_DRAFT_PREFIX = "shop-admin-preview-center:";
 const PREVIEW_COMMIT_KEY = `${PREVIEW_DRAFT_PREFIX}commit-token`;
+const PREVIEW_DRAFT_TTL_MS = 15 * 60 * 1000;
+const PREVIEW_DRAFT_SCENES: PreviewCenterScene[] = ["product", "banner", "channel", "brand", "topic"];
 
 function canUseStorage() {
   return typeof window !== "undefined" && !!window.localStorage;
@@ -38,7 +40,13 @@ export function getPreviewDraft<T>(scene: PreviewCenterScene) {
   const raw = window.localStorage.getItem(buildPreviewDraftKey(scene));
   if (!raw) return null;
   try {
-    return JSON.parse(raw) as PreviewDraftEnvelope<T>;
+    const envelope = JSON.parse(raw) as PreviewDraftEnvelope<T>;
+    const updatedAt = Date.parse(envelope.updatedAt);
+    if (!Number.isFinite(updatedAt) || Date.now() - updatedAt > PREVIEW_DRAFT_TTL_MS) {
+      clearPreviewDraft(scene);
+      return null;
+    }
+    return envelope;
   } catch {
     return null;
   }
@@ -49,9 +57,12 @@ export function clearPreviewDraft(scene: PreviewCenterScene) {
   window.localStorage.removeItem(buildPreviewDraftKey(scene));
 }
 
+export function clearAllPreviewDrafts() {
+  PREVIEW_DRAFT_SCENES.forEach(scene => clearPreviewDraft(scene));
+}
+
 export function getAllPreviewDrafts() {
-  const scenes: PreviewCenterScene[] = ["product", "banner", "channel", "brand", "topic"];
-  return scenes
+  return PREVIEW_DRAFT_SCENES
     .map(scene => getPreviewDraft(scene))
     .filter(Boolean) as PreviewDraftEnvelope[];
 }

@@ -50,9 +50,10 @@ export default {
         {
             path: "/content/preview-center",
             name: "ContentPreviewCenter",
-            component: () => import("@/views/content/preview-center/index.vue"),
+            redirect: "/visual-editor/home",
             meta: {
-                title: "全站预览中心",
+                title: "全站预览中心（已迁移）",
+                showLink: false,
                 permissions: ["content:manage", "content:read", "product:manage", "product:read"]
             }
         },

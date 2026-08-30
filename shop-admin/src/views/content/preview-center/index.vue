@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from "vue";
-import { useRoute, useRouter } from "vue-router";
-import { EditPen, RefreshRight } from "@element-plus/icons-vue";
+import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from "vue";
+import { onBeforeRouteLeave, useRoute, useRouter } from "vue-router";
+import { CircleCheck, EditPen, RefreshRight } from "@element-plus/icons-vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import {
   getBannerList,
@@ -39,6 +39,7 @@ import type {
 import { hasAnyPerms } from "@/utils/auth";
 import {
   clearPreviewDraft,
+  clearAllPreviewDrafts,
   getAllPreviewDrafts,
   getPreviewCommitToken,
   getPreviewDraft,
@@ -130,6 +131,8 @@ const productEditorSkus = ref<PreviewEditableSku[]>([]);
 const productOriginalSkuStocks = ref(new Map<number, number>());
 const productOriginalSingleStock = ref(0);
 const productStockAdjustReason = ref("");
+const editorInitialSnapshot = ref("");
+const isEditorInitializing = ref(false);
 
 const typeOptions = [
   { label: "实物商品", value: 1 },
@@ -671,6 +674,40 @@ const editorSelectionLabel = computed(() => {
   }
 });
 
+function buildEditorSnapshot() {
+  switch (visualEditorScene.value) {
+    case "banner":
+      return JSON.stringify(bannerEditor);
+    case "channel":
+      return JSON.stringify(channelEditor);
+    case "brand":
+      return JSON.stringify(brandEditor);
+    case "topic":
+      return JSON.stringify(topicEditor);
+    case "product":
+      return JSON.stringify({
+        productEditor,
+        keywordTags: productKeywordTags.value,
+        skus: productEditorSkus.value.map(item => ({
+          id: item.id,
+          priceYuan: item.priceYuan,
+          marketPriceYuan: item.marketPriceYuan,
+          stock: item.stock,
+          picUrl: item.picUrl
+        })),
+        stockAdjustReason: productStockAdjustReason.value
+      });
+    default:
+      return "";
+  }
+}
+
+const hasUnsavedChanges = computed(() => {
+  return !!visualEditorScene.value
+    && !!editorInitialSnapshot.value
+    && buildEditorSnapshot() !== editorInitialSnapshot.value;
+});
+
 function clearSceneDraft(scene: PreviewCenterScene) {
   clearPreviewDraft(scene);
   refreshDrafts();
@@ -859,6 +896,7 @@ async function loadVisualEditor(scene: VisualEditorScene, entityId: number, swit
     }
   }
   visualEditorLoading.value = true;
+  isEditorInitializing.value = true;
   try {
     visualEditorScene.value = scene;
     visualEditorEntityId.value = entityId;
@@ -892,16 +930,40 @@ async function loadVisualEditor(scene: VisualEditorScene, entityId: number, swit
     }
   } finally {
     visualEditorLoading.value = false;
+    await nextTick();
+    isEditorInitializing.value = false;
+    editorInitialSnapshot.value = buildEditorSnapshot();
   }
 }
 
-function openVisualEditor(scene: VisualEditorScene, entityId?: number, targetTab?: string) {
-  if (!entityId) return;
-  if (targetTab) activeTab.value = targetTab;
-  void loadVisualEditor(scene, entityId, true);
+async function confirmDiscardChanges(actionLabel: string) {
+  if (!hasUnsavedChanges.value) return true;
+  try {
+    await ElMessageBox.confirm(
+      `当前内容还没有保存，${actionLabel}会丢失这次修改。是否继续？`,
+      "还有未保存的修改",
+      {
+        type: "warning",
+        confirmButtonText: "放弃修改并继续",
+        cancelButtonText: "继续编辑"
+      }
+    );
+    return true;
+  } catch {
+    return false;
+  }
 }
 
-function closeVisualEditor() {
+async function openVisualEditor(scene: VisualEditorScene, entityId?: number, targetTab?: string) {
+  if (!entityId) return;
+  const changingSelection = visualEditorScene.value !== scene || visualEditorEntityId.value !== entityId;
+  if (changingSelection && !await confirmDiscardChanges("切换到其他内容")) return;
+  if (targetTab) activeTab.value = targetTab;
+  await loadVisualEditor(scene, entityId, true);
+}
+
+async function closeVisualEditor() {
+  if (!await confirmDiscardChanges("关闭编辑")) return;
   const previewScene = currentEditorPreviewScene();
   if (previewScene) {
     clearPreviewDraft(previewScene);
@@ -909,6 +971,7 @@ function closeVisualEditor() {
   refreshDrafts();
   visualEditorScene.value = "";
   visualEditorEntityId.value = undefined;
+  editorInitialSnapshot.value = "";
 }
 
 async function resetVisualEditor() {
@@ -920,6 +983,93 @@ async function resetVisualEditor() {
   }
   await loadVisualEditor(visualEditorScene.value, visualEditorEntityId.value, false);
   ElMessage.success("已恢复为当前正式数据");
+}
+
+async function refreshOfficialData() {
+  if (!await confirmDiscardChanges("刷新正式数据")) return;
+  clearAllPreviewDrafts();
+  refreshDrafts();
+  visualEditorScene.value = "";
+  visualEditorEntityId.value = undefined;
+  editorInitialSnapshot.value = "";
+  await Promise.all([fetchData(), fetchRollbackData()]);
+  ElMessage.success("已刷新为后端正式数据");
+}
+
+function isNonNegativeInteger(value: number) {
+  return Number.isInteger(value) && value >= 0;
+}
+
+function findDuplicate<T extends { id?: number }>(
+  items: T[],
+  currentId: number | undefined,
+  value: string,
+  getValue: (item: T) => string | undefined
+) {
+  const normalized = value.trim();
+  if (!normalized) return undefined;
+  return items.find(item => item.id !== currentId && getValue(item)?.trim() === normalized);
+}
+
+function hasPersistedValueChanged<T extends { id?: number }>(
+  items: T[],
+  currentId: number | undefined,
+  value: string,
+  getValue: (item: T) => string | undefined
+) {
+  const current = items.find(item => item.id === currentId);
+  return !current || (getValue(current)?.trim() || "") !== value.trim();
+}
+
+function validateVisualEditor() {
+  if (visualEditorScene.value === "banner") {
+    if (!bannerEditor.title.trim()) return "请填写 Banner 标题";
+    if (!bannerEditor.picUrl.trim()) return "请从素材库选择 Banner 图片";
+    if (hasPersistedValueChanged(banners.value, bannerEditor.id, bannerEditor.url, item => item.url)) {
+      const duplicate = findDuplicate(banners.value, bannerEditor.id, bannerEditor.url, item => item.url);
+      if (duplicate) return `跳转目标已被 Banner「${duplicate.title}」使用，请重新选择或设为不跳转`;
+    }
+  }
+  if (visualEditorScene.value === "channel") {
+    if (!channelEditor.name.trim()) return "请填写频道名称";
+    const duplicateName = findDuplicate(channels.value, channelEditor.id, channelEditor.name, item => item.name);
+    if (duplicateName) return `频道名称「${duplicateName.name}」已存在，请换一个名称`;
+    if (hasPersistedValueChanged(channels.value, channelEditor.id, channelEditor.url, item => item.url)) {
+      const duplicateUrl = findDuplicate(channels.value, channelEditor.id, channelEditor.url, item => item.url);
+      if (duplicateUrl) return `跳转目标已被频道「${duplicateUrl.name}」使用，请重新选择或设为不跳转`;
+    }
+  }
+  if (visualEditorScene.value === "brand") {
+    if (!brandEditor.name.trim()) return "请填写品牌名称";
+    const duplicate = findDuplicate(brands.value, brandEditor.id, brandEditor.name, item => item.name);
+    if (duplicate) return `品牌名称「${duplicate.name}」已存在，请换一个名称`;
+    if (brandEditor.floorPriceYuan < 0) return "品牌起售价不能小于 0 元";
+  }
+  if (visualEditorScene.value === "topic") {
+    if (!topicEditor.title.trim()) return "请填写专题标题";
+    const duplicate = findDuplicate(topics.value, topicEditor.id, topicEditor.title, item => item.title);
+    if (duplicate) return `专题标题「${duplicate.title}」已存在，请换一个标题`;
+  }
+  if (visualEditorScene.value === "product") {
+    if (!productEditor.name.trim()) return "请填写商品名称";
+    if (!productEditor.categoryId) return "请选择商品分类";
+    if (productEditor.status === 1 && !productEditor.picUrl.trim()) return "上架商品必须从素材库选择主图";
+    if (productEditorSkus.value.length === 0) {
+      if (productEditor.price <= 0) return "商品售价必须大于 0 元";
+      if (productEditor.marketPrice > 0 && productEditor.marketPrice < productEditor.price) return "市场价不能低于售价";
+      if (!isNonNegativeInteger(productEditor.stock)) return "商品库存必须是 0 或正整数";
+    }
+    for (const sku of productEditorSkus.value) {
+      if (sku.priceYuan <= 0) return `规格「${sku.label}」的售价必须大于 0 元`;
+      if (sku.marketPriceYuan > 0 && sku.marketPriceYuan < sku.priceYuan) return `规格「${sku.label}」的市场价不能低于售价`;
+      if (!isNonNegativeInteger(sku.stock)) return `规格「${sku.label}」的库存必须是 0 或正整数`;
+    }
+    if (productEditorStockChanged.value) {
+      const reason = productStockAdjustReason.value.trim();
+      if (reason.length < 4 || reason.length > 200) return "库存发生变化，请填写 4 至 200 个字符的调整原因";
+    }
+  }
+  return "";
 }
 
 function buildProductSavePayload() {
@@ -971,17 +1121,14 @@ function buildProductSavePayload() {
 
 async function handleVisualSave() {
   if (!visualEditorScene.value || !visualEditorEntityId.value) return;
+  const validationMessage = validateVisualEditor();
+  if (validationMessage) {
+    ElMessage.warning(validationMessage);
+    return;
+  }
   visualSaving.value = true;
   try {
     if (visualEditorScene.value === "banner") {
-      if (!bannerEditor.title.trim()) {
-        ElMessage.warning("请输入 Banner 标题");
-        return;
-      }
-      if (!bannerEditor.picUrl.trim()) {
-        ElMessage.warning("请选择 Banner 图片");
-        return;
-      }
       await updateBanner({
         id: bannerEditor.id,
         title: bannerEditor.title.trim(),
@@ -994,10 +1141,6 @@ async function handleVisualSave() {
     }
 
     if (visualEditorScene.value === "channel") {
-      if (!channelEditor.name.trim()) {
-        ElMessage.warning("请输入频道名称");
-        return;
-      }
       await updateChannel({
         id: channelEditor.id,
         name: channelEditor.name.trim(),
@@ -1010,10 +1153,6 @@ async function handleVisualSave() {
     }
 
     if (visualEditorScene.value === "brand") {
-      if (!brandEditor.name.trim()) {
-        ElMessage.warning("请输入品牌名称");
-        return;
-      }
       await updateBrand({
         id: brandEditor.id,
         name: brandEditor.name.trim(),
@@ -1026,10 +1165,6 @@ async function handleVisualSave() {
     }
 
     if (visualEditorScene.value === "topic") {
-      if (!topicEditor.title.trim()) {
-        ElMessage.warning("请输入专题标题");
-        return;
-      }
       await updateTopic({
         id: topicEditor.id,
         title: topicEditor.title.trim(),
@@ -1043,21 +1178,6 @@ async function handleVisualSave() {
     }
 
     if (visualEditorScene.value === "product") {
-      if (!productEditor.name.trim()) {
-        ElMessage.warning("请输入商品名称");
-        return;
-      }
-      if (!productEditor.categoryId) {
-        ElMessage.warning("请选择商品分类");
-        return;
-      }
-      if (productEditorStockChanged.value) {
-        const reason = productStockAdjustReason.value.trim();
-        if (reason.length < 4 || reason.length > 200) {
-          ElMessage.warning("库存发生变化，请填写 4 至 200 个字符的调整原因");
-          return;
-        }
-      }
       const { spuPayload, skuPayload } = buildProductSavePayload();
       const savedId = await saveProduct(spuPayload, skuPayload, productStockAdjustReason.value.trim());
       selectedProductId.value = savedId;
@@ -1076,6 +1196,10 @@ async function handleVisualSave() {
     visualSaving.value = false;
   }
 }
+
+onBeforeRouteLeave(async () => {
+  return await confirmDiscardChanges("离开当前页面");
+});
 
 function openFullEditor() {
   if (!visualEditorScene.value || !visualEditorEntityId.value) return;
@@ -1138,7 +1262,7 @@ watch(
     bannerEditor.status
   ],
   () => {
-    if (visualEditorScene.value !== "banner" || !bannerEditor.id) return;
+    if (isEditorInitializing.value || visualEditorScene.value !== "banner" || !bannerEditor.id) return;
     setPreviewDraft("banner", {
       id: bannerEditor.id,
       title: bannerEditor.title,
@@ -1162,7 +1286,7 @@ watch(
     channelEditor.status
   ],
   () => {
-    if (visualEditorScene.value !== "channel" || !channelEditor.id) return;
+    if (isEditorInitializing.value || visualEditorScene.value !== "channel" || !channelEditor.id) return;
     setPreviewDraft("channel", {
       id: channelEditor.id,
       name: channelEditor.name,
@@ -1186,7 +1310,7 @@ watch(
     brandEditor.status
   ],
   () => {
-    if (visualEditorScene.value !== "brand" || !brandEditor.id) return;
+    if (isEditorInitializing.value || visualEditorScene.value !== "brand" || !brandEditor.id) return;
     setPreviewDraft("brand", {
       id: brandEditor.id,
       name: brandEditor.name,
@@ -1211,7 +1335,7 @@ watch(
     topicEditor.status
   ],
   () => {
-    if (visualEditorScene.value !== "topic" || !topicEditor.id) return;
+    if (isEditorInitializing.value || visualEditorScene.value !== "topic" || !topicEditor.id) return;
     setPreviewDraft("topic", {
       id: topicEditor.id,
       title: topicEditor.title,
@@ -1253,7 +1377,7 @@ watch(
     }))
   ],
   () => {
-    if (visualEditorScene.value !== "product" || !productEditor.id) return;
+    if (isEditorInitializing.value || visualEditorScene.value !== "product" || !productEditor.id) return;
     setPreviewDraft("product", {
       id: productEditor.id,
       name: productEditor.name,
@@ -1278,6 +1402,10 @@ watch(
 );
 
 onMounted(async () => {
+  if (route.query.fresh === "1") {
+    clearAllPreviewDrafts();
+    refreshDrafts();
+  }
   await Promise.all([fetchData(), fetchRollbackData()]);
   startDraftPolling();
 });
@@ -1295,22 +1423,37 @@ onBeforeUnmount(() => {
   <div class="app-container preview-center-page" v-loading="loading">
     <div class="page-header">
       <div>
-        <h2 class="page-title">全站预览中心</h2>
-        <p class="page-subtitle">现在不只是看预览了。你可以直接点左侧页面模块，在右侧边改边看前端效果。</p>
+        <h2 class="page-title">可视化装修</h2>
+        <p class="page-subtitle">不用切换小程序。点左侧想修改的位置，在右侧填写，左侧会实时显示客户看到的样子。</p>
       </div>
-      <el-button @click="fetchData">
+      <el-button @click="refreshOfficialData">
         <el-icon><RefreshRight /></el-icon>
         刷新正式数据
       </el-button>
     </div>
 
     <el-alert
-      title="当前版本已支持 Banner、频道、品牌、专题、商品详情的可点击编辑；点击左侧模块后，右侧会自动切到对应编辑表单。"
+      title="先点左侧内容，再在右侧填写。填写过程中只是预览草稿，点击“保存并更新预览”才会正式生效。"
       type="success"
       :closable="false"
       show-icon
       class="page-alert"
     />
+
+    <div class="beginner-guide" aria-label="可视化装修操作步骤">
+      <div class="guide-step" :class="{ 'is-active': !visualEditorScene }">
+        <span class="guide-number">1</span>
+        <div><strong>选择要修改的位置</strong><span>点击左侧带“点此编辑”的图片或卡片</span></div>
+      </div>
+      <div class="guide-step" :class="{ 'is-active': !!visualEditorScene }">
+        <span class="guide-number">2</span>
+        <div><strong>按右侧提示填写</strong><span>带红色星号的是必须填写的内容</span></div>
+      </div>
+      <div class="guide-step" :class="{ 'is-active': hasUnsavedChanges }">
+        <span class="guide-number">3</span>
+        <div><strong>确认后保存</strong><span>保存即正式生效，最近一次操作可一键回退</span></div>
+      </div>
+    </div>
 
     <div class="page-grid">
       <div class="page-main">
@@ -1638,7 +1781,8 @@ onBeforeUnmount(() => {
                 <span class="card-title">{{ editorPanelTitle }}</span>
                 <div v-if="editorSelectionLabel" class="editor-subtitle">{{ editorSelectionLabel }}</div>
               </div>
-              <el-tag v-if="visualEditorScene" type="success" effect="light">点哪里改哪里</el-tag>
+              <el-tag v-if="visualEditorScene && hasUnsavedChanges" type="warning" effect="light">有未保存修改</el-tag>
+              <el-tag v-else-if="visualEditorScene" type="success" effect="light">已同步预览</el-tag>
             </div>
           </template>
 
@@ -1649,24 +1793,35 @@ onBeforeUnmount(() => {
           </div>
 
           <div v-else v-loading="visualEditorLoading" class="editor-form-wrap">
+            <el-alert
+              :title="hasUnsavedChanges ? '你正在查看草稿效果，未保存前不会影响客户小程序。' : '现在显示的是正式数据；修改后会先在左侧实时预览。'"
+              :type="hasUnsavedChanges ? 'warning' : 'info'"
+              :closable="false"
+              show-icon
+              class="editor-status-alert"
+            />
             <div class="editor-actions">
               <el-button plain size="small" @click="openFullEditor">打开原后台页</el-button>
-              <el-button plain size="small" @click="resetVisualEditor">恢复正式数据</el-button>
+              <el-button plain size="small" :disabled="!hasUnsavedChanges" @click="resetVisualEditor">放弃本次修改</el-button>
               <el-button plain size="small" @click="closeVisualEditor">关闭编辑</el-button>
             </div>
 
             <el-form v-if="visualEditorScene === 'banner'" label-position="top">
               <el-form-item label="Banner 标题" required>
                 <el-input v-model="bannerEditor.title" placeholder="请输入 Banner 标题" maxlength="50" />
+                <div class="field-hint">客户通常看不到标题；用于后台识别这张首页大图。</div>
               </el-form-item>
               <el-form-item label="Banner 图片" required>
                 <MaterialImagePicker v-model="bannerEditor.picUrl" biz-type="content" empty-text="请选择 Banner 图" />
+                <div class="field-hint">请从素材库选择横向宣传图，建议比例 2:1。</div>
               </el-form-item>
               <el-form-item label="跳转目标">
                 <LinkSelector :key="editorLinkKey" v-model="bannerEditor.url" />
+                <div class="field-hint">可不选；选择后客户点击图片会进入对应商品或页面。</div>
               </el-form-item>
               <el-form-item label="排序权重">
                 <el-input-number v-model="bannerEditor.sort" :min="0" :max="9999" controls-position="right" />
+                <div class="field-hint">数字越大越靠前；不确定时保持原数字。</div>
               </el-form-item>
               <el-form-item label="状态">
                 <el-segmented
@@ -1679,12 +1834,15 @@ onBeforeUnmount(() => {
             <el-form v-else-if="visualEditorScene === 'channel'" label-position="top">
               <el-form-item label="频道名称" required>
                 <el-input v-model="channelEditor.name" placeholder="请输入频道名称" maxlength="20" />
+                <div class="field-hint">显示在首页图标下方，建议不超过 6 个字。</div>
               </el-form-item>
               <el-form-item label="频道图标">
                 <MaterialImagePicker v-model="channelEditor.iconUrl" biz-type="content" empty-text="请选择频道图标" />
+                <div class="field-hint">建议选择正方形图片；未选择时会用文字作为临时图标。</div>
               </el-form-item>
               <el-form-item label="跳转目标">
                 <LinkSelector :key="editorLinkKey" v-model="channelEditor.url" />
+                <div class="field-hint">选择客户点此频道后要进入的商品或页面。</div>
               </el-form-item>
               <el-form-item label="排序权重">
                 <el-input-number v-model="channelEditor.sort" :min="0" :max="9999" controls-position="right" />
@@ -1700,9 +1858,11 @@ onBeforeUnmount(() => {
             <el-form v-else-if="visualEditorScene === 'brand'" label-position="top">
               <el-form-item label="品牌名称" required>
                 <el-input v-model="brandEditor.name" placeholder="请输入品牌名称" maxlength="50" />
+                <div class="field-hint">品牌名称不能与现有品牌重复。</div>
               </el-form-item>
               <el-form-item label="品牌图片">
                 <MaterialImagePicker v-model="brandEditor.picUrl" biz-type="content" empty-text="请选择品牌图" />
+                <div class="field-hint">可留空；不填写时前端会按默认方式展示。</div>
               </el-form-item>
               <el-form-item label="起售价（元）">
                 <el-input-number
@@ -1712,6 +1872,7 @@ onBeforeUnmount(() => {
                   :step="1"
                   controls-position="right"
                 />
+                <div class="field-hint">单位是人民币元，例如 99.90；不能填写负数。</div>
               </el-form-item>
               <el-form-item label="排序权重">
                 <el-input-number v-model="brandEditor.sort" :min="0" :max="9999" controls-position="right" />
@@ -1727,15 +1888,18 @@ onBeforeUnmount(() => {
             <el-form v-else-if="visualEditorScene === 'topic'" label-position="top">
               <el-form-item label="专题标题" required>
                 <el-input v-model="topicEditor.title" placeholder="请输入专题标题" maxlength="50" />
+                <div class="field-hint">显示在专题卡片上，建议说明活动或主题。</div>
               </el-form-item>
               <el-form-item label="专题副标题">
                 <el-input v-model="topicEditor.subtitle" placeholder="请输入副标题" maxlength="100" />
               </el-form-item>
               <el-form-item label="专题图片">
                 <MaterialImagePicker v-model="topicEditor.picUrl" biz-type="content" empty-text="请选择专题图" />
+                <div class="field-hint">可留空；不填写时前端会按默认方式展示。</div>
               </el-form-item>
               <el-form-item label="价格说明">
                 <el-input v-model="topicEditor.priceInfo" placeholder="如 39.9 或 39元起" maxlength="30" />
+                <div class="field-hint">可留空；填写数字时系统会自动按“元起”展示。</div>
               </el-form-item>
               <el-form-item label="排序权重">
                 <el-input-number v-model="topicEditor.sort" :min="0" :max="9999" controls-position="right" />
@@ -1751,6 +1915,7 @@ onBeforeUnmount(() => {
             <el-form v-else-if="visualEditorScene === 'product'" label-position="top">
               <el-form-item label="商品名称" required>
                 <el-input v-model="productEditor.name" placeholder="请输入商品名称" maxlength="100" />
+                <div class="field-hint">这是客户在商品列表和详情页看到的名称。</div>
               </el-form-item>
               <el-form-item label="商品分类" required>
                 <el-select v-model="productEditor.categoryId" placeholder="请选择分类" style="width: 100%">
@@ -1761,6 +1926,7 @@ onBeforeUnmount(() => {
                     :value="cat.id!"
                   />
                 </el-select>
+                <div class="field-hint">选择最匹配的分类，客户会在该分类下找到商品。</div>
               </el-form-item>
               <el-form-item label="商品类型">
                 <el-segmented
@@ -1791,8 +1957,9 @@ onBeforeUnmount(() => {
                   <el-option v-for="item in keywordOptions" :key="item" :label="item" :value="item" />
                 </el-select>
               </el-form-item>
-              <el-form-item label="主图">
+              <el-form-item label="主图" :required="productEditor.status === 1">
                 <MaterialImagePicker v-model="productEditor.picUrl" biz-type="product" empty-text="请选择主图" />
+                <div class="field-hint">上架时必须选择清晰的商品主图；下架商品可暂不补图。</div>
               </el-form-item>
               <el-form-item label="轮播图">
                 <MaterialImagePicker
@@ -1824,14 +1991,17 @@ onBeforeUnmount(() => {
               </el-form-item>
 
               <template v-if="productEditorSkus.length === 0">
-                <el-form-item label="售价（元）">
-                  <el-input-number v-model="productEditor.price" :min="0" :precision="2" :step="1" controls-position="right" />
+                <el-form-item label="售价（元）" required>
+                  <el-input-number v-model="productEditor.price" :min="0.01" :precision="2" :step="1" controls-position="right" />
+                  <div class="field-hint">单位是人民币元，必须大于 0。</div>
                 </el-form-item>
                 <el-form-item label="市场价（元）">
                   <el-input-number v-model="productEditor.marketPrice" :min="0" :precision="2" :step="1" controls-position="right" />
+                  <div class="field-hint">可不填；填写后不能低于售价。</div>
                 </el-form-item>
                 <el-form-item label="库存">
                   <el-input-number v-model="productEditor.stock" :min="0" controls-position="right" />
+                  <div class="field-hint">只能填写 0 或正整数。</div>
                 </el-form-item>
               </template>
 
@@ -1848,8 +2018,8 @@ onBeforeUnmount(() => {
                   </div>
                   <MaterialImagePicker v-model="item.picUrl" biz-type="product" empty-text="SKU 图可选" />
                   <div class="sku-editor-grid">
-                    <el-form-item label="售价（元）">
-                      <el-input-number v-model="item.priceYuan" :min="0" :precision="2" :step="1" controls-position="right" />
+                    <el-form-item label="售价（元）" required>
+                      <el-input-number v-model="item.priceYuan" :min="0.01" :precision="2" :step="1" controls-position="right" />
                     </el-form-item>
                     <el-form-item label="市场价（元）">
                       <el-input-number v-model="item.marketPriceYuan" :min="0" :precision="2" :step="1" controls-position="right" />
@@ -1886,12 +2056,16 @@ onBeforeUnmount(() => {
                   show-word-limit
                   placeholder="填写盘点入库、损耗修正等具体原因"
                 />
+                <div class="field-hint">修改库存必须写明原因，4 至 200 个字，方便后续核对。</div>
               </el-form-item>
             </el-form>
 
             <div class="editor-footer">
               <el-button @click="closeVisualEditor">取消</el-button>
-              <el-button type="primary" :loading="visualSaving" @click="handleVisualSave">保存并更新预览</el-button>
+              <el-button type="primary" :loading="visualSaving" @click="handleVisualSave">
+                <el-icon><CircleCheck /></el-icon>
+                保存并正式生效
+              </el-button>
             </div>
           </div>
         </el-card>
@@ -1984,6 +2158,64 @@ onBeforeUnmount(() => {
   margin-bottom: 16px;
 }
 
+.beginner-guide {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.guide-step {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 72px;
+  padding: 12px 14px;
+  border: 1px solid #e4e9e3;
+  border-radius: 8px;
+  background: #fff;
+  color: #6b746d;
+}
+
+.guide-step.is-active {
+  border-color: #86ad8b;
+  background: #f4faf2;
+}
+
+.guide-number {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #e7f2e6;
+  color: #3f7b4c;
+  font-weight: 700;
+}
+
+.guide-step.is-active .guide-number {
+  background: #5f8f74;
+  color: #fff;
+}
+
+.guide-step strong,
+.guide-step span:not(.guide-number) {
+  display: block;
+}
+
+.guide-step strong {
+  color: #35443a;
+  font-size: 14px;
+}
+
+.guide-step span:not(.guide-number) {
+  margin-top: 4px;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
 .page-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 380px;
@@ -1999,6 +2231,18 @@ onBeforeUnmount(() => {
   display: grid;
   gap: 16px;
   align-self: start;
+}
+
+.editor-status-alert {
+  margin-bottom: 12px;
+}
+
+.field-hint {
+  width: 100%;
+  margin-top: 6px;
+  color: #8a948c;
+  font-size: 12px;
+  line-height: 1.5;
 }
 
 .phone-shell {
@@ -2660,6 +2904,10 @@ onBeforeUnmount(() => {
 }
 
 @media (max-width: 1280px) {
+  .beginner-guide {
+    grid-template-columns: 1fr;
+  }
+
   .content-grid,
   .product-preview-layout,
   .sku-editor-grid {

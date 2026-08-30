@@ -231,7 +231,7 @@ const restoreButtonText = computed(() =>
 
 function openPreviewCenter() {
   const previewUrl = router.resolve({
-    path: "/content/preview-center",
+        path: "/visual-editor/home",
     query: { scene: "product" }
   });
   window.open(previewUrl.href, "_blank");
@@ -633,7 +633,7 @@ onBeforeUnmount(() => {
         <h3 class="page-title">{{ isEdit ? "编辑商品" : "新增商品" }}</h3>
       </div>
       <div class="header-actions">
-        <el-button plain @click="openPreviewCenter">打开全站预览中心</el-button>
+        <el-button plain @click="openPreviewCenter">打开可视化装修</el-button>
         <el-tag :type="hasUnsavedChanges ? 'warning' : 'success'" effect="plain">
           {{ hasUnsavedChanges ? "有未保存修改" : "已与已保存内容一致" }}
         </el-tag>
@@ -908,7 +908,7 @@ onBeforeUnmount(() => {
             生成 SKU 矩阵
           </el-button>
 
-          <el-table
+          <el-table scrollbar-always-on
             v-if="skuMatrix.length > 0"
             :data="skuMatrix"
             border

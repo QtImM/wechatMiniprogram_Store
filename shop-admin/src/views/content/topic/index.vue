@@ -79,8 +79,8 @@ function openEdit(row: ContentTopic) {
 
 function openPreviewCenter() {
     const previewUrl = router.resolve({
-        path: "/content/preview-center",
-        query: { scene: "content" }
+        path: "/visual-editor/home",
+        query: { scene: "content", fresh: "1" }
     });
     window.open(previewUrl.href, "_blank");
 }
@@ -240,12 +240,12 @@ onBeforeUnmount(() => {
                 <el-icon class="mr-1"><i class="ep-icon-plus" /></el-icon>
                 新增专题
             </el-button>
-            <el-button plain @click="openPreviewCenter">打开全站预览中心</el-button>
+            <el-button plain @click="openPreviewCenter">打开可视化装修</el-button>
         </el-card>
 
         <!-- 表格 -->
         <el-card shadow="never">
-            <el-table :data="list" v-loading="loading" border>
+            <el-table scrollbar-always-on :data="list" v-loading="loading" border>
                 <el-table-column prop="id" label="ID" width="70" align="center" />
                 <el-table-column label="场景图片" width="130" align="center">
                     <template #default="{ row }">

@@ -99,7 +99,7 @@ onMounted(async () => { roles.value = await getSystemRoles(); await fetchData();
     </el-card>
     <el-card shadow="never">
       <div class="toolbar"><el-button type="primary" :icon="Plus" @click="openCreate">新增管理员</el-button><span>共 {{ total }} 个账号</span></div>
-      <el-table v-loading="loading" :data="rows" border>
+      <el-table scrollbar-always-on v-loading="loading" :data="rows" border>
         <el-table-column prop="username" label="账号" min-width="150" />
         <el-table-column prop="nickname" label="姓名" min-width="130" />
         <el-table-column label="角色" min-width="190"><template #default="{ row }"><el-tag v-for="role in row.roleNames" :key="role" class="role-tag" effect="plain">{{ role }}</el-tag></template></el-table-column>

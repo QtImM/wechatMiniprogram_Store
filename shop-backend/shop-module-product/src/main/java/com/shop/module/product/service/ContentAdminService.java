@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.LinkedHashSet;
+import java.util.Objects;
 
 /**
  * 内容管理（Banner / 频道 / 品牌 / 专题）CRUD 服务
@@ -267,10 +268,17 @@ public class ContentAdminService {
         value.setPicUrl(requireResourceUrl(value.getPicUrl(), "Banner 图片"));
         value.setUrl(requireLink(value.getUrl()));
         validateCommon(value.getStatus(), value.getSort());
-        LambdaQueryWrapper<ContentBannerDO> duplicate = new LambdaQueryWrapper<ContentBannerDO>()
-                .eq(ContentBannerDO::getUrl, value.getUrl());
-        if (currentId != null) duplicate.ne(ContentBannerDO::getId, currentId);
-        if (bannerMapper.selectCount(duplicate) > 0) throw new ServerException(400, "Banner 跳转地址不能重复");
+        ContentBannerDO current = currentId == null ? null : bannerMapper.selectById(currentId);
+        boolean urlChanged = current == null || !Objects.equals(current.getUrl(), value.getUrl());
+        if (!value.getUrl().isBlank() && urlChanged) {
+            LambdaQueryWrapper<ContentBannerDO> urlQuery = new LambdaQueryWrapper<ContentBannerDO>()
+                    .eq(ContentBannerDO::getUrl, value.getUrl());
+            if (currentId != null) urlQuery.ne(ContentBannerDO::getId, currentId);
+            ContentBannerDO duplicate = bannerMapper.selectOne(urlQuery);
+            if (duplicate != null) {
+                throw new ServerException(400, "跳转目标已被 Banner「" + duplicate.getTitle() + "」使用，请重新选择或设为不跳转");
+            }
+        }
     }
 
     private void validateChannel(ContentChannelDO value, Long currentId) {
@@ -279,11 +287,24 @@ public class ContentAdminService {
         value.setIconUrl(requireResourceUrl(value.getIconUrl(), "频道图标"));
         value.setUrl(requireLink(value.getUrl()));
         validateCommon(value.getStatus(), value.getSort());
-        LambdaQueryWrapper<ContentChannelDO> duplicate = new LambdaQueryWrapper<ContentChannelDO>()
-                .and(wrapper -> wrapper.eq(ContentChannelDO::getName, value.getName())
-                        .or().eq(ContentChannelDO::getUrl, value.getUrl()));
-        if (currentId != null) duplicate.ne(ContentChannelDO::getId, currentId);
-        if (channelMapper.selectCount(duplicate) > 0) throw new ServerException(400, "频道名称或跳转地址不能重复");
+        LambdaQueryWrapper<ContentChannelDO> nameQuery = new LambdaQueryWrapper<ContentChannelDO>()
+                .eq(ContentChannelDO::getName, value.getName());
+        if (currentId != null) nameQuery.ne(ContentChannelDO::getId, currentId);
+        ContentChannelDO duplicateName = channelMapper.selectOne(nameQuery);
+        if (duplicateName != null) {
+            throw new ServerException(400, "频道名称「" + value.getName() + "」已存在，请换一个名称");
+        }
+        ContentChannelDO current = currentId == null ? null : channelMapper.selectById(currentId);
+        boolean urlChanged = current == null || !Objects.equals(current.getUrl(), value.getUrl());
+        if (!value.getUrl().isBlank() && urlChanged) {
+            LambdaQueryWrapper<ContentChannelDO> urlQuery = new LambdaQueryWrapper<ContentChannelDO>()
+                    .eq(ContentChannelDO::getUrl, value.getUrl());
+            if (currentId != null) urlQuery.ne(ContentChannelDO::getId, currentId);
+            ContentChannelDO duplicateUrl = channelMapper.selectOne(urlQuery);
+            if (duplicateUrl != null) {
+                throw new ServerException(400, "跳转目标已被频道「" + duplicateUrl.getName() + "」使用，请重新选择或设为不跳转");
+            }
+        }
     }
 
     private void validateBrand(ContentBrandDO value, Long currentId) {
@@ -296,7 +317,7 @@ public class ContentAdminService {
         validateCommon(value.getStatus(), value.getSort());
         LambdaQueryWrapper<ContentBrandDO> duplicate = new LambdaQueryWrapper<ContentBrandDO>().eq(ContentBrandDO::getName, value.getName());
         if (currentId != null) duplicate.ne(ContentBrandDO::getId, currentId);
-        if (brandMapper.selectCount(duplicate) > 0) throw new ServerException(400, "品牌名称不能重复");
+        if (brandMapper.selectCount(duplicate) > 0) throw new ServerException(400, "品牌名称「" + value.getName() + "」已存在，请换一个名称");
     }
 
     private void validateTopic(ContentTopicDO value, Long currentId) {
@@ -307,7 +328,7 @@ public class ContentAdminService {
         validateCommon(value.getStatus(), value.getSort());
         LambdaQueryWrapper<ContentTopicDO> duplicate = new LambdaQueryWrapper<ContentTopicDO>().eq(ContentTopicDO::getTitle, value.getTitle());
         if (currentId != null) duplicate.ne(ContentTopicDO::getId, currentId);
-        if (topicMapper.selectCount(duplicate) > 0) throw new ServerException(400, "专题标题不能重复");
+        if (topicMapper.selectCount(duplicate) > 0) throw new ServerException(400, "专题标题「" + value.getTitle() + "」已存在，请换一个标题");
     }
 
     private void validateCommon(Integer status, Integer sort) {
@@ -330,7 +351,9 @@ public class ContentAdminService {
     }
 
     private String requireLink(String value) {
-        String normalized = requireText(value, "跳转地址", 255);
+        String normalized = value == null ? "" : value.trim();
+        if (normalized.isEmpty()) return "";
+        if (normalized.length() > 255) throw new ServerException(400, "跳转地址长度不正确");
         if (!normalized.startsWith("/pages/") && !normalized.startsWith("https://")) {
             throw new ServerException(400, "跳转地址必须是小程序页面路径或 HTTPS 地址");
         }
