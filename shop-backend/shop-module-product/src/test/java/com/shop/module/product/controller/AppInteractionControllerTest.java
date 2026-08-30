@@ -1,6 +1,8 @@
 package com.shop.module.product.controller;
 
 import com.shop.framework.security.LoginUser;
+import com.shop.module.product.config.MaterialStorageProperties;
+import com.shop.module.product.service.MaterialFileStorageService;
 import org.junit.jupiter.api.Test;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -26,7 +28,7 @@ class AppInteractionControllerTest {
         ))));
         when(jdbc.queryForObject(anyString(), org.mockito.ArgumentMatchers.eq(Integer.class), any(Object[].class))).thenReturn(1);
 
-        Map<String, Object> data = (Map<String, Object>) new AppInteractionController(jdbc).commentList(1L, 1, 20).get("data");
+        Map<String, Object> data = (Map<String, Object>) new AppInteractionController(jdbc, mock(MaterialFileStorageService.class), new MaterialStorageProperties()).commentList(1L, 1, 20, 0).get("data");
         List<Map<String, Object>> records = (List<Map<String, Object>>) data.get("records");
 
         assertEquals(1, data.get("total"));
@@ -42,7 +44,7 @@ class AppInteractionControllerTest {
         login(7L);
 
         try {
-            Map<String, Object> result = new AppInteractionController(jdbc).toggleCollect(0, 9L);
+            Map<String, Object> result = new AppInteractionController(jdbc, mock(MaterialFileStorageService.class), new MaterialStorageProperties()).toggleCollect(0, 9L);
 
             assertEquals("add", ((Map<?, ?>) result.get("data")).get("type"));
             verify(jdbc).update(org.mockito.ArgumentMatchers.startsWith("UPDATE member_collect SET deleted=0"), eq(7L), eq(9L));
@@ -59,7 +61,7 @@ class AppInteractionControllerTest {
         login(7L);
 
         try {
-            Map<String, Object> result = new AppInteractionController(jdbc).recordFootprint(9L);
+            Map<String, Object> result = new AppInteractionController(jdbc, mock(MaterialFileStorageService.class), new MaterialStorageProperties()).recordFootprint(9L);
 
             assertEquals(0, result.get("code"));
             verify(jdbc).update(org.mockito.ArgumentMatchers.startsWith("UPDATE member_footprint SET deleted=0"), eq(7L), eq(9L), any());

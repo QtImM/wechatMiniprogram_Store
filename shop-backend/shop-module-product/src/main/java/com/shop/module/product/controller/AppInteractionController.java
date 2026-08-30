@@ -2,12 +2,15 @@ package com.shop.module.product.controller;
 
 import com.shop.common.exception.ServerException;
 import com.shop.framework.security.LoginUser;
+import com.shop.module.product.config.MaterialStorageProperties;
+import com.shop.module.product.service.MaterialFileStorageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
 import java.util.*;
@@ -18,6 +21,8 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class AppInteractionController {
     private final JdbcTemplate jdbc;
+    private final MaterialFileStorageService fileStorage;
+    private final MaterialStorageProperties storageProps;
 
     @PostMapping("/collect/addordelete")
     @Transactional
@@ -51,27 +56,47 @@ public class AppInteractionController {
     public Map<String,Object> deleteFootprint(@RequestParam Long footprintId) { return ok(Map.of("deleted", jdbc.update("UPDATE member_footprint SET deleted=1 WHERE id=? AND user_id=? AND deleted=0", footprintId, userId()) > 0)); }
 
     @RequestMapping("/comment/list")
-    public Map<String,Object> commentList(@RequestParam Long valueId, @RequestParam(defaultValue="1") int page, @RequestParam(defaultValue="20") int size) {
+    public Map<String,Object> commentList(@RequestParam Long valueId, @RequestParam(defaultValue="1") int page, @RequestParam(defaultValue="20") int size, @RequestParam(defaultValue="0") int showType) {
         int safePage = Math.min(Math.max(page, 1), 10_000);
         int safeSize = Math.min(Math.max(size, 1), 100);
         int offset = (safePage - 1) * safeSize;
-        List<Map<String,Object>> rows = jdbc.queryForList("SELECT c.id,c.content,DATE_FORMAT(c.create_time,'%Y-%m-%d') addTime,u.nickname,u.avatar FROM product_comment c JOIN member_user u ON u.id=c.user_id WHERE c.spu_id=? AND c.status=1 AND c.deleted=0 ORDER BY c.create_time DESC LIMIT ? OFFSET ?", valueId, safeSize, offset).stream().map(row -> {
+        String sql = showType == 1
+                ? "SELECT c.id,c.content,c.pic_urls,DATE_FORMAT(c.create_time,'%Y-%m-%d') addTime,u.nickname,u.avatar FROM product_comment c JOIN member_user u ON u.id=c.user_id WHERE c.spu_id=? AND c.status=1 AND c.deleted=0 AND c.pic_urls IS NOT NULL AND c.pic_urls != '' ORDER BY c.create_time DESC LIMIT ? OFFSET ?"
+                : "SELECT c.id,c.content,c.pic_urls,DATE_FORMAT(c.create_time,'%Y-%m-%d') addTime,u.nickname,u.avatar FROM product_comment c JOIN member_user u ON u.id=c.user_id WHERE c.spu_id=? AND c.status=1 AND c.deleted=0 ORDER BY c.create_time DESC LIMIT ? OFFSET ?";
+        List<Map<String,Object>> rows = jdbc.queryForList(sql, valueId, safeSize, offset).stream().map(row -> {
             Object nickname = row.remove("nickname"); Object avatar = row.remove("avatar");
+            Object picUrls = row.remove("pic_urls");
             row.put("userInfo", Map.of("nickname", nickname == null ? "用户" : nickname,
-                    "avatar", avatar == null ? "" : avatar)); row.put("picList", List.of()); return row;
+                    "avatar", avatar == null ? "" : avatar));
+            List<Map<String,Object>> picList = new ArrayList<>();
+            if (picUrls instanceof String s && !s.isBlank()) {
+                String[] urls = s.split(","); int idx = 0;
+                for (String u : urls) { if (!u.isBlank()) { picList.add(Map.of("id", ++idx, "picUrl", u.trim())); } }
+            }
+            row.put("picList", picList); return row;
         }).toList();
-        Integer total = jdbc.queryForObject("SELECT COUNT(*) FROM product_comment WHERE spu_id=? AND status=1 AND deleted=0", Integer.class, valueId);
+        String countSql = showType == 1
+                ? "SELECT COUNT(*) FROM product_comment WHERE spu_id=? AND status=1 AND deleted=0 AND pic_urls IS NOT NULL AND pic_urls != ''"
+                : "SELECT COUNT(*) FROM product_comment WHERE spu_id=? AND status=1 AND deleted=0";
+        Integer total = jdbc.queryForObject(countSql, Integer.class, valueId);
         return ok(Map.of("records", rows, "total", total == null ? 0 : total));
     }
 
     @RequestMapping("/comment/count")
-    public Map<String,Object> commentCount(@RequestParam Long valueId) { Integer count=jdbc.queryForObject("SELECT COUNT(*) FROM product_comment WHERE spu_id=? AND status=1 AND deleted=0",Integer.class,valueId); return ok(Map.of("allCount",count==null?0:count,"hasPicCount",0)); }
+    public Map<String,Object> commentCount(@RequestParam Long valueId) {
+        Integer all = jdbc.queryForObject("SELECT COUNT(*) FROM product_comment WHERE spu_id=? AND status=1 AND deleted=0", Integer.class, valueId);
+        Integer hasPic = jdbc.queryForObject("SELECT COUNT(*) FROM product_comment WHERE spu_id=? AND status=1 AND deleted=0 AND pic_urls IS NOT NULL AND pic_urls != ''", Integer.class, valueId);
+        return ok(Map.of("allCount", all == null ? 0 : all, "hasPicCount", hasPic == null ? 0 : hasPic));
+    }
 
     @PostMapping("/comment/post")
     @Transactional
-    public Map<String,Object> postComment(@RequestParam Long valueId, @RequestParam String content) {
+    public Map<String,Object> postComment(@RequestParam Long valueId, @RequestParam String content,
+                                          @RequestParam(defaultValue = "") String picUrls) {
         requireGoods(valueId); Long user = userId(); String normalized = content == null ? "" : content.trim();
         if (normalized.isEmpty() || normalized.length() > 500) throw new ServerException(400,"评论内容应为 1 至 500 个字符");
+        String pics = picUrls == null ? "" : picUrls.trim();
+        if (pics.length() > 2000) throw new ServerException(400, "图片链接过长");
         List<Long> orders = jdbc.queryForList("""
                 SELECT o.id FROM trade_order o
                   JOIN trade_order_item oi ON oi.order_id=o.id AND oi.deleted=0
@@ -82,8 +107,24 @@ public class AppInteractionController {
                  ORDER BY o.create_time ASC, o.id ASC LIMIT 1
                 """, Long.class, user, valueId, valueId, user);
         if (orders.isEmpty()) throw new ServerException(400,"完成购买并确认收货后才能评价该商品");
-        jdbc.update("INSERT INTO product_comment(user_id,order_id,spu_id,content) VALUES (?,?,?,?)",
-                user, orders.get(0), valueId, normalized); return ok(Map.of());
+        jdbc.update("INSERT INTO product_comment(user_id,order_id,spu_id,content,pic_urls) VALUES (?,?,?,?,?)",
+                user, orders.get(0), valueId, normalized, pics.isEmpty() ? null : pics); return ok(Map.of());
+    }
+
+    @PostMapping("/upload/image")
+    public Map<String,Object> uploadImage(@RequestParam("file") MultipartFile file) {
+        if (file == null || file.isEmpty()) throw new ServerException(400, "请选择要上传的图片");
+        if (file.getSize() > 5 * 1024 * 1024) throw new ServerException(400, "图片不能超过5MB");
+        String ct = file.getContentType() == null ? "" : file.getContentType().toLowerCase();
+        if (!ct.equals("image/jpeg") && !ct.equals("image/png") && !ct.equals("image/webp")) throw new ServerException(400, "仅支持 JPG/PNG/WebP 格式");
+        try {
+            String ext = ct.equals("image/png") ? "png" : ct.equals("image/webp") ? "webp" : "jpg";
+            String objectKey = "comment/" + java.time.LocalDate.now().getYear() + "/" + java.util.UUID.randomUUID() + "." + ext;
+            String url = fileStorage.store(file.getBytes(), objectKey);
+            return ok(Map.of("url", url));
+        } catch (Exception e) {
+            throw new ServerException(500, "图片上传失败");
+        }
     }
 
     @PostMapping("/footprint/record")

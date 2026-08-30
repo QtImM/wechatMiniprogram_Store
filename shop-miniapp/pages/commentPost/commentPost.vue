@@ -5,6 +5,18 @@
 			 placeholder="留言经过筛选后，对所有人可见" />
 			<text class="char-count">{{140 - content.length}}</text>
 		</view>
+		<view class="img-section">
+			<view class="img-list">
+				<view class="img-item" v-for="(item, index) in picList" :key="index">
+					<image class="img-thumb" :src="item" mode="aspectFill"></image>
+					<view class="img-del" @tap="removePic(index)">×</view>
+				</view>
+				<view class="img-add" v-if="picList.length < 4" @tap="chooseImage">
+					<text class="add-icon">+</text>
+					<text class="add-text">图片</text>
+				</view>
+			</view>
+		</view>
 		<view class="btn-row">
 			<view class="btn-cancel" @tap="onClose">取消</view>
 			<view class="btn-post" @tap="onPost">发表</view>
@@ -20,17 +32,53 @@
 			return {
 				typeId: 0,
 				valueId: 0,
-				content: ''
+				content: '',
+				picList: [],
+				uploading: false
 			}
 		},
 		methods: {
+			chooseImage() {
+				let that = this;
+				const remain = 4 - that.picList.length;
+				if (remain <= 0) return;
+				uni.chooseImage({
+					count: remain,
+					sizeType: ['compressed'],
+					sourceType: ['album', 'camera'],
+					success: function(res) {
+						const paths = res.tempFilePaths || [];
+						paths.forEach(path => {
+							that.uploadOne(path);
+						});
+					}
+				});
+			},
+			uploadOne(filePath) {
+				let that = this;
+				that.uploading = true;
+				util.uploadFile(api.UploadImage, filePath).then(res => {
+					if (res.data && res.data.url) {
+						that.picList.push(res.data.url);
+					}
+					that.uploading = false;
+				}).catch(() => {
+					that.uploading = false;
+				});
+			},
+			removePic(index) {
+				this.picList.splice(index, 1);
+			},
 			onPost() {
 				let that = this;
 				if (!that.content) { util.toast('请填写评论'); return; }
+				if (that.uploading) { util.toast('图片上传中，请稍候'); return; }
+				const picUrls = that.picList.join(',');
 				util.request(api.CommentPost, {
 					typeId: that.typeId,
 					valueId: that.valueId,
-					content: that.content
+					content: that.content,
+					picUrls: picUrls
 				}).then(function(res) {
 					if (res.code === 0) {
 						uni.showToast({
@@ -88,6 +136,69 @@
 		right: 24rpx;
 		font-size: 24rpx;
 		color: #999;
+	}
+
+	.img-section {
+		margin-top: 20rpx;
+	}
+
+	.img-list {
+		display: flex;
+		flex-wrap: wrap;
+	}
+
+	.img-item {
+		position: relative;
+		width: 160rpx;
+		height: 160rpx;
+		margin-right: 16rpx;
+		margin-bottom: 16rpx;
+	}
+
+	.img-thumb {
+		width: 100%;
+		height: 100%;
+		border-radius: 12rpx;
+	}
+
+	.img-del {
+		position: absolute;
+		top: -10rpx;
+		right: -10rpx;
+		width: 40rpx;
+		height: 40rpx;
+		background: rgba(0,0,0,0.55);
+		color: #fff;
+		font-size: 28rpx;
+		border-radius: 50%;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		line-height: 1;
+	}
+
+	.img-add {
+		width: 160rpx;
+		height: 160rpx;
+		border: 2rpx dashed #c0c0c0;
+		border-radius: 12rpx;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		background: #FEFEFC;
+	}
+
+	.add-icon {
+		font-size: 48rpx;
+		color: #999;
+		line-height: 1;
+	}
+
+	.add-text {
+		font-size: 22rpx;
+		color: #999;
+		margin-top: 4rpx;
 	}
 
 	.btn-row {

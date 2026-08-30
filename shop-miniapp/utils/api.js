@@ -44,6 +44,7 @@ module.exports = {
 	CommentList: 'comment/list', //评论列表
 	CommentCount: 'comment/count', //评论总数
 	CommentPost: 'comment/post', //发表评论
+	UploadImage: 'upload/image', //上传图片
 
 	TopicList: 'topic/list', //专题列表
 	TopicDetail: 'topic/detail', //专题详情
