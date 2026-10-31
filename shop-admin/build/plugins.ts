@@ -18,21 +18,23 @@ export function getPluginsList(
 ): PluginOption[] {
   const lifecycle = process.env.npm_lifecycle_event;
   const enableCodeInspector =
-    process.platform !== "win32" && process.env.VITE_CODE_INSPECTOR !== "false";
+    process.platform !== "win32" && process.env.VITE_CODE_INSPECTOR === "true";
   return [
     tailwindcss(),
     vue(),
     // jsx、tsx语法支持
     vueJsx(),
     /**
-     * Windows 本地环境下该插件会尝试写入 node_modules 缓存文件，容易触发 EPERM。
-     * 默认仅在非 Windows 环境启用，避免阻塞本地开发启动。
+     * 默认关闭 code-inspector：其 dev-server 中间件会抢占 /admin-api 代理请求，
+     * 导致登录等接口一直挂起（前端仅提示“系统异常”）。
+     * Windows 环境该插件还会写入 node_modules 缓存触发 EPERM。
+     * 需要点击跳转源码时再显式设置 VITE_CODE_INSPECTOR=true。
      */
     enableCodeInspector
       ? codeInspectorPlugin({
-          bundler: "vite",
-          hideConsole: true
-        })
+        bundler: "vite",
+        hideConsole: true
+      })
       : null,
     viteBuildInfo(),
     /**

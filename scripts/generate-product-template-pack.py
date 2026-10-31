@@ -56,7 +56,7 @@ INSTRUCTIONS = [
     "7. 本模板中的示例文件分为“可直接参考上新”和“仅作格式参考”两类，请按文件名说明使用。",
 ]
 
-README_TEXT = """药食同源 v1.0 商品 Excel 模板包
+README_TEXT = """陕铺 v1.0 商品 Excel 模板包
 
 一、文件用途
 1. 01-商品导入空白模板.xlsx
@@ -161,7 +161,8 @@ def apply_validations(sheet) -> None:
 
 def add_validation(sheet, cell_range: str, values: list[str]) -> None:
     escaped = ",".join(value.replace('"', '""') for value in values)
-    validation = DataValidation(type="list", formula1=f'"{escaped}"', allow_blank=True)
+    validation = DataValidation(
+        type="list", formula1=f'"{escaped}"', allow_blank=True)
     validation.prompt = "请从下拉选项中选择，或参照示例填写。"
     validation.error = "请输入模板允许的选项值。"
     sheet.add_data_validation(validation)
@@ -342,15 +343,19 @@ def main() -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
 
     save_workbook(output_dir / "01-商品导入空白模板.xlsx", "商品导入空白模板", [])
-    save_workbook(output_dir / "02-新增商品示例-单规格.xlsx", "新增商品示例 - 单规格", single_spec_rows())
-    save_workbook(output_dir / "03-新增商品示例-多规格.xlsx", "新增商品示例 - 多规格", multi_spec_rows())
-    save_workbook(output_dir / "04-更新商品示例-改价改库存.xlsx", "更新商品示例 - 仅作格式参考", update_rows())
-    save_workbook(output_dir / "05-补充规格示例-新增SKU.xlsx", "补充规格示例 - 仅作格式参考", upsert_rows())
+    save_workbook(output_dir / "02-新增商品示例-单规格.xlsx",
+                  "新增商品示例 - 单规格", single_spec_rows())
+    save_workbook(output_dir / "03-新增商品示例-多规格.xlsx",
+                  "新增商品示例 - 多规格", multi_spec_rows())
+    save_workbook(output_dir / "04-更新商品示例-改价改库存.xlsx",
+                  "更新商品示例 - 仅作格式参考", update_rows())
+    save_workbook(output_dir / "05-补充规格示例-新增SKU.xlsx",
+                  "补充规格示例 - 仅作格式参考", upsert_rows())
 
     readme_path = output_dir / "README-商品模板包说明.txt"
     readme_path.write_text(README_TEXT, encoding="utf-8")
 
-    zip_path = output_dir / "药食同源-v1.0-商品Excel模板包.zip"
+    zip_path = output_dir / "陕铺-v1.0-商品Excel模板包.zip"
     with ZipFile(zip_path, "w", compression=ZIP_DEFLATED) as archive:
         for file_path in sorted(output_dir.iterdir()):
             if file_path.name == zip_path.name:

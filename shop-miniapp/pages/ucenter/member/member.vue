@@ -31,7 +31,7 @@
 							</view>
 						</view>
 						<view class="card-brand">
-							<text class="brand-name">药食同源</text>
+							<text class="brand-name">陕铺</text>
 							<text class="brand-sub">MEMBER</text>
 						</view>
 					</view>

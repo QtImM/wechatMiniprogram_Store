@@ -181,7 +181,7 @@ Create file `codes/shop-backend/pom.xml`:
     <version>1.0.0-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>shop-backend</name>
-    <description>药食同源微信小程序商城</description>
+    <description>陕铺微信小程序商城</description>
 
     <modules>
         <module>shop-framework</module>
@@ -1035,7 +1035,7 @@ Create `codes/sql/init.sql`:
 
 ```sql
 -- ============================================
--- 药食同源小程序商城 - 初始化SQL (Demo阶段)
+-- 陕铺小程序商城 - 初始化SQL (Demo阶段)
 -- ============================================
 
 CREATE DATABASE IF NOT EXISTS `shop` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -1958,7 +1958,7 @@ Create `codes/shop-miniapp/src/pages.json`:
   ],
   "globalStyle": {
     "navigationBarTextStyle": "black",
-    "navigationBarTitleText": "药食同源商城",
+    "navigationBarTitleText": "陕铺商城",
     "navigationBarBackgroundColor": "#ffffff",
     "backgroundColor": "#f5f5f5"
   }
@@ -1969,9 +1969,9 @@ Create `codes/shop-miniapp/src/manifest.json`:
 
 ```json
 {
-  "name": "药食同源商城",
+  "name": "陕铺商城",
   "appid": "",
-  "description": "药食同源微信小程序商城",
+  "description": "陕铺微信小程序商城",
   "versionName": "1.0.0",
   "versionCode": "100",
   "mp-weixin": {
@@ -2222,7 +2222,7 @@ Create `codes/shop-miniapp/index.html`:
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>药食同源商城</title>
+  <title>陕铺商城</title>
   <!--preload-links-->
   <!--app-context-->
 </head>

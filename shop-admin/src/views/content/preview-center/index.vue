@@ -210,7 +210,7 @@ const changeSummary = computed(() => {
   }
 });
 const keywordOptions = [
-  "药食同源",
+  "陕铺",
   "滋补养生",
   "花草茶饮",
   "轻养零食",
@@ -1690,7 +1690,7 @@ onBeforeUnmount(() => {
               <div class="phone-screen home-screen">
                 <div class="home-hero">
                   <div class="brand-block">
-                    <div class="brand-title">药食同源</div>
+                    <div class="brand-title">陕铺</div>
                     <div class="brand-subtitle">实时首页预览</div>
                   </div>
                   <div class="search-pill">搜索药食、花茶、滋补好物</div>
