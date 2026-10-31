@@ -1,5 +1,5 @@
 -- ============================================
--- 药食同源小程序商城 - 初始化SQL (Demo阶段)
+-- 陕铺小程序商城 - 初始化SQL (Demo阶段)
 -- ============================================
 
 CREATE DATABASE IF NOT EXISTS `shop` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -256,7 +256,7 @@ INSERT INTO `content_brand` (`name`, `pic_url`, `floor_price`, `sort`, `status`)
 ('同仁堂', 'https://images.unsplash.com/photo-1597481499750-3e6b22637e12?w=600&auto=format&fit=crop', 5900, 90, 1);
 
 INSERT INTO `content_topic` (`title`, `subtitle`, `pic_url`, `price_info`, `sort`, `status`) VALUES
-('药食同源养生指南', '传统中医智慧，现代健康生活', 'https://images.unsplash.com/photo-1596701062351-8c2c14d1fdd0?w=600&auto=format&fit=crop', '49.9', 100, 1),
+('陕铺养生指南', '传统中医智慧，现代健康生活', 'https://images.unsplash.com/photo-1596701062351-8c2c14d1fdd0?w=600&auto=format&fit=crop', '49.9', 100, 1),
 ('四季养生茶饮', '顺应时节，调养身心', 'https://images.unsplash.com/photo-1597481499750-3e6b22637e12?w=600&auto=format&fit=crop', '29.9', 90, 1);
 
 -- ============ 交易闭环相关 ============

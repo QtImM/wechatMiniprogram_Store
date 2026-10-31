@@ -105,10 +105,10 @@ useEventListener(document, "keydown", ({ code }) => {
           <!-- 品牌 Logo + 标题 -->
           <div class="brand-logo">
             <img :src="getLogo()" alt="logo" />
-            <span>药食同源管理后台</span>
+            <span>陕铺管理后台</span>
           </div>
           <Motion>
-            <h2>药食同源 · 管理系统</h2>
+            <h2>陕铺 · 管理系统</h2>
           </Motion>
           <p class="version-text">v1.0 客户交付版</p>
 

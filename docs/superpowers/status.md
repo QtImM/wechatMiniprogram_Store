@@ -1131,7 +1131,7 @@
 - 当前代码侧主要能力已收口；剩余阻塞集中在真实客户资料、微信体验版/真机回归、真实微信支付退款、快递 100 真实物流、生产部署/回滚/备份恢复演练、依赖漏洞在线扫描和最终验收证据归档。
 - 新增 `docs/delivery/v1.0-customer-info-collection-form.md`，形成可直接发客户的一次性资料收集表，覆盖微信小程序、域名证书、微信支付退款、快递 100、运营资料、协议合规和验收联系人。
 - 新增 `docs/acceptance/v1.0-staging-real-channel-checklist.md`，形成内部 staging 与真实渠道验收执行总表，覆盖部署、自动化门禁、后台、小程序、真实支付退款、真实物流、生产演练和最终归档；已挂入交付手册并纳入 `verify-delivery-docs.ps1`。
-- 已根据小程序后台截图补充客户资料表中已知信息：AppID 为 `wx34175bfa441e4316`，小程序名称为“药食同源Test”；AppSecret、服务器域名、微信支付权限/商户资料、上传下载域名等仍标记待提供或待配置。
+- 已根据小程序后台截图补充客户资料表中已知信息：AppID 为 `wx34175bfa441e4316`，小程序名称为“陕铺Test”；AppSecret、服务器域名、微信支付权限/商户资料、上传下载域名等仍标记待提供或待配置。
 - 已启动本地开发环境：Docker Desktop、`shop-mysql`、`shop-redis`、`shop-backend` 均已运行，后端商品分类接口正常；管理后台开发服务已在 `http://127.0.0.1:8848` 监听，管理员登录和资料接口验证通过；HBuilderX 微信小程序编译成功。
 - 2026-08-29 再次本地启动排障确认：根因不是业务代码损坏，而是 Docker Desktop 打开后 `shop-mysql`、`shop-redis` 未自动恢复，导致 `shop-backend` 在容器内无法解析 `mysql` 主机；手动 `docker start shop-mysql shop-redis` 后，后端恢复为 `healthy`。
 - 管理后台本地启动另发现 Windows 环境兼容问题：`code-inspector-plugin` 会尝试写入 `node_modules/.../record.json` 并触发 `EPERM`，已在 `shop-admin/build/plugins.ts` 中默认关闭 Windows 下的该开发插件；`corepack pnpm dev` 现可稳定启动并监听 `http://127.0.0.1:8848`。
@@ -1156,7 +1156,7 @@
 
 - 已新增模板生成脚本 `scripts/generate-product-template-pack.py`，可一键生成客户交付用商品 Excel 模板包。
 - 已生成交付目录 `docs/delivery/product-template-pack/`，包含 5 份 Excel 模板、1 份客户填写说明和 1 份目录说明。
-- 已生成客户可直接发送的压缩包 `docs/delivery/product-template-pack/药食同源-v1.0-商品Excel模板包.zip`。
+- 已生成客户可直接发送的压缩包 `docs/delivery/product-template-pack/陕铺-v1.0-商品Excel模板包.zip`。
 - 模板包内容覆盖：空白模板、单规格新增示例、多规格新增示例、更新商品改价改库存示例、补充规格示例。
 - 每份 Excel 已核验包含 `商品导入`、`字典`、`填写说明` 三个工作表；压缩包内容清单复核通过。
 
@@ -1305,6 +1305,21 @@
 - 已实现功能模块：首页(9)、搜索(7)、分类(3)、商品详情(12)、购物车(8)、登录授权(4)、个人中心(5)、订单(7)、地址(4)、收藏(3)、足迹(2)、优惠券(5)、评论(3)、反馈(2)、设置(3)、法律文档(3)、专题(2)、品牌(2)、结算(5)、新品/热销(2)、导航(2)、UI一致性(3)
 - 待客户资料功能：真实微信支付、真实物流查询、真机兼容性、微信分享、提审上线
 - 测试状态：⏳ 待执行，截图待采集
+
+---
+
+## 2026-10-31 本地启动排障：管理后台提示“系统异常”
+
+- 根因一：Docker Desktop 未启动，MySQL（3307）、Redis（6380）、后端（8085）均未运行，管理后台的 `/admin-api` 代理请求失败
+- 根因二：`code-inspector-plugin` 的 dev-server 中间件会抢占 `/admin-api/*` 请求，导致页面能打开但接口永久挂起；已在 `shop-admin/build/plugins.ts` 改为默认关闭，需要源码跳转时设置 `VITE_CODE_INSPECTOR=true`
+- 微信开发者工具启动失败与后端无关：需在工具「设置 → 安全设置」开启服务端口，HBuilderX 才能通过 CLI 调起；也可手动导入 `shop-miniapp/unpackage/dist/dev/mp-weixin`
+
+## 2026-10-31 品牌更名：药食同源 → 陕铺
+
+- 小程序名正式确定为「陕铺」，全仓品牌文案统一替换：小程序页面/分享文案/导航栏标题/manifest、管理后台登录页与平台标题、后端 POM 描述、SQL 种子与迁移、脚本与交付文档
+- 商品模板包重命名为 `docs/delivery/product-template-pack/陕铺-v1.0-商品Excel模板包.zip`，生成脚本输出文件名同步调整
+- 本地演示库 `content_topic` 中已有专题标题同步更新；`shop-miniapp/unpackage/dist`、`shop-admin/dist` 为构建产物，重新构建后自动生效
+- 更名后已完成一次全量重构建与启动：后端 `mvn clean install -DskipTests` 后以 `shop-server-1.0.0-SNAPSHOT.jar` 启动（8085，profile dev）；管理后台 `pnpm dev` 重启（8848）；小程序用 `HBuilderX cli launch mp-weixin --compile true` 重新编译成功，产物已为「陕铺商城」。微信开发者工具的服务端口仍未开启，`launch mp-weixin` 直接调起模拟器依旧失败
 
 ---
 

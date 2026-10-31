@@ -73,7 +73,7 @@ INSERT INTO `trade_order_item`
     (`id`, `order_id`, `user_id`, `spu_id`, `sku_id`, `goods_name`, `goods_pic_url`,
      `spec_name`, `price`, `count`, `total_price`, `create_time`, `update_time`, `deleted`)
 SELECT 815000 + (`id` - 810000), `id`, `user_id`, 3, 3000000001,
-       '药食同源养生组合装', 'https://example.com/admin-trade-test.png', '标准装',
+       '陕铺养生组合装', 'https://example.com/admin-trade-test.png', '标准装',
        2990, CASE WHEN `goods_price` = 5980 THEN 2 ELSE 1 END, `goods_price`,
        `create_time`, NOW(), b'0'
   FROM `trade_order`

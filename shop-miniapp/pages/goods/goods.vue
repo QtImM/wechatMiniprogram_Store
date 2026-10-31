@@ -534,7 +534,7 @@ export default {
 	},
 	onShareAppMessage() {
 		return {
-			title: this.goods.name || '药食同源好物推荐',
+			title: this.goods.name || '陕铺好物推荐',
 			path: '/pages/goods/goods?id=' + this.id
 		}
 	}

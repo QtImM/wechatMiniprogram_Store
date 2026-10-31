@@ -70,7 +70,7 @@ const statusOptions = [
   { label: "下架", value: 0 }
 ] as const;
 const keywordOptions = [
-  "药食同源",
+  "陕铺",
   "滋补养生",
   "花草茶饮",
   "轻养零食",

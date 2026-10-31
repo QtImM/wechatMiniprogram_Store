@@ -9,7 +9,7 @@
     <version>1.0.0-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>shop-backend</name>
-    <description>药食同源微信小程序商城</description>
+    <description>陕铺微信小程序商城</description>
 
     <modules>
         <module>shop-framework</module>
