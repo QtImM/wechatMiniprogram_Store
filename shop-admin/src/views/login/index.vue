@@ -50,10 +50,10 @@ const onLogin = async (formEl: FormInstance | undefined) => {
           username: ruleForm.username,
           password: ruleForm.password
         })
-        .then(async () => {
+        .then(async result => {
           // 动态菜单由路由守卫异步初始化；这里固定进入看板，避免菜单尚未就绪时取首页路径报错。
           disabled.value = true;
-          await router.replace("/dashboard");
+          await router.replace(result.homePath || "/dashboard");
           message("登录成功", { type: "success" });
         })
         .catch(() => {

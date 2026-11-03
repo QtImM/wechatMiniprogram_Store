@@ -104,7 +104,7 @@ function createEmptyFormState(): ProductFormState {
     marketPrice: 0,
     stock: 0,
     sort: 0,
-    status: 1
+    status: 0
   };
 }
 

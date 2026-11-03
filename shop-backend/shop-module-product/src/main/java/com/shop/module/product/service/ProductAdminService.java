@@ -173,24 +173,32 @@ public class ProductAdminService {
             throw new ServerException(400, "商品回退快照不存在");
         }
         ProductSpuDO current = productSpuMapper.selectById(snapshotSpu.getId());
+        if (current == null) throw new ServerException(409, "商品已删除，请通过商品管理重新创建，不能恢复历史库存");
         ProductSpuDO target = copySpuForRestore(snapshotSpu);
-        if (current == null) {
-            if (target.getSalesCount() == null) {
-                target.setSalesCount(0);
-            }
-            productSpuMapper.insert(target);
-        } else {
-            target.setSalesCount(current.getSalesCount());
-            if (productSpuMapper.updateById(target) != 1) {
-                throw new ServerException(409, "商品信息已变化，请刷新后重试");
+        // 快照回退仅修改展示信息，绝不回写历史库存、销量或价格汇总。
+        target.setStock(null);
+        target.setSalesCount(null);
+        target.setPrice(null);
+        target.setMarketPrice(null);
+        if (productSpuMapper.updateById(target) != 1) {
+            throw new ServerException(409, "商品已变化，请刷新后重试");
+        }
+        List<ProductSkuDO> existing = productSkuMapper.selectList(new LambdaQueryWrapper<ProductSkuDO>()
+                .eq(ProductSkuDO::getSpuId, target.getId()));
+        Set<Long> currentIds = new HashSet<>();
+        for (ProductSkuDO sku : existing) currentIds.add(sku.getId());
+        Set<Long> snapshotIds = new HashSet<>();
+        if (snapshotSkus != null) for (ProductSkuDO sku : snapshotSkus) snapshotIds.add(sku.getId());
+        if (!currentIds.equals(snapshotIds)) {
+            throw new ServerException(409, "规格集合已变化，请手动编辑，不能通过历史快照恢复规格和库存");
+        }
+        for (ProductSkuDO sku : snapshotSkus == null ? List.<ProductSkuDO>of() : snapshotSkus) {
+            if (productSkuMapper.update(null, new LambdaUpdateWrapper<ProductSkuDO>()
+                    .eq(ProductSkuDO::getId, sku.getId()).eq(ProductSkuDO::getSpuId, target.getId())
+                    .set(ProductSkuDO::getPicUrl, sku.getPicUrl())) != 1) {
+                throw new ServerException(409, "规格已变化，请刷新后重试");
             }
         }
-        List<ProductSkuDO> requestedSkus = snapshotSkus == null ? List.of() : snapshotSkus.stream()
-                .map(this::copySkuForRestore)
-                .toList();
-        saveSkusInternal(target.getId(), normalizeRequestedSkus(target, requestedSkus), adminStockBizNo(),
-                adminId == null ? 0L : adminId, stockAdjustReason);
-        syncSpuSummary(target.getId());
         materialAssetService.refreshAllReferenceCounts();
     }
 

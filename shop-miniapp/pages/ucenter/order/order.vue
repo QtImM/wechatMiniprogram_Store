@@ -48,7 +48,8 @@
 							@tap.stop="applyRefund(item)">申请退款</view>
 						<view class="action-btn ghost" v-if="item.handleOption && item.handleOption.refundCancel"
 							@tap.stop="cancelRefund(item)">撤销申请</view>
-						<!-- 确认收货 -->
+						<view class="action-btn ghost" v-if="item.handleOption && item.handleOption.comment" @tap.stop="goDetail(item.id)">去评价</view>
+                        <!-- 确认收货 -->
 						<view class="action-btn primary" v-if="item.handleOption && item.handleOption.confirm"
 							@tap.stop="confirmOrder(item, index)">确认收货</view>
 						<!-- 查看物流（待收货时） -->

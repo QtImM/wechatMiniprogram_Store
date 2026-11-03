@@ -139,6 +139,29 @@ class ProductAdminServiceTest {
         assertEquals(400, exception.getCode());
     }
 
+    @Test
+    void rollbackDoesNotWriteHistoricalStockOrPrice() {
+        ProductSpuMapper spuMapper = mock(ProductSpuMapper.class);
+        ProductSkuMapper skuMapper = mock(ProductSkuMapper.class);
+        ProductSpuDO current = spu(10L);
+        ProductSpuDO snapshot = spu(10L);
+        snapshot.setStock(100);
+        snapshot.setPrice(1990);
+        when(spuMapper.selectById(10L)).thenReturn(current);
+        when(spuMapper.updateById(any(ProductSpuDO.class))).thenReturn(1);
+        when(skuMapper.selectList(any())).thenReturn(List.of(sku(20L, 10L, 4)));
+        when(skuMapper.update(isNull(), any())).thenReturn(1);
+        service(spuMapper, skuMapper, mock(ProductInventoryService.class))
+                .restoreProductSnapshot(snapshot, List.of(sku(20L, 10L, 100)), 1L, "回退");
+        var captor = org.mockito.ArgumentCaptor.forClass(ProductSpuDO.class);
+        verify(spuMapper).updateById(captor.capture());
+        org.junit.jupiter.api.Assertions.assertNull(captor.getValue().getStock());
+        org.junit.jupiter.api.Assertions.assertNull(captor.getValue().getPrice());
+        var update = org.mockito.ArgumentCaptor.forClass(com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper.class);
+        verify(skuMapper).update(isNull(), update.capture());
+        org.junit.jupiter.api.Assertions.assertFalse(update.getValue().getSqlSet().contains("stock"));
+    }
+
     private ProductAdminService service(ProductSpuMapper spuMapper, ProductSkuMapper skuMapper,
                                         ProductInventoryService inventoryService) {
         return new ProductAdminService(spuMapper, skuMapper, mock(CategoryMapper.class),
