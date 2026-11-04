@@ -8,6 +8,10 @@ on:
     branches:
       - main
 
+concurrency:
+  group: delivery-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   delivery-gate:
     runs-on: ubuntu-latest

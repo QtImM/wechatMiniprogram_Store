@@ -101,7 +101,7 @@ def main():
                                       'introduction': '仅用于临时验收', 'customerService': ''})
         require(api('/admin-api/content/shop-config')['displayName'] == '陕铺演练店', '店铺展示配置读写一致')
         delete_status, delete_body = request('/admin-api/material/delete?id=' + str(asset['id']), method='DELETE')
-        require(delete_status == 400 and json.loads(delete_body).get('code') != 0,
+        require(delete_status == 409 and json.loads(delete_body).get('code') == 409,
                 '正在使用的 Logo 删除请求被拒绝')
         require(mysql(args, 'SELECT COUNT(*) FROM material_asset WHERE deleted=b\'0\'', args.database).strip() == b'1', '正在使用的 Logo 不会被删除')
         api('/admin-api/product/category/create', {'parentId': 0, 'name': '演练分类', 'sort': 0, 'status': 1})
