@@ -26,11 +26,19 @@ python3 -m venv .venv
 
 ## 3. 首次部署
 
+在干净的构建机从本次固定 commit 封存镜像包，只构建一次：
+
 ```bash
-.venv/bin/python scripts/deploy_release.py initialize --env .env.prod
+.venv/bin/python scripts/release_images.py --env .env.prod --output deploy/releases/candidate-<版本>
 ```
 
-流程依次执行：环境预检、配置校验、镜像构建、启动数据库与 Redis、空库初始化与全量迁移、清理演示业务数据、设置管理员密码、准备素材目录属主、启动应用、HTTPS 业务就绪检查、记录 commit 与镜像。
+该目录含 `images.tar` 与 `manifest.json`，不包含配置、私钥或数据库。先在隔离测试主机验收该包，再将同一目录通过受控通道传到客户主机，双方使用同一源码 commit。保留已验收包和发布记录，不覆盖旧包。
+
+```bash
+.venv/bin/python scripts/deploy_release.py initialize --env .env.prod --bundle deploy/releases/candidate-<版本>
+```
+
+流程核对源码版本与镜像包 SHA256，导入精确镜像；再执行环境预检、配置校验、启动数据库与 Redis、空库初始化与全量迁移、清理演示业务数据、设置管理员密码、准备素材目录属主、启动应用、HTTPS 业务就绪检查、记录 commit、包校验值与镜像。部署禁止现场重新构建。
 
 首次初始化只接受空库，失败后保留现场，不会自动重置或清空非空库。不要通过删除数据库再试来处理已有客户环境。初始化过程中后端必须保持停止，数据库不对外暴露。
 
@@ -39,12 +47,12 @@ python3 -m venv .venv
 ## 4. 后续升级
 
 ```bash
-.venv/bin/python scripts/deploy_release.py upgrade --env .env.prod --backup deploy/backups/before-release-<版本>.zip
+.venv/bin/python scripts/deploy_release.py upgrade --env .env.prod --bundle deploy/releases/candidate-<版本> --backup deploy/backups/before-release-<版本>.zip
 ```
 
 工具要求升级前成套备份，停后端后核对全部历史迁移校验和，再执行新增迁移。历史校验冲突时停止，不能手工覆盖记录强行通过。数据库曾使用 10 月改名后的历史 SQL 时，需要拿副本核对差异，决定经审查的修复步骤。
 
-当前命令从固定的干净源码构建；发布记录保存实际镜像 ID。跨机推广时应推广已验证的同一镜像摘要，而不是在每台机器自行重新解析依赖。上线前保留上一版本镜像和配置。工具不自动回退数据库。
+部署要求与源码版本一致的固定镜像包，逐个核对导入后的镜像 ID；不接受 `latest` 等可变标签。上线前保留上一版本镜像包和配置。工具不自动回退数据库。
 
 ## 5. 加密异机备份
 

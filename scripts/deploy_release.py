@@ -6,7 +6,7 @@ from pathlib import Path
 import subprocess
 import time
 from urllib.request import urlopen
-from delivery_backup import ROOT, compose
+from delivery_backup import ROOT, compose, digest
 from release_preflight import read_env, validate
 
 
@@ -21,9 +21,12 @@ def main():
     parser.add_argument('action', choices=['initialize', 'upgrade'])
     parser.add_argument('--env', required=True, type=Path)
     parser.add_argument('--backup', type=Path, help='升级前成套备份文件，必须为新的路径')
+    parser.add_argument('--bundle', required=True, type=Path, help='已经封存并在隔离环境验收的精确镜像包')
     args = parser.parse_args()
     if subprocess.check_output(['git', 'status', '--porcelain'], cwd=ROOT).strip():
         raise ValueError('源码包含未提交修改，请先完成审查并固定版本')
+    from release_images import load_bundle
+    args.images_override = load_bundle(args.bundle)
     values = read_env(args.env)
     errors = validate(values)
     if errors:
@@ -46,14 +49,13 @@ def main():
             raise ValueError('首次部署须通过环境设置 DELIVERY_ADMIN_PASSWORD，至少 16 字符')
     # 配置输出可能包含密钥，只做静默校验，不打印展开后的配置。
     compose(args, 'config', '--quiet')
-    compose(args, 'build')
     compose(args, 'up', '-d', '--wait', '--wait-timeout', '180', 'mysql', 'redis')
     compose(args, 'stop', 'backend')
     checked_python('prepare_database.py', args.action if args.action == 'initialize' else 'migrate',
                    '--env', args.env, '--database', database, env=bootstrap_env)
     compose(args, 'run', '--rm', '--no-deps', '--user', '0', '--entrypoint', 'sh', 'backend',
             '-c', 'chown -R 10001:10001 /app/material /app/logs')
-    compose(args, 'up', '-d', '--wait', '--wait-timeout', '240')
+    compose(args, 'up', '-d', '--no-build', '--wait', '--wait-timeout', '240')
     url = values['APP_EXTERNAL_BASE_URL'].rstrip('/') + '/readyz'
     with urlopen(url, timeout=10) as response:
         if response.status != 200 or json.load(response).get('status') != 'UP':
@@ -61,6 +63,7 @@ def main():
     manifest = {
         'commit': subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT).decode().strip(),
         'mode': values['APP_DELIVERY_MODE'], 'time': int(time.time()),
+        'bundle_sha256': digest(args.bundle / 'images.tar'),
         'images': compose(args, 'images', '--format', 'json', stdout=subprocess.PIPE).stdout.decode(),
         'status': 'deployed-awaiting-business-acceptance'
     }

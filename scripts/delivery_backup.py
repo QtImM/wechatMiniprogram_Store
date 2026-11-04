@@ -21,8 +21,10 @@ def digest(path):
 
 
 def compose(args, *command, **kwargs):
+    override = getattr(args, 'images_override', None)
     return subprocess.run(['docker', 'compose', '--env-file', str(args.env.resolve()),
-                           '-f', str(ROOT / 'docker-compose.prod.yml'), *command],
+                           '-f', str(ROOT / 'docker-compose.prod.yml'),
+                           *(['-f', str(override)] if override else []), *command],
                           check=True, **kwargs)
 
 

@@ -33,6 +33,7 @@ services:
       retries: 30
 
   backend:
+    image: ${SHOP_BACKEND_IMAGE:-shanpu/backend:local}
     build:
       context: ./shop-backend
       dockerfile: Dockerfile
@@ -85,6 +86,7 @@ services:
         condition: service_healthy
 
   admin:
+    image: ${SHOP_ADMIN_IMAGE:-shanpu/admin:local}
     build:
       context: ./shop-admin
       dockerfile: Dockerfile

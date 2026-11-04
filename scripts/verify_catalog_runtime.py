@@ -51,8 +51,11 @@ def main():
     report.parent.mkdir(parents=True, exist_ok=True)
     checkpoints = []
     try:
+        bundle = ROOT / 'deploy/releases/runtime-bundle'
+        subprocess.run([sys.executable, str(ROOT / 'scripts/release_images.py'), '--env', str(env_path),
+                        '--output', str(bundle)], check=True, env=environment)
         subprocess.run([sys.executable, str(ROOT / 'scripts/deploy_release.py'),
-                        'initialize', '--env', str(env_path)], check=True, env=environment)
+                        'initialize', '--env', str(env_path), '--bundle', str(bundle)], check=True, env=environment)
         checkpoints.append('正式部署脚本、Java 25 镜像及 HTTPS 就绪')
         opener = build_opener(ProxyHandler({}), HTTPSHandler(
             context=ssl.create_default_context(cafile=str(tls / 'fullchain.pem'))))
