@@ -104,3 +104,29 @@ jobs:
           path: |
             shop-backend/**/target/surefire-reports/
           retention-days: 14
+
+  catalog-runtime:
+    needs: delivery-gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - name: 拉取代码
+        uses: actions/checkout@v4
+      - name: 安装 Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: 演练生产容器部署、录入及备份恢复
+        run: |
+          python -m pip install -r scripts/requirements-delivery.txt
+          echo '127.0.0.1 shop.delivery.test' | sudo tee -a /etc/hosts
+          python scripts/verify_catalog_runtime.py
+      - name: 归档容器演练结论
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: catalog-runtime-reports
+          path: |
+            deploy/reviews/catalog-runtime.json
+            deploy/releases/*.json
+          retention-days: 14
