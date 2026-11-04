@@ -13,6 +13,17 @@ try {
     & docker exec $MysqlContainer sh -c 'MYSQL_PWD=root mysql -uroot --default-character-set=utf8mb4 < /tmp/ci-init.sql'
     & "$PSScriptRoot/migrate-db.ps1" -Database shop -MysqlContainer $MysqlContainer
     if ($LASTEXITCODE -ne 0) { throw '交易演练初始化失败' }
+    # 历史演示种子中的销量没有对应实付订单，不能用作一致性验收基线。
+    # 仅清理本次 GitHub 临时容器中新建的库，保留系统权限与展示配置。
+    $keep = @('sys_role', 'sys_permission', 'sys_role_permission', 'sys_admin_user',
+        'sys_admin_user_role', 'schema_migration_history', 'shop_display_config')
+    $tables = & docker exec $MysqlContainer sh -c 'MYSQL_PWD=root mysql -uroot shop -N -B -e "SHOW TABLES"'
+    foreach ($table in $tables) {
+        if ($table -notmatch '^[A-Za-z0-9_]+$') { throw '非预期表名' }
+        if ($table -notin $keep) {
+            & docker exec $MysqlContainer sh -c 'MYSQL_PWD=root mysql -uroot shop -e "DELETE FROM $1"' cleanup $table
+        }
+    }
     $jar = Get-ChildItem (Join-Path $root 'shop-backend/shop-server/target') -Filter '*.jar' | Select-Object -First 1
     if (-not $jar) { throw '缺少本次构建后端产物' }
     $outputLog = Join-Path $env:RUNNER_TEMP 'trade-runtime.log'

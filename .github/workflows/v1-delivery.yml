@@ -138,7 +138,8 @@ jobs:
           python-version: "3.12"
       - name: 演练生产容器部署、录入及备份恢复
         run: |
-          python -m pip install -r scripts/requirements-delivery.txt
+          python -m pip install -r scripts/requirements-ci.txt
+          python -m playwright install --with-deps chromium
           echo '127.0.0.1 shop.delivery.test' | sudo tee -a /etc/hosts
           python scripts/verify_catalog_runtime.py
       - name: 归档容器演练结论
@@ -148,5 +149,6 @@ jobs:
           name: catalog-runtime-reports
           path: |
             deploy/reviews/catalog-runtime.json
+            deploy/reviews/screenshots/*.png
             deploy/releases/*.json
           retention-days: 14

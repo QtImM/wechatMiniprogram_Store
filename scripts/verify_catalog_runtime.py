@@ -112,6 +112,8 @@ def main():
             'skus': [{'skuCode': 'DELIVERY-CI', 'properties': '[]', 'price': 100,
                       'marketPrice': 100, 'stock': 10, 'warningStock': 2, 'picUrl': image_url}]})
         require(mysql(args, 'SELECT status FROM product_spu WHERE id=' + str(spu), args.database).strip() == b'0', '保存商品保持下架')
+        from verify_catalog_browser import verify_browser
+        verify_browser()
         checkpoints.append('真实 HTTP 登录、权限边界、素材、店铺设置及商品录入')
         # 验证完整迁移重跑无副作用，然后以实际数据库和素材执行备份恢复。
         compose(args, 'stop', 'backend')
