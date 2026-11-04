@@ -1,6 +1,7 @@
 package com.shop.module.system.service;
 
 import com.shop.common.exception.ServerException;
+import com.shop.common.config.DeliveryMode;
 import com.shop.framework.security.LoginUser;
 import com.shop.framework.security.TokenService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -22,6 +23,7 @@ public class AdminAuthService {
 
     private final JdbcTemplate jdbcTemplate;
     private final TokenService tokenService;
+    private final DeliveryMode deliveryMode;
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     @Value("${admin.auth.max-failed-attempts:5}")
@@ -140,7 +142,14 @@ public class AdminAuthService {
         result.put("nickname", nickname == null ? "" : nickname);
         result.put("avatar", avatar == null ? "" : avatar);
         result.put("roles", roles);
+        if (!deliveryMode.isCommerce()) {
+            permissions = permissions.stream().filter(p -> p.startsWith("product:")
+                    || p.startsWith("material:") || p.startsWith("content:")
+                    || p.startsWith("system:") || p.startsWith("auth:")).toList();
+        }
         result.put("permissions", permissions);
+        result.put("deliveryMode", deliveryMode.isCommerce() ? "commerce" : "catalog");
+        result.put("homePath", deliveryMode.isCommerce() ? "/dashboard" : "/product/spu");
         return result;
     }
 

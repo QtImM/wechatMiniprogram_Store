@@ -70,6 +70,20 @@ class AppInteractionControllerTest {
         }
     }
 
+    @Test
+    void commentUsesSelectedOrderAndCurrentUser() {
+        JdbcTemplate jdbc = mock(JdbcTemplate.class);
+        when(jdbc.queryForObject(anyString(), eq(Integer.class), any(Object[].class))).thenReturn(1);
+        when(jdbc.queryForList(anyString(), eq(Long.class), any(Object[].class))).thenReturn(List.of(88L));
+        login(7L);
+        try {
+            new AppInteractionController(jdbc, mock(MaterialFileStorageService.class), new MaterialStorageProperties())
+                    .postComment(9L, "很好", "", 88L);
+            verify(jdbc).queryForList(anyString(), eq(Long.class), eq(7L), eq(9L), eq(88L), eq(88L), eq(9L), eq(7L));
+            verify(jdbc).update(anyString(), eq(7L), eq(88L), eq(9L), eq("很好"), org.mockito.ArgumentMatchers.isNull());
+        } finally { SecurityContextHolder.clearContext(); }
+    }
+
     private void login(Long userId) {
         LoginUser user = new LoginUser();
         user.setUserId(userId);

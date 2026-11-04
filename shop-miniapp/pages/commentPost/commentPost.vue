@@ -32,6 +32,7 @@
 			return {
 				typeId: 0,
 				valueId: 0,
+                orderId: 0,
 				content: '',
 				picList: [],
 				uploading: false
@@ -77,6 +78,7 @@
 				util.request(api.CommentPost, {
 					typeId: that.typeId,
 					valueId: that.valueId,
+                    orderId: that.orderId,
 					content: that.content,
 					picUrls: picUrls
 				}).then(function(res) {
@@ -95,6 +97,7 @@
 		onLoad: function(options) {
 			this.typeId = parseInt(options.typeId);
 			this.valueId = parseInt(options.valueId);
+            this.orderId = Number(options.orderId || 0);
 		}
 	}
 </script>
