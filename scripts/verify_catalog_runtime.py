@@ -115,6 +115,20 @@ def main():
             'skus': [{'skuCode': 'DELIVERY-CI', 'properties': '[]', 'price': 100,
                       'marketPrice': 100, 'stock': 10, 'warningStock': 2, 'picUrl': image_url}]})
         require(mysql(args, 'SELECT status FROM product_spu WHERE id=' + str(spu), args.database).strip() == b'0', '保存商品保持下架')
+        admin_token = token
+        for username, role in [('delivery_operator', 'PRODUCT_OPERATOR'), ('delivery_readonly', 'READONLY')]:
+            mysql(args, "INSERT INTO sys_admin_user(username,password,nickname,status) "
+                  "SELECT '%s',password,'临时角色演练',1 FROM sys_admin_user WHERE username='admin'" % username, args.database)
+            mysql(args, "INSERT INTO sys_admin_user_role(admin_user_id,role_id) "
+                  "SELECT u.id,r.id FROM sys_admin_user u JOIN sys_role r ON r.code='%s' WHERE u.username='%s'" % (role, username), args.database)
+            role_profile = api('/admin-api/auth/login', {'username': username, 'password': values['DELIVERY_ADMIN_PASSWORD']})
+            token = role_profile['token']
+            require(role in role_profile['roles'], '实际账号具备预期角色 ' + role)
+            api('/admin-api/product/spu/page')
+            require(request('/admin-api/system/shop')[0] == 403, '非系统管理员不能修改店铺配置 ' + role)
+            if role == 'READONLY':
+                require(request('/admin-api/product/spu/save', {})[0] == 403, '只读账号通过实际安全过滤链禁止商品写入')
+        token = admin_token
         from verify_catalog_browser import verify_browser
         verify_browser()
         checkpoints.append('真实 HTTP 登录、权限边界、素材、店铺设置及商品录入')
