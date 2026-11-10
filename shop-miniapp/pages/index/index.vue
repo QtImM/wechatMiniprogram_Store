@@ -361,7 +361,7 @@ export default {
 	},
 	onShareAppMessage() {
 		return {
-			title: '陕铺商城 - 让健康触手可及',
+			title: '陕铺 - 让健康触手可及',
 			path: '/pages/index/index'
 		}
 	},
