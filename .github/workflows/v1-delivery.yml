@@ -142,6 +142,16 @@ jobs:
           python -m playwright install --with-deps chromium
           echo '127.0.0.1 shop.delivery.test' | sudo tee -a /etc/hosts
           python scripts/verify_catalog_runtime.py
+      - name: 保存通过验收的精确镜像包
+        uses: actions/upload-artifact@v4
+        with:
+          name: catalog-verified-images-${{ github.sha }}
+          path: |
+            deploy/releases/runtime-bundle/images.tar
+            deploy/releases/runtime-bundle/manifest.json
+          if-no-files-found: error
+          compression-level: 1
+          retention-days: 7
       - name: 归档容器演练结论
         if: always()
         uses: actions/upload-artifact@v4

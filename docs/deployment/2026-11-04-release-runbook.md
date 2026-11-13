@@ -42,6 +42,8 @@ python3 -m venv .venv
 
 该目录含 `images.tar` 与 `manifest.json`，不包含配置、私钥或数据库。先在隔离测试主机验收该包，再将同一目录通过受控通道传到客户主机，双方使用同一源码 commit。保留已验收包和发布记录，不覆盖旧包。
 
+完整容器 CI 成功后会提供 `catalog-verified-images-<commit>` 下载包，内含本次验收的镜像归档与 manifest，临时保留 7 天；交付方需在到期前转存到受控发布存储并核对 SHA256。客户服务器架构须与该产物一致，架构不同时重新构建并完成对应验收。不能把临时 Actions 附件当作长期发布存储。
+
 ```bash
 .venv/bin/python scripts/deploy_release.py initialize --env .env.prod --bundle deploy/releases/candidate-<版本>
 ```
