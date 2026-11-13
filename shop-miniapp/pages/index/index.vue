@@ -361,7 +361,7 @@ export default {
 	},
 	onShareAppMessage() {
 		return {
-			title: this.$store.state.shop.displayName + '商城 - 让健康触手可及',
+			title: this.$store.state.shop.displayName + ' - 让健康触手可及',
 			path: '/pages/index/index'
 		}
 	},
