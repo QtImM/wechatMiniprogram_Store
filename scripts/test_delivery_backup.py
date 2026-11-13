@@ -5,6 +5,8 @@ from pathlib import Path
 import tempfile
 import unittest
 import zipfile
+from unittest.mock import patch
+from argparse import Namespace
 
 spec = importlib.util.spec_from_file_location('delivery_backup', Path(__file__).with_name('delivery_backup.py'))
 backup = importlib.util.module_from_spec(spec)
@@ -12,6 +14,16 @@ spec.loader.exec_module(backup)
 
 
 class ArchiveTests(unittest.TestCase):
+    def test_unwritable_archive_directory_rejected_before_stopping_backend(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / 'deploy/data/material').mkdir(parents=True)
+            args = Namespace(database='shop', archive=root / 'backups/test.zip')
+            with patch.object(backup, 'ROOT', root), patch.object(backup.os, 'access', return_value=False), patch.object(backup, 'compose') as docker:
+                with self.assertRaisesRegex(ValueError, '备份目录不可写'):
+                    backup.backup(args)
+                docker.assert_not_called()
+
     def write(self, root, files, hashes=None):
         archive = root / 'backup.zip'
         manifest = {'format': 1, 'files': hashes or {

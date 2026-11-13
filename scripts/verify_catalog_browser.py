@@ -25,7 +25,7 @@ def login(page, base, username, password, output):
         page.wait_for_url('**/#/product/spu')
     except Exception:
         page.screenshot(path=str(output / ('失败-' + username + '.png')),
-                        mask=[page.get_by_placeholder('密码', exact=True)], full_page=True)
+                        mask=[page.get_by_placeholder('密码', exact=True)], full_page=True, animations="disabled")
         (output / ('失败-' + username + '.json')).write_text(json.dumps({
             'url': page.url, 'loginHttpStatus': status, 'loginCode': code,
             'formErrors': page.locator('.el-form-item__error').all_text_contents()
@@ -49,15 +49,15 @@ def verify_browser():
         base = values['APP_EXTERNAL_BASE_URL']
         page.goto(base + '/#/login')
         expect(page.get_by_placeholder('账号', exact=True)).to_be_visible()
-        page.screenshot(path=str(output / '01-登录-临时演练.png'), full_page=True)
+        page.screenshot(path=str(output / '01-登录-临时演练.png'), full_page=True, animations="disabled")
         login(page, base, 'admin', values['DELIVERY_ADMIN_PASSWORD'], output)
         expect(page.get_by_role('button', name='新增商品', exact=True)).to_be_visible()
         expect(page.get_by_role('cell', name='交付演练商品', exact=True)).to_be_visible()
-        page.screenshot(path=str(output / '02-商品列表-临时演练.png'), full_page=True)
+        page.screenshot(path=str(output / '02-商品列表-临时演练.png'), full_page=True, animations="disabled")
         page.get_by_role('button', name='新增商品', exact=True).click()
         expect(page.get_by_placeholder('请输入商品名称')).to_be_visible()
         expect(page.locator('.el-form-item').filter(has_text='状态').get_by_text('下架', exact=True)).to_be_visible()
-        page.screenshot(path=str(output / '03-新增商品默认下架-临时演练.png'), full_page=True)
+        page.screenshot(path=str(output / '03-新增商品默认下架-临时演练.png'), full_page=True, animations="disabled")
         page.goto(base + '/#/system/shop')
         name = page.locator('.el-form-item').filter(has_text='店铺展示名').get_by_role('textbox')
         expect(name).to_have_value('陕铺演练店')
@@ -68,7 +68,7 @@ def verify_browser():
             raise AssertionError('浏览器保存店铺展示设置失败')
         page.reload()
         expect(name).to_have_value('陕铺浏览器演练店')
-        page.screenshot(path=str(output / '04-店铺展示设置-临时演练.png'), full_page=True)
+        page.screenshot(path=str(output / '04-店铺展示设置-临时演练.png'), full_page=True, animations="disabled")
         context.close()
         for username, can_create in [('delivery_operator', True), ('delivery_readonly', False)]:
             role_context = browser.new_context(ignore_https_errors=True, viewport={'width': 1440, 'height': 1000}, locale='zh-CN')
@@ -78,7 +78,7 @@ def verify_browser():
             expect(role_page.get_by_role('cell', name='交付演练商品', exact=True)).to_be_visible()
             create = role_page.get_by_role('button', name='新增商品', exact=True)
             expect(create).to_be_visible() if can_create else expect(create).to_have_count(0)
-            role_page.screenshot(path=str(output / ('05-' + username + '-临时演练.png')), full_page=True)
+            role_page.screenshot(path=str(output / ('05-' + username + '-临时演练.png')), full_page=True, animations="disabled")
             role_context.close()
         browser.close()
     if errors:

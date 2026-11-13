@@ -53,6 +53,8 @@ def backup(args):
     if not material.is_dir():
         raise ValueError('素材目录不存在，拒绝生成不完整备份')
     args.archive.parent.mkdir(parents=True, exist_ok=True)
+    if not os.access(args.archive.parent, os.W_OK):
+        raise ValueError('备份目录不可写，请先核对部署用户权限；后端尚未停止')
     paused = False
     with tempfile.TemporaryDirectory() as tmp:
         sql = Path(tmp) / 'database.sql'

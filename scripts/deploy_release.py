@@ -36,6 +36,10 @@ def main():
             raise ValueError('缺少 HTTPS 证书文件：' + name)
     for name in ['material', 'mysql', 'redis']:
         (ROOT / 'deploy/data' / name).mkdir(parents=True, exist_ok=True)
+    # 在 Docker 创建 bind mount 前由部署用户建立父目录，避免备份目录归属 root。
+    (ROOT / 'deploy/backups/mysql').mkdir(parents=True, exist_ok=True)
+    if not os.access(ROOT / 'deploy/backups', os.W_OK):
+        raise ValueError('备份目录不可写，请先由运维人员核对目录属主和部署用户权限')
     database = values['MYSQL_DATABASE']
     bootstrap_env = os.environ.copy()
     bootstrap_env['DELIVERY_ADMIN_PASSWORD'] = values.get('DELIVERY_ADMIN_PASSWORD', '')

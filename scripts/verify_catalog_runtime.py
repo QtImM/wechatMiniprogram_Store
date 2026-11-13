@@ -56,6 +56,7 @@ def main():
                         '--output', str(bundle)], check=True, env=environment)
         subprocess.run([sys.executable, str(ROOT / 'scripts/deploy_release.py'),
                         'initialize', '--env', str(env_path), '--bundle', str(bundle)], check=True, env=environment)
+        args.images_override = bundle / 'images.compose.json'
         checkpoints.append('正式部署脚本、Java 25 镜像及 HTTPS 就绪')
         opener = build_opener(ProxyHandler({}), HTTPSHandler(
             context=ssl.create_default_context(cafile=str(tls / 'fullchain.pem'))))
