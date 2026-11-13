@@ -1,9 +1,36 @@
 """临时 CI 中以真实浏览器核对录入后台，并生成标注为演练环境的教程截图。"""
 import os
 import re
+import json
 from playwright.sync_api import sync_playwright, expect
 from delivery_backup import ROOT
 from release_preflight import read_env
+
+
+def login(page, base, username, password, output):
+    """失败时仅归档脱敏诊断，禁止保存 Token、请求体或浏览器会话。"""
+    status = None
+    code = None
+    try:
+        page.goto(base + '/#/login')
+        page.get_by_placeholder('账号', exact=True).fill(username)
+        page.get_by_placeholder('密码', exact=True).fill(password)
+        with page.expect_response(lambda response: '/admin-api/auth/login' in response.url
+                                  and response.request.method == 'POST') as response:
+            page.get_by_role('button', name=re.compile(r'登\s*录')).click()
+        status = response.value.status
+        code = response.value.json().get('code')
+        if status != 200 or code != 0:
+            raise AssertionError('浏览器登录接口拒绝请求')
+        page.wait_for_url('**/#/product/spu')
+    except Exception:
+        page.screenshot(path=str(output / ('失败-' + username + '.png')),
+                        mask=[page.get_by_placeholder('密码', exact=True)], full_page=True)
+        (output / ('失败-' + username + '.json')).write_text(json.dumps({
+            'url': page.url, 'loginHttpStatus': status, 'loginCode': code,
+            'formErrors': page.locator('.el-form-item__error').all_text_contents()
+        }, ensure_ascii=False, indent=2), encoding='utf-8')
+        raise
 
 
 def verify_browser():
@@ -23,10 +50,7 @@ def verify_browser():
         page.goto(base + '/#/login')
         expect(page.get_by_placeholder('账号', exact=True)).to_be_visible()
         page.screenshot(path=str(output / '01-登录-临时演练.png'), full_page=True)
-        page.get_by_placeholder('账号', exact=True).fill('admin')
-        page.get_by_placeholder('密码', exact=True).fill(values['DELIVERY_ADMIN_PASSWORD'])
-        page.get_by_role('button', name=re.compile(r'登\s*录')).click()
-        page.wait_for_url('**/#/product/spu')
+        login(page, base, 'admin', values['DELIVERY_ADMIN_PASSWORD'], output)
         expect(page.get_by_role('button', name='新增商品', exact=True)).to_be_visible()
         expect(page.get_by_role('cell', name='交付演练商品', exact=True)).to_be_visible()
         page.screenshot(path=str(output / '02-商品列表-临时演练.png'), full_page=True)
@@ -50,11 +74,7 @@ def verify_browser():
             role_context = browser.new_context(ignore_https_errors=True, viewport={'width': 1440, 'height': 1000}, locale='zh-CN')
             role_page = role_context.new_page()
             role_page.on('pageerror', lambda error: errors.append(str(error)))
-            role_page.goto(base + '/#/login')
-            role_page.get_by_placeholder('账号', exact=True).fill(username)
-            role_page.get_by_placeholder('密码', exact=True).fill(values['DELIVERY_ADMIN_PASSWORD'])
-            role_page.get_by_role('button', name=re.compile(r'登\s*录')).click()
-            role_page.wait_for_url('**/#/product/spu')
+            login(role_page, base, username, values['DELIVERY_ADMIN_PASSWORD'], output)
             expect(role_page.get_by_role('cell', name='交付演练商品', exact=True)).to_be_visible()
             create = role_page.get_by_role('button', name='新增商品', exact=True)
             expect(create).to_be_visible() if can_create else expect(create).to_have_count(0)

@@ -150,5 +150,6 @@ jobs:
           path: |
             deploy/reviews/catalog-runtime.json
             deploy/reviews/screenshots/*.png
+            deploy/reviews/screenshots/*.json
             deploy/releases/*.json
           retention-days: 14

@@ -51,7 +51,7 @@ const onLogin = async (formEl: FormInstance | undefined) => {
           password: ruleForm.password
         })
         .then(async result => {
-          // 动态菜单由路由守卫异步初始化；这里固定进入看板，避免菜单尚未就绪时取首页路径报错。
+          // 动态菜单由路由守卫初始化，按后端返回的交付模式选择登录落点。
           disabled.value = true;
           await router.replace(result.homePath || "/dashboard");
           message("登录成功", { type: "success" });
