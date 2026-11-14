@@ -76,4 +76,6 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    from delivery_lock import operation_lock
+    with operation_lock():
+        main()

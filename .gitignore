@@ -65,6 +65,7 @@ build-check.log
 
 deploy/releases/
 deploy/backup-status.json
+deploy/delivery-operation.lock
 
 shop-miniapp/config/.release-build.lock
 deploy/reviews/

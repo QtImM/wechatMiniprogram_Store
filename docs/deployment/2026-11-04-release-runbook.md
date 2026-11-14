@@ -82,6 +82,20 @@ python3 -m venv .venv
 
 ## 6. 隔离恢复
 
+### 备份保留
+
+```bash
+.venv/bin/python scripts/backup_retention.py --env .env.prod --offsite-dir /mnt/shanpu-backup
+# 确认预览后，由运维启用执行；客户无需运行命令。
+.venv/bin/python scripts/backup_retention.py --env .env.prod --offsite-dir /mnt/shanpu-backup --apply
+```
+
+默认只预览；执行保留48小时内全部定期副本、30天内每日最新副本，以及至少两个最新恢复点。清理前两个最新保留副本必须均能解密并通过完整归档校验，失败时不删除；不处理升级前副本、未知文件名或符号链接。`shanpu-retention.service/.timer` 提供每日03:15执行模板，运维需先核实专用挂载目录、权限、容量和保留约定。删除的过期副本不能由此工具撤销，保留的恢复点仍可使用。
+
+部署、回滚、定期备份、恢复和保留入口共用非阻塞互斥锁，防止备份与升级同时改变服务状态。检测到已有任务时拒绝本次操作；不要删除锁文件来绕过检查。Windows可运行离线测试，正式运维入口要求Linux。
+
+### 恢复操作
+
 ```bash
 .venv/bin/python scripts/backup_crypto.py decrypt /mnt/shanpu-backup/<备份>.enc /受控临时目录/restore.zip
 .venv/bin/python scripts/delivery_backup.py restore --env .env.prod --database shop_restore_<日期> --archive /受控临时目录/restore.zip --material deploy/restore-check/<日期>-material
@@ -100,5 +114,13 @@ python3 -m venv .venv
 完成真实登录、支付、退款、发货、物流、确认收货、评价、反馈和日终对账；按客户账号核对微信发货信息管理及结算要求。iOS/Android 真机、微信审核与客户签收完成后才标记 M2 交付完成。
 
 ## 8. 回滚与事故
+
+应用镜像回滚入口（由技术运维执行）：
+
+```bash
+.venv/bin/python scripts/rollback_release.py --env .env.prod --release deploy/releases/release-<目标版本部署时间>.json --bundle deploy/releases/<目标版本>
+```
+
+工具核对已部署记录、配置校验值、镜像包校验值及目标提交的迁移清单，只有数据库结构清单完全一致才自动执行；不会回放旧 SQL，不会恢复数据库。旧发布记录没有配置校验值时拒绝执行，需要先完成兼容审查。通过后保留现有数据库和素材，重新启动指定应用镜像并检查 HTTPS 就绪；失败时入口保持停止。迁移清单相同仍需业务回归，不能代替跨版本实际演练；跨结构版本需单独设计恢复路径。
 
 应用异常优先停止入口，回滚到已保存的镜像和兼容配置；保留所有上线后订单。数据库恢复先在隔离库演练，结合微信账单补核备份时间点之后的资金状态，禁止直接用旧库覆盖新增真实交易。涉及资金和数据损坏由客户负责人、财务及技术负责人共同确认恢复路径。

@@ -36,11 +36,11 @@ def create_bundle(args):
     print('镜像包已封存；测试和正式部署必须使用这个包：', args.output)
 
 
-def load_bundle(path):
+def load_bundle(path, *, expected_commit=None):
     path = Path(path).resolve()
     manifest = json.loads((path / 'manifest.json').read_text(encoding='utf-8'))
     expected = {'backend', 'admin', 'mysql', 'redis', 'nginx'}
-    if (manifest.get('format') != 1 or manifest.get('commit') != commit()
+    if (manifest.get('format') != 1 or manifest.get('commit') != (expected_commit or commit())
             or set(manifest.get('images', {})) != expected
             or any(not re.fullmatch(r'sha256:[a-f0-9]{64}', value) for value in manifest['images'].values())):
         raise ValueError('镜像包格式、服务或源码版本不匹配')

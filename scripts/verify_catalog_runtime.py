@@ -197,6 +197,17 @@ def main():
                     '独立恢复应用可登录并读取恢复商品')
         subprocess.run(['docker', 'rm', '-f', 'shanpu-restore-ci'], check=True, stdout=subprocess.DEVNULL)
         checkpoints.append('恢复数据库及素材启动独立应用，真实登录并读取商品')
+        # 回滚入口烟测：同一已部署包重新导入，核对部署后录入的数据仍在。
+        # 这里没有跨版本镜像，不将此项写成前一业务版本回滚已验收。
+        release_record = next((ROOT / 'deploy/releases').glob('release-*.json'))
+        product_before = mysql(args, 'SELECT * FROM product_spu ORDER BY id', args.database)
+        subprocess.run([sys.executable, str(ROOT / 'scripts/rollback_release.py'),
+                        '--env', str(env_path), '--release', str(release_record),
+                        '--bundle', str(bundle)], check=True, env=environment)
+        require(mysql(args, 'SELECT * FROM product_spu ORDER BY id', args.database) == product_before,
+                '回滚入口重部署后保留初始化后录入的商品')
+        require(request(image_url.split(domain, 1)[1])[1] == picture, '回滚入口重部署后图片仍可访问')
+        checkpoints.append('同版本回滚入口烟测及新增商品图片保留，非跨版本验收')
         compose(args, 'up', '-d', '--wait', '--wait-timeout', '180', 'backend')
         require(request('/readyz')[0] == 200, '备份后服务恢复正常')
         compose(args, 'stop', 'backend')
@@ -204,7 +215,7 @@ def main():
         checkpoints.append('故障注入：后端停止后就绪检查拒绝通过')
     finally:
         report.write_text(json.dumps({'checkpoints': checkpoints,
-            'complete': len(checkpoints) == 5, 'scope': '临时 CI 演练，不代表客户生产或真实渠道验收'}, ensure_ascii=False, indent=2), encoding='utf-8')
+            'complete': len(checkpoints) == 6, 'scope': '临时 CI 演练，不代表跨版本回滚、客户生产或真实渠道验收'}, ensure_ascii=False, indent=2), encoding='utf-8')
         subprocess.run(['docker', 'rm', '-f', 'shanpu-restore-ci'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         compose(args, 'down', '--remove-orphans')
 

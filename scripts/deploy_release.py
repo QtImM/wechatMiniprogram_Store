@@ -87,6 +87,7 @@ def main():
         'commit': subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT).decode().strip(),
         'mode': values['APP_DELIVERY_MODE'], 'time': int(time.time()),
         'bundle_sha256': digest(args.bundle / 'images.tar'),
+        'config_sha256': digest(args.env),
         'images': compose(args, 'images', '--format', 'json', stdout=subprocess.PIPE).stdout.decode(),
         'status': 'deployed-awaiting-business-acceptance'
     }
@@ -97,4 +98,6 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    from delivery_lock import operation_lock
+    with operation_lock():
+        main()

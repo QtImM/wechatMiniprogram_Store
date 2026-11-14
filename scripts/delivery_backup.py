@@ -166,7 +166,9 @@ def main():
             parser.error('备份/恢复需要有效 --env 及 --database')
         if args.action == 'restore' and args.material is None:
             parser.error('恢复需要 --material 指定新的隔离素材目录')
-        (backup if args.action == 'backup' else restore)(args)
+        from delivery_lock import operation_lock
+        with operation_lock():
+            (backup if args.action == 'backup' else restore)(args)
 
 
 if __name__ == '__main__':
