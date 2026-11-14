@@ -31,7 +31,7 @@ footer{margin-top:45px;border-top:1px solid #dce5d9;padding-top:16px;color:#6071
 <body>
 <div class="layout">
 <aside aria-label="教程目录">
-<p class="brand">陕铺</p><p class="aside-label">后台操作教程 · 2026年11月10日</p>
+<p class="brand">陕铺</p><p class="aside-label">后台操作教程 · 2026年11月14日</p>
 <details open><summary>按任务查找操作步骤</summary><nav><ol><li><a href="#section-01">01｜操作入口</a></li>
 <li><a href="#section-02">02｜打开后台并登录</a></li>
 <li><a href="#section-03">03｜修改小程序名称</a></li>
@@ -54,7 +54,7 @@ footer{margin-top:45px;border-top:1px solid #dce5d9;padding-top:16px;color:#6071
 <p class="tools-note">本页可离线阅读。按 Ctrl+F 查找文字；点击截图打开原图，查看小字和操作编号。</p>
 </aside>
 <main><article><h1>陕铺后台操作教程</h1>
-<p>更新日期：2026年11月14日。截图使用演示数据，商品、价格和库存以实际后台为准。图中的红色编号标出操作位置。旧版编号截图来自11月10日界面；本次默认下架、店铺设置和回退规则以正文及实际候选界面为准，相关截图正在更新。</p>
+<p>更新日期：2026年11月14日。截图使用演示数据，商品、价格和库存以实际后台为准。带红色编号的截图来自11月10日界面；新增商品和店铺展示设置截图来自11月14日隔离测试后台，未加编号。新增商品默认下架，回退范围见第14节。</p>
 <p>后台先交付“商品录入阶段”，随后开放商城交易。录入阶段可以维护商品、图片和内容；微信端浏览和交易暂未开放，请先在后台和预览中核对资料。收到负责人通知商城已开放后，再按第15节检查微信端。</p>
 <h2 id="section-01">01｜操作入口</h2>
 <table>
@@ -181,6 +181,7 @@ footer{margin-top:45px;border-top:1px solid #dce5d9;padding-top:16px;color:#6071
 <p>“内容管理 → 品牌管理”用于维护首页推荐品牌，例如“陕铺优选”。微信官方名称在公众平台维护。</p>
 <p>页面上的店铺展示名与 Logo 由超级管理员进入“系统管理 → 店铺展示设置”修改：填写展示名，从素材库选择 Logo，点“保存设置”，重新进入页面核对。支持该配置的小程序版本重新打开后读取新内容。普通商品运营看不到该入口时，请联系指定管理员处理。</p>
 <p>店铺展示设置不改变微信搜索中的官方名称，也不改变构建时名称和默认导航标题。</p>
+<p><a class="screenshot" href="images/18-shop-settings.png" target="_blank" rel="noopener" aria-label="查看原图：店铺展示设置：填写展示名、选择 Logo 后保存；图中为隔离测试店铺"><img src="images/18-shop-settings.png" alt="店铺展示设置：填写展示名、选择 Logo 后保存；图中为隔离测试店铺" loading="lazy"></a><span class="image-caption">店铺展示设置：填写展示名、选择 Logo 后保存；图中为隔离测试店铺 · 点击图片放大查看</span></p>
 <p>商品名称、价格和图片在商品编辑页修改，操作见下文。</p>
 <h2 id="section-04">04｜查找商品</h2>
 <p>入口：<strong>商品管理 → 商品列表</strong>。</p>
@@ -350,7 +351,7 @@ footer{margin-top:45px;border-top:1px solid #dce5d9;padding-top:16px;color:#6071
 <ol>
 <li>填写“商品名称”和“商品分类”，商品类型按实际选择。</li>
 <li>补充简介和关键词。</li>
-<li>新版默认是“下架”，保持下架录入，完成检查后再上架。旧截图中的“上架”不代表新版默认值。</li>
+<li>默认状态为“下架”，保持下架录入，完成检查后再上架。当前交付版本仅支持实物商品。</li>
 <li>上传主图，添加轮播图和详情说明。</li>
 <li>如果只有一种规格，保持“单规格”，填写售价、市场价和库存。</li>
 <li>如果有多种规格，打开“多规格”，选择规格名称，逐个填写规格值，点击“生成 SKU 矩阵”。</li>
@@ -358,7 +359,7 @@ footer{margin-top:45px;border-top:1px solid #dce5d9;padding-top:16px;color:#6071
 <li>点页面底部“创建商品”，等待“商品创建成功”。</li>
 <li>重新进入商品核对；确认后，在列表点“上架”，再检查小程序。</li>
 </ol>
-<p><a class="screenshot" href="images/13-product-create.png" target="_blank" rel="noopener" aria-label="查看原图：图13：新增商品页，先填写名称，再按需选择规格模式"><img src="images/13-product-create.png" alt="图13：新增商品页，先填写名称，再按需选择规格模式" loading="lazy"></a><span class="image-caption">图13：新增商品页，先填写名称，再按需选择规格模式 · 点击图片放大查看</span></p>
+<p><a class="screenshot" href="images/13-product-create.png" target="_blank" rel="noopener" aria-label="查看原图：图13：隔离测试后台新增商品页，初始状态为下架"><img src="images/13-product-create.png" alt="图13：隔离测试后台新增商品页，初始状态为下架" loading="lazy"></a><span class="image-caption">图13：隔离测试后台新增商品页，初始状态为下架 · 点击图片放大查看</span></p>
 <p>例如，规格名称选“净含量”，规格值填“250g”和“500g”，生成后会出现两行。分别填写并检查两行的价格和库存。</p>
 <p>找不到合适分类时，联系分类负责人，或进入“商品管理 → 分类管理”新增分类，保存后回商品页面重新选择。</p>
 <h2 id="section-13">13｜更换首页图片、频道名称和推荐内容</h2>

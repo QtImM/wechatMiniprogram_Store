@@ -78,21 +78,25 @@ def backup(args):
                     raise ValueError('素材目录不能含符号链接')
                 if file.is_file():
                     records['material/' + file.relative_to(material).as_posix()] = digest(file)
-            temporary = args.archive.with_suffix(args.archive.suffix + '.partial')
+            # 独占创建且从第一个字节开始限制权限，不覆盖并发生成的归档。
+            descriptor, temporary_name = tempfile.mkstemp(prefix='backup-', suffix='.partial', dir=args.archive.parent)
+            temporary = Path(temporary_name)
             try:
-                with zipfile.ZipFile(temporary, 'w', zipfile.ZIP_DEFLATED) as archive:
-                    archive.write(sql, 'database.sql')
-                    for name in records:
-                        if name.startswith('material/'):
-                            archive.write(material / name[len('material/'):], name)
-                    archive.writestr('manifest.json', json.dumps({'format': 1, 'database': args.database,
-                        'files': records}, ensure_ascii=False))
-                os.chmod(temporary, 0o600)
-                temporary.replace(args.archive)
+                with os.fdopen(descriptor, 'w+b') as stream:
+                    with zipfile.ZipFile(stream, 'w', zipfile.ZIP_DEFLATED) as archive:
+                        archive.write(sql, 'database.sql')
+                        for name in records:
+                            if name.startswith('material/'):
+                                archive.write(material / name[len('material/'):], name)
+                        archive.writestr('manifest.json', json.dumps({'format': 1, 'database': args.database,
+                            'files': records}, ensure_ascii=False))
+                    stream.flush()
+                    os.fsync(stream.fileno())
+                os.link(temporary, args.archive)
             finally:
                 temporary.unlink(missing_ok=True)
         finally:
-            if paused:
+            if paused and not getattr(args, 'keep_stopped', False):
                 compose(args, 'start', 'backend', stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     print('成套备份完成；含客户数据，必须加密并复制到异机存储：', args.archive)
 

@@ -57,10 +57,12 @@ python3 -m venv .venv
 ## 4. 后续升级
 
 ```bash
-.venv/bin/python scripts/deploy_release.py upgrade --env .env.prod --bundle deploy/releases/candidate-<版本> --backup deploy/backups/before-release-<版本>.zip
+.venv/bin/python scripts/deploy_release.py upgrade --env .env.prod --bundle deploy/releases/candidate-<版本> --backup deploy/backups/before-release-<版本>.zip --offsite-dir /mnt/shanpu-backup
 ```
 
-工具要求升级前成套备份，停后端后核对全部历史迁移校验和，再执行新增迁移。历史校验冲突时停止，不能手工覆盖记录强行通过。数据库曾使用 10 月改名后的历史 SQL 时，需要拿副本核对差异，决定经审查的修复步骤。
+工具要求升级前成套备份，从备份到迁移保持后端停止；校验归档后加密写入独立存储，并读回解密比较 SHA256，全部成功才继续迁移。`--offsite-dir` 必须为挂载根目录，部署负责人另行核实其存储确实处于独立故障域；挂载检测本身不能证明异机。配置缺失在停机前拒绝；备份或迁移失败时保持后端停止，运维核对现场后恢复，禁止未经检查直接重跑或开放写入。
+
+迁移前核对全部历史校验和。没有迁移历史的数据库直接拒绝升级，不自动创建基线或执行历史种子；先在隔离副本核对数据库来源。历史校验冲突时停止，不能手工覆盖记录强行通过。数据库曾使用 10 月改名后的历史 SQL 时，需要拿副本核对差异，决定经审查的修复步骤。
 
 部署要求与源码版本一致的固定镜像包，逐个核对导入后的镜像 ID；不接受 `latest` 等可变标签。上线前保留上一版本镜像包和配置。工具不自动回退数据库。
 
@@ -74,7 +76,7 @@ python3 -m venv .venv
 
 没有独立挂载时任务拒绝执行，不会把本机目录冒充异机灾备。备份包含数据库和图片，经过清单校验及 AES-256-GCM 加密后复制，核对异机文件哈希；密码独立安全保管。默认不自动删除历史备份，正式运维需按容量与客户保留要求配置存储生命周期，避免磁盘持续增长。
 
-`deploy/systemd/shanpu-backup.service` 和 `.timer` 是每小时任务模板，默认路径 `/opt/shanpu`，安装前按实际路径核对。备份有短暂后端停写窗口；高频交易阶段如需无停写方案，应增加数据库日志及文件一致性策略后验证。
+`deploy/systemd/shanpu-backup.service` 和 `.timer` 是每30分钟任务模板，超过60分钟没有有效备份触发状态告警。该频率用于支撑待确认的1小时恢复点目标，仍须实测备份耗时与最后可恢复时间；不能仅凭任务频率承诺 RPO。默认路径 `/opt/shanpu`，安装前按实际路径核对。备份有短暂后端停写窗口；高频交易阶段如需无停写方案，应增加数据库日志及文件一致性策略后验证。
 
 备份状态记录在 `deploy/backup-status.json`，监控必须同时检查最后成功时间；只依靠“任务运行失败时发通知”无法发现整个定时器没有运行。
 

@@ -6,6 +6,7 @@ from pathlib import Path
 import ssl
 import subprocess
 import sys
+import time
 from types import SimpleNamespace
 from urllib.error import HTTPError
 from urllib.request import Request, build_opener, HTTPSHandler, ProxyHandler
@@ -159,6 +160,42 @@ def main():
             if file.is_file():
                 require(digest(file) == digest(material / file.relative_to(ROOT / 'deploy/data/material')), '隔离恢复图片哈希一致')
         checkpoints.append('重复迁移、数据库图片成套备份、加密及隔离恢复')
+        # 用恢复库和恢复素材启动独立应用，不能只比较 SQL 后就宣称应用可恢复。
+        username = values['MYSQL_USER']
+        if not username.replace('_', '').isalnum():
+            raise ValueError('演练数据库用户名不符合预期')
+        mysql(args, "GRANT ALL ON `" + restored + "`.* TO '" + username + "'@'%'")
+        compose(args, 'run', '--rm', '--no-deps', '--user', '0', '--entrypoint', 'sh',
+                '-v', str(material) + ':/app/material', 'backend', '-c', 'chown -R 10001:10001 /app/material')
+        compose(args, 'run', '-d', '--no-deps', '--name', 'shanpu-restore-ci',
+                '-p', '127.0.0.1:18085:8085', '-v', str(material) + ':/app/material',
+                '-e', 'DB_URL=jdbc:mysql://mysql:3306/' + restored + '?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Shanghai',
+                'backend', stdout=subprocess.PIPE)
+        from urllib.request import urlopen
+        restored_base = 'http://127.0.0.1:18085'
+        deadline = time.monotonic() + 180
+        while True:
+            try:
+                with urlopen(restored_base + '/actuator/health', timeout=5) as response:
+                    if json.load(response).get('status') == 'UP':
+                        break
+            except Exception:
+                if time.monotonic() >= deadline:
+                    raise AssertionError('恢复应用在期限内未就绪')
+                time.sleep(2)
+            if time.monotonic() >= deadline:
+                raise AssertionError('恢复应用在期限内未就绪')
+        login_body = json.dumps({'username': 'admin', 'password': values['DELIVERY_ADMIN_PASSWORD']}).encode()
+        with urlopen(Request(restored_base + '/admin-api/auth/login', login_body,
+                             {'Content-Type': 'application/json'}), timeout=20) as response:
+            restored_token = json.load(response)['data']['token']
+        with urlopen(Request(restored_base + '/admin-api/product/spu/page',
+                             headers={'Authorization': 'Bearer ' + restored_token}), timeout=20) as response:
+            result = json.load(response)
+            require(result.get('code') == 0 and '交付演练商品' in json.dumps(result, ensure_ascii=False),
+                    '独立恢复应用可登录并读取恢复商品')
+        subprocess.run(['docker', 'rm', '-f', 'shanpu-restore-ci'], check=True, stdout=subprocess.DEVNULL)
+        checkpoints.append('恢复数据库及素材启动独立应用，真实登录并读取商品')
         compose(args, 'up', '-d', '--wait', '--wait-timeout', '180', 'backend')
         require(request('/readyz')[0] == 200, '备份后服务恢复正常')
         compose(args, 'stop', 'backend')
@@ -166,7 +203,8 @@ def main():
         checkpoints.append('故障注入：后端停止后就绪检查拒绝通过')
     finally:
         report.write_text(json.dumps({'checkpoints': checkpoints,
-            'complete': len(checkpoints) == 4, 'scope': '临时 CI 演练，不代表客户生产或真实渠道验收'}, ensure_ascii=False, indent=2), encoding='utf-8')
+            'complete': len(checkpoints) == 5, 'scope': '临时 CI 演练，不代表客户生产或真实渠道验收'}, ensure_ascii=False, indent=2), encoding='utf-8')
+        subprocess.run(['docker', 'rm', '-f', 'shanpu-restore-ci'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         compose(args, 'down', '--remove-orphans')
 
 

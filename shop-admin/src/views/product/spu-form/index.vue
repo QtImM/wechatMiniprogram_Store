@@ -62,8 +62,7 @@ const isEdit = computed(() => !!spuId.value);
 
 const categoryList = ref<Category[]>([]);
 const typeOptions = [
-  { label: "实物商品", value: 1 },
-  { label: "虚拟商品", value: 2 }
+  { label: "实物商品", value: 1 }
 ] as const;
 const statusOptions = [
   { label: "上架", value: 1 },

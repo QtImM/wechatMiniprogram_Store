@@ -149,7 +149,7 @@ jobs:
       - name: 保存通过验收的精确镜像包
         uses: actions/upload-artifact@v4
         with:
-          name: catalog-verified-images-${{ github.sha }}
+          name: catalog-verified-images-${{ github.event.pull_request.head.sha || github.sha }}
           path: |
             deploy/releases/runtime-bundle/images.tar
             deploy/releases/runtime-bundle/manifest.json

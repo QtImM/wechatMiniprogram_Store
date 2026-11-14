@@ -24,7 +24,10 @@ def migrations():
         yield match.group(1), match.group(2), sql, hashlib.sha256(sql.encode()).hexdigest()
 
 
-def migrate(args):
+def migrate(args, *, fresh_bootstrap=False):
+    history_exists = mysql(args, "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema=DATABASE() AND table_name='schema_migration_history'", args.database).strip() == b'1'
+    if not history_exists and not fresh_bootstrap:
+        raise ValueError('数据库没有迁移历史，禁止自动升级；请先在隔离副本核对来源和迁移基线，空库请使用 initialize')
     execute(args, '''CREATE TABLE IF NOT EXISTS schema_migration_history (
         version varchar(32) PRIMARY KEY, description varchar(128) NOT NULL,
         checksum varchar(64) NOT NULL, installed_on datetime NOT NULL DEFAULT CURRENT_TIMESTAMP
@@ -56,7 +59,7 @@ def initialize(args):
     sql = (ROOT / 'sql/init.sql').read_text(encoding='utf-8-sig')
     sql = re.sub(r'^\s*(?:CREATE DATABASE[^\n]+|USE `shop`;)[\r\n]*', '', sql, flags=re.M)
     execute(args, sql)
-    migrate(args)
+    migrate(args, fresh_bootstrap=True)
     # 仅作用于本次刚刚初始化的空库。运行前外部应用必须尚未启动。
     tables = mysql(args, 'SHOW TABLES', args.database).decode().splitlines()
     keep = {'sys_role', 'sys_permission', 'sys_role_permission', 'sys_admin_user',

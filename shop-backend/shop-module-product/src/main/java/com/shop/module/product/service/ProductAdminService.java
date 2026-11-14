@@ -55,6 +55,12 @@ public class ProductAdminService {
         if (spu == null) {
             throw new ServerException(400, "商品信息不能为空");
         }
+        ProductSpuDO previous = spu.getId() == null ? null : requireSpu(spu.getId());
+        if (spu.getType() == null) spu.setType(previous == null || previous.getType() == null ? 1 : previous.getType());
+        if (!Integer.valueOf(1).equals(spu.getType())
+                && (previous == null || !spu.getType().equals(previous.getType()))) {
+            throw new ServerException(400, "当前版本仅支持新增实物商品，历史非实物商品请保持下架并联系维护人员");
+        }
         List<ProductSkuDO> skus = normalizeRequestedSkus(spu, requestedSkus);
         applySkuSummary(spu, skus);
         validateSpu(spu);
@@ -107,6 +113,10 @@ public class ProductAdminService {
             throw new ServerException(400, "商品 ID 不能为空");
         }
         ProductSpuDO current = requireSpu(request.getId());
+        if (request.getType() != null && !Integer.valueOf(1).equals(request.getType())
+                && !request.getType().equals(current.getType())) {
+            throw new ServerException(400, "当前版本仅支持实物商品，不能改为其他类型");
+        }
         if (requiresMergedValidation(request)) {
             ProductSpuDO merged = mergeForValidation(current, request);
             validateSpu(merged);
@@ -175,6 +185,9 @@ public class ProductAdminService {
         ProductSpuDO current = productSpuMapper.selectById(snapshotSpu.getId());
         if (current == null) throw new ServerException(409, "商品已删除，请通过商品管理重新创建，不能恢复历史库存");
         ProductSpuDO target = copySpuForRestore(snapshotSpu);
+        if (Integer.valueOf(1).equals(target.getStatus()) && target.getType() != null && target.getType() != 1) {
+            throw new ServerException(400, "历史非实物商品不能通过回退重新上架");
+        }
         // 快照回退仅修改展示信息，绝不回写历史库存、销量或价格汇总。
         target.setStock(null);
         target.setSalesCount(null);
@@ -298,6 +311,9 @@ public class ProductAdminService {
     }
 
     private void validateSpu(ProductSpuDO spu) {
+        if (Integer.valueOf(1).equals(spu.getStatus()) && spu.getType() != null && spu.getType() != 1) {
+            throw new ServerException(400, "当前版本仅支持实物商品上架，历史非实物商品请保持下架");
+        }
         String name = spu.getName() == null ? "" : spu.getName().trim();
         if (name.isEmpty() || name.length() > 128) {
             throw new ServerException(400, "商品名称长度应为 1 至 128 个字符");
@@ -436,6 +452,7 @@ public class ProductAdminService {
 
     private boolean requiresMergedValidation(ProductSpuDO request) {
         return request.getStatus() != null
+                || request.getType() != null
                 || request.getCategoryId() != null
                 || request.getName() != null
                 || request.getPicUrl() != null
@@ -446,6 +463,7 @@ public class ProductAdminService {
     private ProductSpuDO mergeForValidation(ProductSpuDO current, ProductSpuDO request) {
         ProductSpuDO merged = new ProductSpuDO();
         merged.setId(current.getId());
+        merged.setType(request.getType() != null ? request.getType() : current.getType());
         merged.setName(request.getName() != null ? request.getName() : current.getName());
         merged.setCategoryId(request.getCategoryId() != null ? request.getCategoryId() : current.getCategoryId());
         merged.setKeyword(request.getKeyword() != null ? request.getKeyword() : current.getKeyword());

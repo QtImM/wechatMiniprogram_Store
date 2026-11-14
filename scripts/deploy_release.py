@@ -6,7 +6,7 @@ from pathlib import Path
 import subprocess
 import time
 from urllib.request import urlopen
-from delivery_backup import ROOT, compose, digest
+from delivery_backup import ROOT, backup, compose, digest, verify_archive
 from release_preflight import read_env, validate
 
 
@@ -21,6 +21,7 @@ def main():
     parser.add_argument('action', choices=['initialize', 'upgrade'])
     parser.add_argument('--env', required=True, type=Path)
     parser.add_argument('--backup', type=Path, help='升级前成套备份文件，必须为新的路径')
+    parser.add_argument('--offsite-dir', type=Path, help='升级前加密备份的独立存储挂载根目录，须事先核实独立故障域')
     parser.add_argument('--bundle', required=True, type=Path, help='已经封存并在隔离环境验收的精确镜像包')
     args = parser.parse_args()
     if subprocess.check_output(['git', 'status', '--porcelain'], cwd=ROOT).strip():
@@ -46,8 +47,26 @@ def main():
     if args.action == 'upgrade':
         if args.backup is None:
             raise ValueError('升级必须指定 --backup，不允许跳过备份')
-        checked_python('delivery_backup.py', 'backup', '--env', args.env,
-                       '--database', database, '--archive', args.backup)
+        if args.offsite_dir is None or not os.path.ismount(args.offsite_dir):
+            raise ValueError('升级必须指定已核实独立故障域的 --offsite-dir 挂载根目录')
+        if len(values.get('DELIVERY_BACKUP_PASSWORD', '')) < 20:
+            raise ValueError('升级前必须配置独立备份密码，至少 20 字符')
+        import tempfile
+        import uuid
+        from backup_crypto import transform
+        args.database = database
+        args.archive = args.backup
+        # 从备份到迁移与验证保持同一停写窗口；失败时保留停写供运维处理。
+        args.keep_stopped = True
+        backup(args)
+        with tempfile.TemporaryDirectory() as temporary:
+            verify_archive(args.backup, Path(temporary) / 'verify')
+            remote = args.offsite_dir / ('upgrade-' + uuid.uuid4().hex + '.enc')
+            transform(args.backup, remote, values['DELIVERY_BACKUP_PASSWORD'])
+            restored = Path(temporary) / 'verified.zip'
+            transform(remote, restored, values['DELIVERY_BACKUP_PASSWORD'], decrypt=True)
+            if digest(restored) != digest(args.backup):
+                raise ValueError('独立备份读回校验失败，禁止迁移，后端保持停止')
     else:
         if len(bootstrap_env.get('DELIVERY_ADMIN_PASSWORD', '')) < 16:
             raise ValueError('首次部署须通过环境设置 DELIVERY_ADMIN_PASSWORD，至少 16 字符')

@@ -27,6 +27,45 @@ import static org.mockito.Mockito.when;
 
 class ProductAdminServiceTest {
 
+    @Test
+    void shouldRejectCreatingVirtualProductBeforeDatabaseWrite() {
+        ProductSpuDO product = spu(null);
+        product.setType(2);
+        ServerException error = assertThrows(ServerException.class,
+                () -> service(mock(ProductSpuMapper.class), mock(ProductSkuMapper.class),
+                        mock(ProductInventoryService.class)).saveProduct(product, List.of()));
+        assertEquals(400, error.getCode());
+    }
+
+    @Test
+    void shouldRejectVirtualProductOnSaleThroughPartialUpdate() {
+        ProductSpuMapper mapper = mock(ProductSpuMapper.class);
+        ProductSpuDO current = spu(10L);
+        current.setType(2);
+        current.setStatus(0);
+        when(mapper.selectById(10L)).thenReturn(current);
+        ProductSpuDO request = new ProductSpuDO();
+        request.setId(10L);
+        request.setStatus(1);
+        ServerException error = assertThrows(ServerException.class,
+                () -> service(mapper, mock(ProductSkuMapper.class), mock(ProductInventoryService.class)).updateSpu(request));
+        assertEquals(400, error.getCode());
+    }
+
+    @Test
+    void shouldRejectChangingPhysicalProductToVirtualByDirectApi() {
+        ProductSpuMapper mapper = mock(ProductSpuMapper.class);
+        ProductSpuDO current = spu(10L);
+        current.setType(1);
+        when(mapper.selectById(10L)).thenReturn(current);
+        ProductSpuDO request = new ProductSpuDO();
+        request.setId(10L);
+        request.setType(2);
+        ServerException error = assertThrows(ServerException.class,
+                () -> service(mapper, mock(ProductSkuMapper.class), mock(ProductInventoryService.class)).updateSpu(request));
+        assertEquals(400, error.getCode());
+    }
+
     @BeforeAll
     static void initializeLambdaCache() {
         MapperBuilderAssistant assistant = new MapperBuilderAssistant(new MybatisConfiguration(), "");

@@ -9,7 +9,7 @@ from release_preflight import read_env
 
 
 def healthy(status, now):
-    return status.get('success') is True and 0 <= now - status.get('time', 0) <= 5400
+    return status.get('success') is True and 0 <= now - status.get('time', 0) <= 3600
 
 
 def main():
@@ -26,7 +26,7 @@ def main():
     webhook = read_env(args.env).get('BACKUP_ALERT_URL', '')
     if not webhook.startswith('https://'):
         raise ValueError('备份状态异常，且没有配置可用 HTTPS 告警入口')
-    request = Request(webhook, json.dumps({'text': '陕铺超过 90 分钟没有有效备份，请检查备份任务、异机存储与服务器状态。'}).encode(),
+    request = Request(webhook, json.dumps({'text': '陕铺超过 60 分钟没有有效备份，请检查备份任务、异机存储与服务器状态。'}).encode(),
                       headers={'Content-Type': 'application/json'})
     with urlopen(request, timeout=10) as response:
         if response.status >= 300:
