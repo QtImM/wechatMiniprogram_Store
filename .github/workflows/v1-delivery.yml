@@ -41,6 +41,8 @@ jobs:
     steps:
       - name: 拉取代码
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
 
       - name: 安装 Java 25
         uses: actions/setup-java@v4
@@ -132,6 +134,8 @@ jobs:
     steps:
       - name: 拉取代码
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
       - name: 安装 Python
         uses: actions/setup-python@v5
         with:
