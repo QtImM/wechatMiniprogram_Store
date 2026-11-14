@@ -35,36 +35,42 @@
                 orderId: 0,
 				content: '',
 				picList: [],
-				uploading: false
+				pendingUploads: 0,
+				choosing: false,
+				posting: false
 			}
 		},
 		methods: {
 			chooseImage() {
 				let that = this;
-				const remain = 4 - that.picList.length;
-				if (remain <= 0) return;
+				const remain = 4 - that.picList.length - that.pendingUploads;
+				if (remain <= 0 || that.choosing || that.posting) return;
+				that.choosing = true;
 				uni.chooseImage({
 					count: remain,
 					sizeType: ['compressed'],
 					sourceType: ['album', 'camera'],
 					success: function(res) {
-						const paths = res.tempFilePaths || [];
+						const paths = (res.tempFilePaths || []).slice(0, remain);
 						paths.forEach(path => {
 							that.uploadOne(path);
 						});
-					}
+					},
+					complete() { that.choosing = false; }
 				});
 			},
 			uploadOne(filePath) {
 				let that = this;
-				that.uploading = true;
-				util.uploadFile(api.UploadImage, filePath).then(res => {
+				if (that.picList.length + that.pendingUploads >= 4 || that.posting) return;
+				that.pendingUploads += 1;
+				return util.uploadFile(api.UploadImage, filePath).then(res => {
 					if (res.data && res.data.url) {
 						that.picList.push(res.data.url);
 					}
-					that.uploading = false;
 				}).catch(() => {
-					that.uploading = false;
+					util.toast('图片上传失败，请重新选择');
+				}).finally(() => {
+					that.pendingUploads -= 1;
 				});
 			},
 			removePic(index) {
@@ -72,14 +78,16 @@
 			},
 			onPost() {
 				let that = this;
-				if (!that.content) { util.toast('请填写评论'); return; }
-				if (that.uploading) { util.toast('图片上传中，请稍候'); return; }
+				if (that.posting) return;
+				if (!that.content.trim()) { util.toast('请填写评论'); return; }
+				if (that.pendingUploads > 0 || that.choosing) { util.toast('图片上传中，请稍候'); return; }
+				that.posting = true;
 				const picUrls = that.picList.join(',');
 				util.request(api.CommentPost, {
 					typeId: that.typeId,
 					valueId: that.valueId,
                     orderId: that.orderId,
-					content: that.content,
+					content: that.content.trim(),
 					picUrls: picUrls
 				}).then(function(res) {
 					if (res.code === 0) {
@@ -87,8 +95,8 @@
 							title: '评论成功',
 							complete: function() { uni.navigateBack(); }
 						});
-					}
-				});
+					} else { that.posting = false; }
+				}).catch(() => { that.posting = false; });
 			},
 			onClose: function() {
 				uni.navigateBack();

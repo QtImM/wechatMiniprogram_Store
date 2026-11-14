@@ -94,7 +94,7 @@ function Assert-ApiRejected([string]$Path, [object]$Body, [string]$Token) {
     } catch {
         if ($_.Exception.Response) {
             $statusCode = [int]$_.Exception.Response.StatusCode
-            Assert-True ($statusCode -ge 400) "$Path 应返回 HTTP 错误状态"
+            Assert-True ($statusCode -ge 400 -and $statusCode -lt 500) "$Path 应返回业务拒绝，不能用服务端500错误代替"
             return
         }
         throw
@@ -104,6 +104,7 @@ function Assert-ApiRejected([string]$Path, [object]$Body, [string]$Token) {
 function Cleanup-TestData {
     Write-Step "清理历史验收测试数据"
     $sql = @"
+DELETE FROM product_comment WHERE spu_id = $ProductId;
 DELETE FROM trade_order_log WHERE order_id IN (
   SELECT id FROM trade_order WHERE user_id IN (SELECT id FROM member_user WHERE openid LIKE 'dev_openid_$RunCodePrefix%')
 );
@@ -185,6 +186,10 @@ function New-PaidOrder([string]$Scene) {
     $requestId = "PS$([DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds())$([guid]::NewGuid().ToString('N').Substring(0,8))"
     $submit = Invoke-Api "/app-api/order/submit" @{ addressId = $addressId; requestId = $requestId } $user.Token
     $orderId = [long]$submit.orderInfo.id
+    $stockAfterFirstSubmit = [int](Invoke-Sql "SELECT stock FROM product_sku WHERE id=$SkuId;")
+    $repeated = Invoke-Api "/app-api/order/submit" @{ addressId = $addressId; requestId = $requestId } $user.Token
+    Assert-True ([long]$repeated.orderInfo.id -eq $orderId) "同一requestId必须返回原订单"
+    Assert-True ([int](Invoke-Sql "SELECT stock FROM product_sku WHERE id=$SkuId;") -eq $stockAfterFirstSubmit) "重复下单不得再次扣库存"
     Invoke-Api "/app-api/pay/prepay" @{ orderId = $orderId } $user.Token | Out-Null
     $amounts = Invoke-Sql "SELECT CONCAT(p.amount, ',', o.actual_price) FROM pay_order p JOIN trade_order o ON o.id=p.order_id WHERE p.order_id=$orderId;"
     $amountParts = $amounts.Split(',')
@@ -255,6 +260,8 @@ try {
 
     Write-Step "验收：购物车重复加入与删除"
     $cartUser = New-TestUser "cart_repeat"
+    Assert-ApiRejected "/app-api/cart/add" @{ goodsId = $ProductId; productId = $SkuId; number = 0 } $cartUser.Token
+    Assert-ApiRejected "/app-api/cart/add" @{ goodsId = $ProductId; productId = $SkuId; number = -1 } $cartUser.Token
     Invoke-Api "/app-api/cart/add" @{ goodsId = $ProductId; productId = $SkuId; number = 1 } $cartUser.Token | Out-Null
     Invoke-Api "/app-api/cart/delete" @{ productIds = "$SkuId" } $cartUser.Token | Out-Null
     Invoke-Api "/app-api/cart/add" @{ goodsId = $ProductId; productId = $SkuId; number = 1 } $cartUser.Token | Out-Null
@@ -268,6 +275,15 @@ try {
 
     Write-Step "验收：下单、支付、管理端发货、确认收货"
     $shipFlow = New-PaidOrder "ship"
+    Write-Step "验收：跨用户订单、地址、支付与售后访问拒绝"
+    Assert-ApiRejected "/app-api/order/detail" @{ orderId = $shipFlow.OrderId } $memberForAuth.Token
+    Assert-ApiRejected "/app-api/order/cancelOrder" @{ orderId = $shipFlow.OrderId } $memberForAuth.Token
+    Assert-ApiRejected "/app-api/pay/prepay" @{ orderId = $shipFlow.OrderId } $memberForAuth.Token
+    Assert-ApiRejected "/app-api/pay/query" @{ orderId = $shipFlow.OrderId } $memberForAuth.Token
+    Assert-ApiRejected "/app-api/order/refund/apply" @{ orderId = $shipFlow.OrderId; reason = '越权验收' } $memberForAuth.Token
+    $foreignAddress = [long](Invoke-Sql "SELECT id FROM member_address WHERE user_id=$($shipFlow.UserId) LIMIT 1;")
+    Assert-ApiRejected "/app-api/address/detail" @{ id = $foreignAddress } $memberForAuth.Token
+    Assert-Order $shipFlow.OrderId 1 1 "跨用户请求不能改变订单"
     $adminList = Invoke-GetApi "/admin-api/trade/order/list?page=1&size=10&orderId=$($shipFlow.OrderId)" $adminToken
     Assert-True ([int]$adminList.total -eq 1) "管理端订单列表未查到测试订单"
     $adminDetail = Invoke-GetApi "/admin-api/trade/order/detail?orderId=$($shipFlow.OrderId)" $adminToken
@@ -285,6 +301,20 @@ try {
     Invoke-Api "/app-api/order/confirmOrder" @{ orderId = $shipFlow.OrderId } $shipFlow.Token | Out-Null
     Assert-Order $shipFlow.OrderId 3 1 "确认收货后订单应为已完成"
     Assert-LogExists $shipFlow.OrderId "CONFIRM_RECEIPT"
+    Write-Step "验收：收货后商品下架仍可评价，重复评价被拒绝"
+    Invoke-Sql "UPDATE product_spu SET status=0 WHERE id=$ProductId;" | Out-Null
+    $commentForm = @{ valueId = $ProductId; orderId = $shipFlow.OrderId; content = '隔离验收收货评价'; picUrls = '' }
+    $commentHeaders = @{ Authorization = "Bearer $($shipFlow.Token)" }
+    $comment = Invoke-RestMethod -Uri "$BaseUrl/app-api/comment/post" -Method Post -Headers $commentHeaders -Body $commentForm
+    Assert-True ($comment.code -eq 0) "已收货后即使商品下架也应允许评价"
+    try {
+        $duplicate = Invoke-RestMethod -Uri "$BaseUrl/app-api/comment/post" -Method Post -Headers $commentHeaders -Body $commentForm
+        Assert-True ($duplicate.code -ne 0) "同一订单商品不能重复评价"
+    } catch {
+        if (-not $_.Exception.Response -or [int]$_.Exception.Response.StatusCode -ne 400) { throw }
+    }
+    Assert-True ([int](Invoke-Sql "SELECT COUNT(*) FROM product_comment WHERE order_id=$($shipFlow.OrderId) AND spu_id=$ProductId;") -eq 1) "重复请求不能新增第二条评价"
+    Invoke-Sql "UPDATE product_spu SET status=1 WHERE id=$ProductId;" | Out-Null
 
     Write-Step "验收：管理端同意售后"
     $approveFlow = New-PaidOrder "approve"

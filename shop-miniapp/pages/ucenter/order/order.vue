@@ -125,7 +125,7 @@ export default {
 				uni.showToast({ title: '支付成功', icon: 'success' });
 				this.reload();
 			}).catch((error) => {
-				util.toast(error && error.pending ? '支付结果确认中' : '支付失败，请重试');
+				util.toast(util.paymentErrorMessage(error));
 				if (error && error.pending) this.reload();
 			});
 		},

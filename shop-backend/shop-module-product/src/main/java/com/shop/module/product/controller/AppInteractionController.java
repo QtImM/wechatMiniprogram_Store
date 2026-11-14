@@ -4,6 +4,7 @@ import com.shop.common.exception.ServerException;
 import com.shop.framework.security.LoginUser;
 import com.shop.module.product.config.MaterialStorageProperties;
 import com.shop.module.product.service.MaterialFileStorageService;
+import com.shop.module.product.service.MaterialAssetService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.core.Authentication;
@@ -94,10 +95,23 @@ public class AppInteractionController {
     public Map<String,Object> postComment(@RequestParam Long valueId, @RequestParam String content,
                                           @RequestParam(defaultValue = "") String picUrls,
                                           @RequestParam(defaultValue = "0") Long orderId) {
-        requireGoods(valueId); Long user = userId(); String normalized = content == null ? "" : content.trim();
+        // 评价资格以已完成订单为准，商品随后下架不应剥夺买家的评价入口。
+        Long user = userId(); String normalized = content == null ? "" : content.trim();
         if (normalized.isEmpty() || normalized.length() > 500) throw new ServerException(400,"评论内容应为 1 至 500 个字符");
         String pics = picUrls == null ? "" : picUrls.trim();
         if (pics.length() > 2000) throw new ServerException(400, "图片链接过长");
+        if (!pics.isEmpty()) {
+            String base = storageProps.getPublicBaseUrl();
+            String prefix = (base.endsWith("/") ? base : base + "/") + "comment/";
+            String[] images = pics.split(",", -1);
+            if (images.length > 4) throw new ServerException(400, "评价图片最多4张");
+            for (String image : images) {
+                if (!image.startsWith(prefix) || image.contains("..") || image.contains("\\")
+                        || !image.matches(".+\\.(png|jpg|webp)")) {
+                    throw new ServerException(400, "请使用评价上传功能提供的正式图片");
+                }
+            }
+        }
         List<Long> orders = jdbc.queryForList("""
                 SELECT o.id FROM trade_order o
                   JOIN trade_order_item oi ON oi.order_id=o.id AND oi.deleted=0
@@ -114,15 +128,20 @@ public class AppInteractionController {
 
     @PostMapping("/upload/image")
     public Map<String,Object> uploadImage(@RequestParam("file") MultipartFile file) {
+        userId();
         if (file == null || file.isEmpty()) throw new ServerException(400, "请选择要上传的图片");
         if (file.getSize() > 5 * 1024 * 1024) throw new ServerException(400, "图片不能超过5MB");
         String ct = file.getContentType() == null ? "" : file.getContentType().toLowerCase();
         if (!ct.equals("image/jpeg") && !ct.equals("image/png") && !ct.equals("image/webp")) throw new ServerException(400, "仅支持 JPG/PNG/WebP 格式");
         try {
+            byte[] content = file.getBytes();
+            MaterialAssetService.validateImageContent(content, ct);
             String ext = ct.equals("image/png") ? "png" : ct.equals("image/webp") ? "webp" : "jpg";
             String objectKey = "comment/" + java.time.LocalDate.now().getYear() + "/" + java.util.UUID.randomUUID() + "." + ext;
-            String url = fileStorage.store(file.getBytes(), objectKey);
+            String url = fileStorage.store(content, objectKey);
             return ok(Map.of("url", url));
+        } catch (ServerException e) {
+            throw e;
         } catch (Exception e) {
             throw new ServerException(500, "图片上传失败");
         }

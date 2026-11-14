@@ -225,7 +225,7 @@
 					uni.showToast({ title: '支付成功', icon: 'success' });
 					that.getOrderDetail();
 				}).catch(error => {
-					util.toast(error && error.pending ? '支付结果确认中' : '支付失败');
+					util.toast(util.paymentErrorMessage(error));
 					if (error && error.pending) that.getOrderDetail();
 				});
 			},
