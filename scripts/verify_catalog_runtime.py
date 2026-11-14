@@ -169,6 +169,7 @@ def main():
                 '-v', str(material) + ':/app/material', 'backend', '-c', 'chown -R 10001:10001 /app/material')
         compose(args, 'run', '-d', '--no-deps', '--name', 'shanpu-restore-ci',
                 '-p', '127.0.0.1:18085:8085', '-v', str(material) + ':/app/material',
+                '-e', 'SPRING_DATA_REDIS_DATABASE=15',
                 '-e', 'DB_URL=jdbc:mysql://mysql:3306/' + restored + '?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Shanghai',
                 'backend', stdout=subprocess.PIPE)
         from urllib.request import urlopen

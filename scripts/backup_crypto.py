@@ -58,6 +58,8 @@ def transform(source, destination, password, decrypt=False):
             out.write(worker.finalize())
             if not decrypt:
                 out.write(worker.tag)
+            out.flush()
+            os.fsync(out.fileno())
         # 同目录原子落盘；错误密码或篡改认证失败不会留下可用明文文件。
         os.link(temporary, destination)
     finally:
