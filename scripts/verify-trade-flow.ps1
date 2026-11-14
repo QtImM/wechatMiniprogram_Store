@@ -195,6 +195,9 @@ function New-PaidOrder([string]$Scene) {
     $amountParts = $amounts.Split(',')
     Assert-True ($amountParts[0] -eq $amountParts[1]) "支付单金额应与订单实付金额一致，实际为 $amounts"
     Invoke-Api "/app-api/pay/mock-success" @{ orderId = $orderId } $user.Token | Out-Null
+    $salesAfterPayment = [int](Invoke-Sql "SELECT sales_count FROM product_spu WHERE id=$ProductId;")
+    Invoke-Api "/app-api/pay/mock-success" @{ orderId = $orderId } $user.Token | Out-Null
+    Assert-True ([int](Invoke-Sql "SELECT sales_count FROM product_spu WHERE id=$ProductId;") -eq $salesAfterPayment) "重复支付成功通知不得重复增加销量"
     Assert-Order $orderId 1 1 "支付成功后订单应为待发货且已支付"
     return @{
         Token = $user.Token
@@ -372,6 +375,38 @@ try {
     $stockAfterTimeout = [int](Invoke-Sql "SELECT stock FROM product_sku WHERE id = $SkuId;")
     Assert-True ($stockAfterTimeout -eq $stockBeforeTimeout) "超时关闭后库存未回补"
     Assert-LogExists $timeoutFlow.OrderId "SYSTEM_CLOSE"
+
+    Write-Step "验收：最后一件库存两个用户并发争抢，只能生成一个订单"
+    $raceCases = @()
+    foreach ($scene in @('last_stock_a', 'last_stock_b')) {
+        $raceUser = New-TestUser $scene
+        $raceAddress = Save-TestAddress $raceUser.Token $raceUser.UserId
+        Invoke-Api "/app-api/cart/add" @{ goodsId = $ProductId; productId = $SkuId; number = 1 } $raceUser.Token | Out-Null
+        $raceCases += [pscustomobject]@{ Token = $raceUser.Token; Body = (@{
+            addressId = $raceAddress; requestId = "RACE$([guid]::NewGuid().ToString('N'))"
+        } | ConvertTo-Json -Compress) }
+    }
+    $stockBeforeRace = [int](Invoke-Sql "SELECT stock FROM product_sku WHERE id=$SkuId;")
+    if ($stockBeforeRace -ne 1) {
+        Invoke-Api "/admin-api/product/inventory/adjust" @{ skuId = $SkuId; changeQuantity = (1 - $stockBeforeRace); reason = '隔离验收最后一件库存并发场景' } $adminToken | Out-Null
+    }
+    $raceResults = @($raceCases | ForEach-Object -Parallel {
+        $case = $_
+        try {
+            $result = Invoke-RestMethod -Uri "$using:BaseUrl/app-api/order/submit" -Method Post `
+                -Headers @{ Authorization = "Bearer $($case.Token)" } -ContentType 'application/json' -Body $case.Body -TimeoutSec 30
+            [pscustomobject]@{ Success = ($result.code -eq 0); OrderId = $result.data.orderInfo.id; Token = $case.Token; Status = 200 }
+        } catch {
+            if (-not $_.Exception.Response) { throw }
+            [pscustomobject]@{ Success = $false; Status = [int]$_.Exception.Response.StatusCode }
+        }
+    } -ThrottleLimit 2)
+    $winners = @($raceResults | Where-Object Success)
+    Assert-True ($raceResults.Count -eq 2 -and $winners.Count -eq 1) "最后一件只能有一个成功订单"
+    Assert-True (@($raceResults | Where-Object { $_.Status -ge 500 }).Count -eq 0) "库存争抢失败必须是业务拒绝，不能返回500"
+    Assert-True ([int](Invoke-Sql "SELECT stock FROM product_sku WHERE id=$SkuId;") -eq 0) "争抢后库存应为0，不能超卖"
+    Invoke-Api '/app-api/order/cancelOrder' @{ orderId = $winners[0].OrderId } $winners[0].Token | Out-Null
+    Assert-True ([int](Invoke-Sql "SELECT stock FROM product_sku WHERE id=$SkuId;") -eq 1) "取消争抢订单后应只恢复一件库存"
 
     Write-Step "验收通过，开始清理测试数据"
     Cleanup-TestData
