@@ -4,6 +4,17 @@ module.exports = {
 const fs = require('fs')
 const path = require('path')
 
+// HBuilderX 编译器不会自动读取本地开发环境文件，显式注入小程序 API 地址。
+if (process.env.NODE_ENV !== 'production' && !process.env.VUE_APP_DEV_API_BASE_URL) {
+  const localEnvFile = path.resolve(__dirname, '.env.development.local')
+  if (fs.existsSync(localEnvFile)) {
+    const match = fs.readFileSync(localEnvFile, 'utf8').match(/^VUE_APP_DEV_API_BASE_URL\s*=\s*(.+)$/m)
+    if (match) {
+      process.env.VUE_APP_DEV_API_BASE_URL = match[1].trim().replace(/^['"]|['"]$/g, '')
+    }
+  }
+}
+
 function copyDirectory(sourceDir, targetDir) {
   if (!fs.existsSync(sourceDir)) {
     return

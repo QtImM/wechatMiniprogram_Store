@@ -1,6 +1,17 @@
 # 陕铺发布执行手册
 
-本手册对应 `codex/customer-delivery-closure` 收口版本。工具已完成离线测试；本机 Docker 无法连接，首次真实部署必须先在 staging 执行本手册并归档结果。不能把这些命令已经写好视为已部署成功。
+本手册对应 v1.0 客户交付流程。首次真实部署必须先在 staging 执行本手册并归档结果。不能把本地 Docker 演示、离线测试或已写好的命令视为客户环境部署成功。
+
+## 运行模式与交付边界
+
+| 场景 | 后端配置 | 小程序构建 | 对客户开放的能力 |
+|---|---|---|---|
+| 本地开发演示 | `dev`，微信登录/退款/物流为 Mock | development，调用本机 API | 仅开发调试，不作客户验收 |
+| M1 商品录入 | `prod + APP_DELIVERY_MODE=catalog`，Mock 关闭，支付关闭 | 不发布小程序 | 只开放后台商品、内容和素材维护；全部 `/app-api/` 返回 503 |
+| 真实渠道验收 | `staging + APP_DELIVERY_MODE=commerce`，Mock 关闭 | staging，调用 HTTPS 测试 API | 用客户 AppID 和测试环境完成真机、登录、支付、退款与物流联验 |
+| M2 商城交易 | `prod + APP_DELIVERY_MODE=commerce`，Mock 关闭，真实支付开启 | production，调用 HTTPS 正式 API | 联验和审核通过后开放正式交易 |
+
+`catalog` 与 `commerce` 控制业务入口，`dev`、`staging`、`prod` 控制后端配置，两者须同时核对。小程序开发工具中的本地模拟器不是体验版或正式版。
 
 ## 1. 客户需提供的条件
 

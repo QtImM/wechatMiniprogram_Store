@@ -19,6 +19,11 @@ class PreflightTests(unittest.TestCase):
     def test_catalog_does_not_require_channels(self):
         self.assertEqual(module.validate(self.config()), [])
 
+    def test_catalog_rejects_enabled_payment(self):
+        values = self.config()
+        values['WECHAT_PAY_ENABLED'] = 'true'
+        self.assertIn('catalog 必须关闭微信支付', module.validate(values))
+
     def test_commerce_requires_channels(self):
         values = self.config()
         values['APP_DELIVERY_MODE'] = 'commerce'

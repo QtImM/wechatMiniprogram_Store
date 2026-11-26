@@ -61,7 +61,14 @@
 					return;
 				}
 				if (!e.detail || e.detail.errMsg !== 'getPhoneNumber:ok' || !e.detail.code) {
-					util.toast('未获得手机号授权');
+					const errMsg = e.detail && e.detail.errMsg || '';
+					if (errMsg.includes('api scope is not declared in the privacy agreement')) {
+						util.toast('手机号授权尚未开通，请稍后再试');
+					} else if (errMsg.includes('deny') || errMsg.includes('cancel')) {
+						util.toast('已取消手机号授权');
+					} else {
+						util.toast('手机号授权失败，请稍后再试');
+					}
 					return;
 				}
 				this.startWechatLogin(api.AuthPhoneLogin, { phoneCode: e.detail.code });
