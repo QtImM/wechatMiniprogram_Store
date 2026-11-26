@@ -61,6 +61,8 @@ def validate(values):
             errors.append('commerce 必须启用真实支付')
         if len(values.get('WECHAT_PAY_API_V3_KEY', '').encode()) != 32:
             errors.append('API v3 Key 必须为 32 字节')
+    elif mode == 'catalog' and values.get('WECHAT_PAY_ENABLED') == 'true':
+        errors.append('catalog 必须关闭微信支付')
     return errors
 
 

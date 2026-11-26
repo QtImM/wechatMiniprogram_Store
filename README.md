@@ -69,6 +69,9 @@ pnpm dev
 3. 在「详情 → 本地设置」勾选「不校验合法域名」。
 
 小程序必须使用 HBuilderX 内置编译器；系统 Node.js 24 与当前 uni-app Vue 2 CLI 构建模式不兼容。
+本机若后端不在默认 `8085` 端口，可在未提交的 `shop-miniapp/.env.development.local` 中设置 `VUE_APP_DEV_API_BASE_URL`，重新用 HBuilderX 编译并在微信开发者工具中重新编译项目。
+
+本地 Docker 默认启用微信 Mock 登录，仅用于开发体验；它会生成模拟 OpenID 和手机号，不能验证真实微信身份。真实联调需在未提交到仓库的 `.env` 中设置 `WX_MA_MOCK_ENABLED=false`、`WX_MA_APPID` 和 `WX_MA_SECRET`，重建后端容器，并将小程序 API 指向手机可访问的 HTTPS 服务。手机号快捷登录还需在微信公众平台的「用户隐私保护指引」中声明手机号及其用途，待指引生效后再用授权账号真机验证。
 
 ## 服务与端口
 
@@ -84,6 +87,7 @@ pnpm dev
 - **管理后台登录提示「系统异常」**：多数是后端没起来。先确认 Docker Desktop 已运行，再执行 `docker compose up -d mysql redis`，健康检查通过后刷新页面重试。
 - **HBuilderX 报 `IDE service port disabled`**：微信开发者工具未开启服务端口，见上文「启动微信小程序」第 2 步；也可手动导入编译产物 `shop-miniapp/unpackage/dist/dev/mp-weixin`。
 - **小程序接口请求失败**：确认后端 8085 可访问，且微信开发者工具已关闭合法域名校验。
+- **手机号快捷登录提示授权未开通**：若开发者工具控制台出现 `api scope is not declared in the privacy agreement`，应先在微信公众平台补齐并提交手机号隐私声明；前端授权回调未成功时，后端不会收到手机号登录请求。
 - **端口被占用**：3307 / 6380 / 8085 / 8848 已被占用时，先停掉旧进程或修改 `.env`（容器端口）与 `shop-admin/.env.development`（前端端口）。
 
 ## 目录结构

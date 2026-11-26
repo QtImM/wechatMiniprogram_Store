@@ -1,5 +1,5 @@
 const buildTarget = require('./build-target.js');
-const runtimeEnv = typeof process !== 'undefined' && process.env ? process.env : {};
+const runtimeEnv = process.env || {};
 const appEnv = buildTarget.appEnv || runtimeEnv.VUE_APP_ENV || runtimeEnv.UNI_APP_ENV || runtimeEnv.NODE_ENV || 'development';
 const isProduction = appEnv === 'production';
 const isStaging = appEnv === 'staging';

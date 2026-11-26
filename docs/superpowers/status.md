@@ -8,6 +8,8 @@
 
 **阶段**: 企业级交付完善
 **当前计划**: [v1.0 客户交付版.md](plans/v1.0%20客户交付版.md)（最终客户交付总计划，基于企业交付阶段 A、B 已完成基线继续推进）
+**当前冲刺**: [2026-11-27-客户交付最后冲刺.md](plans/2026-11-27-客户交付最后冲刺.md)（按 D0–D4 门槛推进 M1 与 M2，真实渠道证据齐全后方可完整交付）
+**D0 核查**: [2026-11-27-D0-基线核查.md](../delivery/2026-11-27-D0-基线核查.md)（本机门禁与隔离迁移已通过；线上可达、正式小程序构建与客户资料仍未放行）
 **原完善计划**: [enterprise-delivery-completion.md](plans/2026-08-13-enterprise-delivery-completion.md)（阶段 A、B 已完成，后续 C/D/E/F 已并入 v1.0 客户交付版）
 **完善报告**: [enterprise-delivery-completion-report.md](specs/2026-08-13-enterprise-delivery-completion-report.md)
 **当前 Issue**: [member-center.md](plans/2026-08-03-member-center.md)（Issue #7 已完成，会员权益继续暂缓并将在阶段 A 收口入口）
@@ -1630,6 +1632,14 @@
 > 2026-11-25 运行监控订单追踪修复已推送至远端 main（666bd28），远端分支提交已核对。本轮人工验收 Word 与过程记录留在本地。
 
 > 2026-11-25 人工验收归档：本地管理后台已验收至第 37 步，文档包含 48 张截图，本次随验收过程记录一并提交。第 19、23 步按用户要求跳过补验，真实微信和小程序实机留待联验。
+
+> 2026-11-27 登录联验排查：微信开发者工具中手机号按钮被平台拦截，控制台显示 `getPhoneNumber:fail api scope is not declared in the privacy agreement`，请求未进入后端；需在客户小程序后台补齐手机号隐私声明并真机复验。本地 Docker 的微信登录当前为 Mock 模式，使用模拟 OpenID/手机号，不代表真实微信身份验证；已将 Mock 开关与 AppID/AppSecret 改为本地环境可配置，并改善手机号授权失败提示。真实联调待客户小程序密钥、隐私声明和可从手机访问的 HTTPS API。
+
+> 同日发现 HBuilderX 未自动读取 `shop-miniapp/.env.development.local`，编译后模拟器曾请求旧后端 `127.0.0.1:8085` 并显示系统异常；现由构建配置显式注入本地 API 地址，已核对编译产物包含 `8086` 且新后端首页接口返回 200。
+
+> 交付模式复核：当前本机为 `dev + commerce`，微信身份、退款和物流均为 Mock，只能作开发演示。正式交付分 M1 `prod + catalog`（后台录入，公众 API 关闭，支付关闭）与 M2 `prod + commerce`（真实微信登录、支付、退款、物流）；真实渠道先在 `staging + commerce` 验收。已修正 `.env.prod.example` 的 catalog/支付开关冲突并加预检拒绝；当前无 `.env.prod` 和小程序发行产物，客户真实渠道验收未完成。
+
+> 2026-11-27 建立客户交付最后冲刺计划：以固定版本、线上可达、M1 正式录入、staging 真实渠道、M2 正式发布与签收为顺序门槛。11 月 25 日客户服务器 catalog 预演有历史通过记录，但今天从本机访问 `bhtjl.top` 的 HTTPS 页面和健康探针均超时；需先定位现网状况。现有客户资料仍缺小程序 Secret、手机号隐私声明、支付公钥 ID、物流及独立备份/告警核验，未将模拟器和 Mock 结果计入 M2 验收。
 
 ```
 开始新对话时：
